@@ -1,0 +1,15 @@
+- id: '1564525145782'
+  alias: Hallway motion turns on tablet
+  trigger:
+  - entity_id: switch.hallway_motion_sensor
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - service: rest_command.wake_up_device
+    data: 
+      device_ip: !secret magic_mirror_ip
+      device_port: !secret magic_mirror_wake_up_port
+
+# TODO Turn off tablet when hallway motion sensor goes off

@@ -1,0 +1,136 @@
+title: !secret home_name
+views:
+
+  - badges:
+      - sensor.yr_symbol
+      - sensor.hacs
+      - sensor.outdoors_temperature
+      - sensor.fjarrkontroll_vardagsrum
+      - sensor.fjarrkontroll_sovrum
+      - sensor.fjarrkontroll_vit
+      - sensor.dimmer_vit
+      - sensor.dimmer_svart
+      - sensor.tradfri_remote_control
+      - sensor.electricity_price
+      - sun.sun
+      - sensor.ip_webcam_video_connections
+      - sensor.ip_webcam_audio_connections
+      - sensor.ip_webcam_battery_voltage
+      - sensor.ip_webcam_proximity
+      - sensor.ip_webcam_light_level
+      - sensor.ip_webcam_motion
+      - sensor.ip_webcam_battery_level
+      - sensor.ip_webcam_sound
+      - sensor.ip_webcam_battery_temperature      
+
+    cards:
+
+      - entities:
+          - light.bedroom_ceiling
+          - switch.bedroom_sideboard_light
+          - switch.bedroom_crib_side_light
+          - switch.bedroom_window_side_light
+        title: Bedroom
+        show_header_toggle: true
+        type: entities
+
+
+      - entities:
+          - switch.hallway_sideboard_light
+          - switch.hallway_motion_sensor
+        title: Hallway
+        show_header_toggle: true
+        type: entities
+
+      - entity: media_player.hallway_speaker
+        type: media-control
+
+      - entities:
+          - light.kitchen_ceiling
+          - light.cabinet
+          - sensor.indoors_temperature
+          - sensor.indoors_humidity
+        title: Kitchen
+        show_header_toggle: true
+        type: entities
+
+      - entity: media_player.kitchen_display
+        type: media-control
+
+      - entities:
+          - light.living_room_ceiling
+          - light.living_room_window_sill
+          - light.living_room_window_ceiling
+        title: Living Room
+        show_header_toggle: true
+        type: entities
+
+      - entity: media_player.tv
+        type: media-control
+
+      - entity: media_player.chromecast_ultra
+        type: media-control
+
+      - entity: media_player.living_room_speaker
+        type: media-control
+
+      - entities:
+          - light.office_spotlights
+          - light.office_top_corner
+        show_header_toggle: true
+        title: Office
+        type: entities
+
+      - entity: media_player.chromecast_audio
+        type: media-control
+
+      - entities:
+          - light.kids_room_ceiling
+        title: Kids room
+        show_header_toggle: true
+        type: entities
+
+      - entity: camera.ip_webcam
+        type: picture-entity
+
+      - entity: camera.hallway_camera
+        type: picture-entity
+
+
+
+      - entities:
+          - script.turn_tv_off
+          - script.toggle_tv_power
+          - script.turn_computer_on
+          - script.turn_everything_off
+          - script.cast_youtube
+          - script.turn_tv_on
+          - script.cast_magic_mirror_camera
+        title: Scripts
+        type: entities
+
+      - entities:
+          - switch.ip_webcam_torch
+          - switch.ip_webcam_gps_active
+          - switch.ip_webcam_exposure_lock
+          - switch.ip_webcam_white_balance_lock
+          - switch.ip_webcam_night_vision
+          - switch.ip_webcam_front_facing_camera
+          - switch.ip_webcam_video_recording
+          - switch.ip_webcam_overlay
+          - switch.ip_webcam_focus
+          - switch.christmas_tree
+          - switch.hallway_camera
+        title: Switch
+        type: entities
+
+      - entity: weather.home
+        type: weather-forecast
+
+      - entity: weather.smhi_home
+        type: weather-forecast
+
+    panel: false
+    path: default_view
+    title: Home
+

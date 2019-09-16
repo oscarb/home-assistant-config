@@ -1,0 +1,82 @@
+toggle_tv_power:
+  alias: TV on/off
+  sequence:
+  - service_template: >
+      {% if is_state('media_player.tv', 'off') %}
+        script.turn_tv_on
+      {% else %}
+        script.turn_tv_off
+      {% endif %}
+
+turn_tv_on:
+  alias: Turn TV on
+  sequence:
+  - service: media_player.turn_on
+    data: 
+      entity_id: media_player.chromecast_ultra
+  - delay:
+      seconds: 2
+  - service: media_player.turn_off
+    data: 
+      entity_id: media_player.chromecast_ultra  
+
+turn_tv_off:
+  alias: Turn TV off 
+  sequence:
+  - service: media_player.turn_off
+    data: 
+      entity_id: media_player.tv
+
+turn_everything_off:
+  alias: Turn everything off
+  sequence:
+    - service: homeassistant.turn_off
+      data:
+        entity_id:
+          - group.all_lights
+          - group.all_switches
+          - media_player.tv  
+
+cast_youtube:
+  alias: Cast YouTube
+  sequence:
+    - service: media_extractor.play_media
+      entity_id: media_player.chromecast_ultra
+      data:
+        media_content_id: "https://www.youtube.com/watch?v=ROkXM3csNWY"
+        media_content_type: video/youtube
+
+cast_magic_mirror_camera:
+  alias: Cast Phone
+  sequence:
+    - service: media_extractor.play_media
+      data_template:
+        entity_id: "{{ media_player }}"
+      data:
+        media_content_id: !secret magic_mirror_video
+        media_content_type: image/jpg
+
+turn_magic_mirror_screen_on:
+  alias: Turn on Magic Mirror screen
+  sequence:
+    - service: rest_command.wake_up_device
+      data:
+        device_ip: !secret magic_mirror_ip
+        device_port: !secret magic_mirror_wake_up_port
+
+turn_computer_on:
+  alias: Turn on computer 
+  sequence:
+    - service: wake_on_lan.send_magic_packet
+      data:
+        mac: !secret computer_mac
+
+turn_computer_off:
+  alias: Turn off computer
+  sequence: 
+    - service: shell_command.turn_off_computer
+      data:
+        ssh_user: !secret shutdown_ssh_user
+        user: !secret shutdown_computer_user
+        ip: !secret computer_ip
+        timeout: 10

@@ -1,0 +1,64 @@
+bedroom:
+  name: Bedroom
+  entities:
+    - light.bedroom_ceiling
+    - switch.bedroom_crib_side_light
+    - switch.bedroom_sideboard_light
+    - switch.bedroom_window_side_light  
+
+hallway:
+  name: Hallway
+  entities:
+    - switch.hallway_sideboard_light
+    - media_player.hallway_speaker
+    - switch.hallway_motion_sensor
+
+kids_room:
+  name: Kids room 
+  entities:
+    - light.kids_room_ceiling
+
+kitchen:
+  name: Kitchen
+  entities:
+    - light.cabinet
+    - light.kitchen_ceiling
+    - media_player.kitchen_display
+    - sensor.indoors_humidity
+    - sensor.indoors_temperature
+  
+living_room:
+  name: Living room
+  entities:
+    - light.living_room_ceiling
+    - light.living_room_window_ceiling
+    - light.living_room_window_sill
+    - media_player.chromecast_ultra
+    - media_player.living_room_speaker
+    - media_player.tv
+
+office:
+  name: Office 
+  entities:
+    - light.office_spotlights
+    - light.office_top_corner
+    - media_player.chromecast_audio
+
+
+all_lamps:
+  entities:
+    - light.bedroom_ceiling
+    - switch.bedroom_crib_side_light
+    - switch.bedroom_sideboard_light
+    - switch.bedroom_window_side_light
+    - switch.hallway_sideboard_light
+    - light.kids_room_ceiling_1
+    - light.kids_room_ceiling_2
+    - light.kids_room_ceiling_3
+    - light.cabinet
+    - light.kitchen_ceiling
+    - light.living_room_ceiling
+    - light.living_room_window_ceiling
+    - light.living_room_window_sill    
+    - light.office_spotlights
+    - light.office_top_corner

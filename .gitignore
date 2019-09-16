@@ -1,0 +1,26 @@
+# You can whitelist files/folders with !, these will not be ignored.
+!*.yaml
+!.gitignore
+!*.md
+
+# Ignore folders.
+.storage
+.cloud
+.google.token
+__pycache__
+deps
+tts
+@eaDir
+
+# Ignore files
+.uuid
+.DS_Store
+*.db
+*.db-*
+*.log
+tellduslive.conf
+
+# Ensure these YAML files are ignored, otherwise your secret data/credentials will leak.
+ip_bans.yaml
+secrets.yaml
+known_devices.yaml

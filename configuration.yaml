@@ -1,0 +1,243 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: !secret home_name
+  # Location required to calculate the time the sun rises and sets
+  latitude: !secret home_latitude 
+  longitude: !secret home_longitude
+  # Impacts weather/sunrise data (altitude above sea level in meters)
+  elevation: !secret home_elevation
+  # metric for Metric, imperial for Imperial
+  unit_system: metric
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: !secret home_timezone
+  # Customization file
+  customize: !include customize.yaml
+
+# Show links to resources in log and frontend
+# introduction: false
+
+# Enables the frontend
+frontend:
+
+# Enables configuration UI
+config:
+
+# Uncomment this if you are using SSL/TLS, running in Docker container, etc.
+http:
+   base_url: !secret http_base_url
+
+# Checks for available updates
+# Note: This component will send some information about your system to
+# the developers to assist with development of Home Assistant.
+# For more information, please see:
+# https://home-assistant.io/blog/2016/10/25/explaining-the-updater/
+updater:
+  # Optional, allows Home Assistant developers to focus on popular components.
+  # include_used_components: true
+
+# Discover some devices automatically
+discovery:
+
+# Allows you to issue voice commands from the frontend in enabled browsers
+conversation:
+
+# Enables support for tracking state changes over time
+history:
+
+# View all events in a logbook
+logbook:
+
+# Enables a map showing the location of tracked devices
+map:
+
+# Track the sun
+sun:
+
+# Global variables for templates
+input_text:
+  video_url:
+    name: Video URL
+    initial: !secret magic_mirror_video
+
+# Switches
+switch:
+  - platform: template
+    switches:
+      hallway_camera: 
+        friendly_name: Show hallway camera on TV
+        value_template: "{{ is_state_attr('media_player.chromecast_ultra', 'media_content_id', states('input_text.video_url')) }}"
+        turn_on:
+          service: script.cast_magic_mirror_camera
+          data:
+            media_player: media_player.chromecast_ultra
+        turn_off:
+          service: media_player.turn_off
+          data:
+            entity_id: media_player.chromecast_ultra
+
+
+# Google Assistant - https://www.home-assistant.io/components/google_assistant
+google_assistant:
+  project_id: !secret ga_project_id
+  api_key: !secret ga_homegraph_api_key
+  expose_by_default: false
+  entity_config:
+    # Bedroom
+    switch.bedroom_crib_side_light:
+      name: Crib side light
+      room: Bedroom / Sovrum 
+      expose: true
+    switch.bedroom_sideboard_light:
+      name: Sideboard light
+      room: Bedroom / Sovrum 
+      expose: true
+    switch.bedroom_window_side_light:
+      name: Window side light
+      room: Bedroom / Sovrum 
+      expose: true
+
+    # Hallway
+    switch.hallway_sideboard_light:
+      name: Sideobard light
+      room: Hallway / Hallen
+      expose: true
+
+    camera.hallway_camera:
+      name: Camera
+      room: Hallway / Hallen
+      expose: true
+      
+    switch.hallway_camera:
+      name: Hallway camera
+      room: Hallway / Hallen
+      aliases:
+        - Kameran i hallen
+        - Security camera
+      expose: true
+
+    # Kitchen 
+    sensor.indoors_temperature:
+      name: Indoors temperature
+      room: Kitchen / Kök
+      aliases:
+        - Kitchen temperature
+        - Temperature
+      expose: true
+
+      # TODO Add outdoors temp
+
+    # Living room
+    media_player.tv:
+      name: Philips TV
+      room: LivingroomVardagsrum
+      aliases: 
+        - TV Screen
+      expose: false
+
+
+# Proxy stream
+stream: 
+
+# Channge UI config mode
+lovelace:
+  mode: yaml
+
+# Sensors
+sensor:
+  # Weather prediction
+  - platform: yr
+
+# Text to speech
+tts:
+  - platform: google_translate
+    service_name: google_say
+
+# Cloud
+cloud:
+
+# Wake on LAN
+wake_on_lan:
+
+# System health
+system_health:
+
+# For casting YouTube videos
+media_extractor:
+
+# Tibber
+tibber:
+  access_token: !secret tibber_access_token
+
+# HACS
+hacs:
+  token: !secret github_hacs_token
+
+# HTTP Requests
+rest_command:
+  wake_up_device:
+    url: http://{{ device_ip }}:{{ device_port }}/?message=on
+
+# Generic camera
+camera:
+  - platform: onvif
+    host: !secret magic_mirror_ip
+    name: Hallway camera
+    port: 8080
+
+# Example configuration.yaml entry
+android_ip_webcam:
+  - host: !secret magic_mirror_ip
+    sensors:
+      - audio_connections
+      - battery_level
+      - battery_temp
+      - battery_voltage
+      - light
+      - motion
+      - pressure
+      - proximity
+      - sound
+      - video_connections
+    switches:
+      - exposure_lock
+      - ffc
+      - focus
+      - gps_active
+      - night_vision
+      - overlay
+      - torch
+      - whitebalance_lock
+      - video_recording
+
+# Light groups 
+light:
+  - platform: group
+    name: Kids Room Ceiling
+    entities:
+      - light.kids_room_ceiling_1
+      - light.kids_room_ceiling_2
+      - light.kids_room_ceiling_3
+ 
+ 
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+
+
+media_player:
+  - platform: philips_android_tv
+    name: TV
+    host: !secret philips_host
+    mac: !secret philips_password
+    username: !secret philips_username
+    password: !secret philips_password
+
+shell_command: 
+  turn_off_computer: ssh {{ ssh_user }} net rpc shutdown -I {{ ip }} -U {{ user }} -t {{ timeout }}
+
+
+# TODO 
+# Refactor
+# Add more security:
+# Customize camera picture (16:9?)
+# Abort shutdown
