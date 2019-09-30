@@ -8,8 +8,30 @@
   condition: []
   action:
   - service: rest_command.wake_up_device
-    data: 
-      device_ip: !secret magic_mirror_ip
-      device_port: !secret magic_mirror_wake_up_port
-
-# TODO Turn off tablet when hallway motion sensor goes off
+    data:
+      device_ip: 192.168.1.163
+      device_port: 1817
+- id: '1569245264705'
+  alias: Bathroom motions turns on bathroom ceiling lamp
+  trigger:
+  - entity_id: switch.bathroom_motion_sensor
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - data:
+      entity_id: light.bathroom_ceiling
+    service: light.turn_on
+- id: '1569245490089'
+  alias: Bathroom motion sensor disabled turns off light
+  trigger:
+  - entity_id: switch.bathroom_motion_sensor
+    from: 'on'
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data:
+      entity_id: light.bathroom_ceiling
+    service: light.turn_off
