@@ -149,7 +149,6 @@ google_assistant:
         - PC
       expose: true
 
-
 # Proxy stream
 stream: 
 
