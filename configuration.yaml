@@ -61,6 +61,13 @@ input_text:
 
 # Switches
 switch:
+  - platform: wake_on_lan
+    name: Computer Power
+    mac_address: !secret computer_mac
+    host: !secret computer_ip
+    turn_off: 
+      service: script.turn_computer_off
+
   - platform: template
     switches:
       hallway_camera: 
@@ -124,7 +131,7 @@ google_assistant:
         - Temperature
       expose: true
 
-      # TODO Add outdoors temp
+    # TODO Add outdoors temp
 
     # Living room
     media_player.tv:
@@ -133,6 +140,14 @@ google_assistant:
       aliases: 
         - TV Screen
       expose: false
+
+    # Office
+    switch.computer_power:
+      name: Computer
+      room: Office
+      aliases:
+        - PC
+      expose: true
 
 
 # Proxy stream
