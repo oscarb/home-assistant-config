@@ -9,7 +9,7 @@
   action:
   - service: rest_command.wake_up_device
     data:
-      device_ip: 192.168.1.163
+      device_ip: !secret magic_mirror_ip
       device_port: 1817
 - id: '1569245264705'
   alias: Bathroom motions turns on bathroom ceiling lamp
