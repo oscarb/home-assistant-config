@@ -249,7 +249,6 @@ media_player:
 shell_command: 
   turn_off_computer: ssh {{ ssh_user }} net rpc shutdown -I {{ ip }} -U {{ user }} -t {{ timeout }}
 
-
 # TODO 
 # Add more security:
 # Customize camera picture (16:9?)
