@@ -251,7 +251,6 @@ shell_command:
 
 
 # TODO 
-# Refactor
 # Add more security:
 # Customize camera picture (16:9?)
 # Abort shutdown
