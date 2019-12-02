@@ -5,14 +5,29 @@
     from: 'off'
     platform: state
     to: 'on'
+  - entity_id: switch.hallway_sideboard_light
+    from: 'off'
+    platform: state
+    to: 'on'
   condition: []
   action:
-  - service: rest_command.wake_up_device
-    data:
-      device_ip: !secret magic_mirror_ip
-      device_port: 1817
+  - service: script.turn_magic_mirror_screen_on
+- id: '1564525145783'
+  alias: Hallway motion absence turns off tablet
+  trigger:
+  - entity_id: switch.hallway_motion_sensor
+    from: 'on'
+    platform: state
+    to: 'off'
+  - entity_id: switch.hallway_sideboard_light
+    from: 'on'
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - service: script.turn_magic_mirror_screen_off
 - id: '1569245264705'
-  alias: Bathroom motions turns on bathroom ceiling lamp
+  alias: Bathroom motion turns on bathroom ceiling lamp
   trigger:
   - entity_id: switch.bathroom_motion_sensor
     from: 'off'
