@@ -102,12 +102,14 @@ vacuum_room:
   sequence:
     - service: vacuum.send_command
       data:
-        entity_id: vacuum.roborock
+        entity_id: vacuum.robocop
         command: app_segment_clean
       data_template: 
-        params: >
+        params: >-
           {% if 'kitchen' in room_name %}
             [19]
           {% elif 'living room' in room_name %}
             [20]
+          {% else %}
+            [21]
           {% endif %}
