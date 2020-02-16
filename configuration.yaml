@@ -22,6 +22,9 @@ frontend:
 # Enables configuration UI
 config:
 
+# Enables the mobile companion app
+mobile_app:
+
 # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
 http:
    base_url: !secret http_base_url
@@ -48,6 +51,10 @@ history:
 
 # View all events in a logbook
 logbook:
+
+# Purge database regularly
+recorder:
+  purge_keep_days: 7
 
 # Enables a map showing the location of tracked devices
 map:
