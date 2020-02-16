@@ -62,3 +62,18 @@
   - data:
       entity_id: light.bathroom_ceiling
     service: light.turn_off
+- id: '1577999538328'
+  alias: Ckean room
+  description: Start Roborock room cleaning triggered from Google Assistant (IFTTT)
+  trigger:
+  - event_data:
+      action: vacuum
+    platform: event
+    event_type: ifttt_webhook_received
+  condition: []
+  action:
+  - alias: ''
+    service: script.vacuum_room
+    data_template:
+      room_name: '{{ trigger.event.data.room }}'
+      

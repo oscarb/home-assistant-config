@@ -278,7 +278,6 @@ group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
 
-
 media_player:
   - platform: philips_android_tv
     name: TV
@@ -289,6 +288,12 @@ media_player:
 
 shell_command: 
   turn_off_computer: ssh {{ ssh_user }} net rpc shutdown -I {{ ip }} -U {{ user }} -t {{ timeout }}
+
+vacuum:
+- platform: xiaomi_miio
+  name: Robocop
+  host: !secret roborock_ip
+  token: !secret roborock_token
 
 # TODO 
 # Add more security:
