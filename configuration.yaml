@@ -37,6 +37,8 @@ updater:
 
 # Discover some devices automatically
 discovery:
+  ignore:
+    - igd
 
 # Allows you to issue voice commands from the frontend in enabled browsers
 conversation:
@@ -56,6 +58,9 @@ sun:
 # MQTT
 mqtt:
   broker: !secret mqtt_broker_ip
+  port: !secret mqtt_broker_port
+  username: !secret mqtt_broker_username
+  password: !secret mqtt_broker_password
   discovery: true
   discovery_prefix: homeassistant
 
@@ -77,7 +82,7 @@ binary_sensor:
 switch:
   - platform: wake_on_lan
     name: Computer Power
-    mac_address: !secret computer_mac
+    mac: !secret computer_mac
     host: !secret computer_ip
     turn_off: 
       service: script.turn_computer_off
