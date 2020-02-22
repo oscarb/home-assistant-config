@@ -80,10 +80,13 @@ input_text:
 # Binary sensors
 
 binary_sensor:
-  - platform: rest
-    resource: !secret magic_mirror_device_info
+  - platform: mqtt
     name: Magic Mirror Screen
-    value_template: '{{ value_json.isScreenOn }}'
+    state_topic: fully/event/#
+    value_template: "{{ value_json.event }}"
+    payload_on: "screenOn"
+    payload_off: "screenOff"
+    json_attributes_topic: fully/deviceInfo/#
 
 # Switches
 switch:
@@ -94,13 +97,6 @@ switch:
     turn_off: 
       service: script.turn_computer_off
 
-  - platform: rest
-    resource: !secret magic_mirror_fully_api
-    name: Magic Mirror REST
-    body_on: '{"cmd": "screenOn"}'
-    body_off: '{"cmd": "screenOff"}'
-    is_on_template: "{{ is_state('binary_sensor.magic_mirror_screen', 'on') }}"
-
   - platform: template
     switches:
       magic_mirror:
@@ -110,6 +106,7 @@ switch:
           service: script.turn_magic_mirror_screen_on
         turn_off:
           service: script.turn_magic_mirror_screen_off
+
       hallway_camera: 
         friendly_name: Show hallway camera on TV
         value_template: "{{ is_state_attr('media_player.chromecast_ultra', 'media_content_id', states('input_text.video_url')) }}"
