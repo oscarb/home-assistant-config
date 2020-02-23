@@ -4,8 +4,7 @@ views:
   - badges:
       - sensor.yr_symbol
       - sensor.hacs
-      - sensor.outdoors_temperature
-      - sensor.fjarrkontroll_vardagsrum
+      - sensor.mqtt_balcony_temperature
       - sensor.fjarrkontroll_sovrum
       - sensor.fjarrkontroll_vit
       - sensor.dimmer_vit
@@ -25,78 +24,65 @@ views:
 
     cards:
 
-      - entities:
+      - title: Bedroom
+        type: entities      
+        entities:
           - light.bedroom_ceiling
+          - switch.bedroom_bedside_table_1
+          - switch.bedroom_bedside_table_2
           - switch.bedroom_sideboard_light
-          - switch.bedroom_crib_side_light
-          - switch.bedroom_window_side_light
-        title: Bedroom
         show_header_toggle: true
-        type: entities
 
-
-      - entities:
+      - title: Hallway
+        type: entities      
+        entities:
           - switch.hallway_sideboard_light
-          - switch.hallway_motion_sensor
-        title: Hallway
+          - media_player.hallway_speaker
+          - binary_sensor.mqtt_hallway_motion
+          - switch.magic_mirror
+          - camera.ip_webcam
         show_header_toggle: true
-        type: entities
 
-      - entity: media_player.hallway_speaker
-        type: media-control
-
-      - entities:
+      - title: Kitchen
+        type: entities      
+        entities:
           - light.kitchen_ceiling
           - light.cabinet
-          - sensor.indoors_temperature
-          - sensor.indoors_humidity
-        title: Kitchen
+          - media_player.kitchen_display
+          - sensor.mqtt_kitchen_humidity
+          - sensor.mqtt_kitchen_temperature
         show_header_toggle: true
-        type: entities
 
-      - entity: media_player.kitchen_display
-        type: media-control
-
-      - entities:
+      - title: Living Room
+        type: entities      
+        entities:
           - light.living_room_ceiling
-          - light.living_room_window_sill
           - light.living_room_window_ceiling
-        title: Living Room
+          - light.living_room_window_sill
+          - media_player.chromecast_ultra
+          - media_player.living_room_speaker
+          - media_player.tv
         show_header_toggle: true
-        type: entities
 
-      - entity: media_player.tv
-        type: media-control
-
-      - entity: media_player.chromecast_ultra
-        type: media-control
-
-      - entity: media_player.living_room_speaker
-        type: media-control
-
-      - entities:
+      - title: Office
+        type: entities      
+        entities:
           - light.office_spotlights
           - light.office_top_corner
-        show_header_toggle: true
-        title: Office
-        type: entities
+          - media_player.chromecast_audio
+        show_header_toggle: true   
 
-      - entity: media_player.chromecast_audio
-        type: media-control
-
-      - entities:
+      - title: Kids room
+        type: entities      
+        entities:
           - light.kids_room_ceiling
-        title: Kids room
-        show_header_toggle: true
-        type: entities
+          - switch.butterfly
+          - switch.reading_lamp
+          - switch.star
+        show_header_toggle: true   
 
       - entity: camera.ip_webcam
         type: picture-entity
-
-      - entity: camera.hallway_camera
-        type: picture-entity
-
-
 
       - entities:
           - script.turn_tv_off

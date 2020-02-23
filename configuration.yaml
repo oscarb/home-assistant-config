@@ -78,7 +78,6 @@ input_text:
     initial: !secret magic_mirror_video
 
 # Binary sensors
-
 binary_sensor:
   - platform: mqtt
     name: Magic Mirror Screen
@@ -129,27 +128,29 @@ google_assistant:
   expose_by_default: false
   entity_config:
     # Bedroom
-    switch.bedroom_crib_side_light:
+    switch.bedroom_bedside_table_1:
       name: Crib side light
+      room: Bedroom / Sovrum 
+      expose: true
+    switch.bedroom_bedside_table_2:
+      name: Window side light
       room: Bedroom / Sovrum 
       expose: true
     switch.bedroom_sideboard_light:
       name: Sideboard light
       room: Bedroom / Sovrum 
       expose: true
-    switch.bedroom_window_side_light:
-      name: Window side light
-      room: Bedroom / Sovrum 
-      expose: true
 
     # Hallway
-    switch.hallway_sideboard_light:
-      name: Sideobard light
+    switch.magic_mirror:
+      name: Magic Mirror
       room: Hallway / Hallen
+      aliases:
+        - Mirror
       expose: true
 
-    camera.hallway_camera:
-      name: Camera
+    switch.hallway_sideboard_light:
+      name: Sideobard light
       room: Hallway / Hallen
       expose: true
       
@@ -162,7 +163,7 @@ google_assistant:
       expose: true
 
     # Kitchen 
-    sensor.indoors_temperature:
+    sensor.mqtt_kitchen_temperature:
       name: Indoors temperature
       room: Kitchen / Kök
       aliases:
@@ -170,7 +171,16 @@ google_assistant:
         - Temperature
       expose: true
 
-    # TODO Add outdoors temp
+    # Balcony
+    sensor.mqtt_balcony_temperature:
+      name: Outdoors temperature
+      room: Balcony
+      aliases:
+        - Balcony temperature
+        - Outside temperature
+        - Temperature outdoors
+        - Temperature
+      expose: true
 
     # Living room
     media_player.tv:
@@ -227,13 +237,9 @@ hacs:
 
 # HTTP Requests
 rest_command:
-  turn_on_screen_autoremote:
-    url: http://{{ device_ip }}:{{ device_port }}/?message=on
-  turn_on_screen_fully:
+  fully_kiosk_browser_turn_screen_on:
     url: http://{{ device_ip }}:{{ device_port }}/?cmd=screenOn&type=json&password={{ password }}
-  turn_off_screen_autoremote:
-    url: http://{{ device_ip }}:{{ device_port }}/?message=of
-  turn_off_screen_fully:
+  fully_kiosk_browser_turn_screen_off:
     url: http://{{ device_ip }}:{{ device_port }}/?cmd=screenOff&type=json&password={{ password }}
 
 # Generic camera
@@ -243,7 +249,7 @@ camera:
     name: Hallway camera
     port: 8080
 
-# Example configuration.yaml entry
+# Android IP Webcam
 android_ip_webcam:
   - host: !secret magic_mirror_ip
     sensors:
@@ -276,12 +282,8 @@ light:
       - light.kids_room_ceiling_1
       - light.kids_room_ceiling_2
       - light.kids_room_ceiling_3
- 
- 
-group: !include groups.yaml
-automation: !include automations.yaml
-script: !include scripts.yaml
 
+# Philips 55OLED803
 media_player:
   - platform: philips_android_tv
     name: TV
@@ -293,13 +295,19 @@ media_player:
 shell_command: 
   turn_off_computer: ssh {{ ssh_user }} net rpc shutdown -I {{ ip }} -U {{ user }} -t {{ timeout }}
 
+# Xiamoi Roborock S6
 vacuum:
 - platform: xiaomi_miio
   name: Robocop
   host: !secret roborock_ip
   token: !secret roborock_token
 
+# Includes 
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+
+
 # TODO 
 # Add more security:
-# Customize camera picture (16:9?)
 # Abort shutdown

@@ -2,30 +2,34 @@ bedroom:
   name: Bedroom
   entities:
     - light.bedroom_ceiling
-    - switch.bedroom_crib_side_light
+    - switch.bedroom_bedside_table_1
+    - switch.bedroom_bedside_table_2
     - switch.bedroom_sideboard_light
-    - switch.bedroom_window_side_light  
 
 hallway:
   name: Hallway
   entities:
     - switch.hallway_sideboard_light
     - media_player.hallway_speaker
-    - switch.hallway_motion_sensor
+    - binary_sensor.mqtt_hallway_motion
+    - switch.magic_mirror
 
 kids_room:
   name: Kids room 
   entities:
     - light.kids_room_ceiling
+    - switch.butterfly
+    - switch.reading_lamp
+    - switch.star
 
 kitchen:
   name: Kitchen
   entities:
-    - light.cabinet
     - light.kitchen_ceiling
+    - light.cabinet
     - media_player.kitchen_display
-    - sensor.indoors_humidity
-    - sensor.indoors_temperature
+    - sensor.kitchen_humidity
+    - sensor.kitchen_temperature
   
 living_room:
   name: Living room
@@ -43,7 +47,6 @@ office:
     - light.office_spotlights
     - light.office_top_corner
     - media_player.chromecast_audio
-
 
 all_lamps:
   entities:
