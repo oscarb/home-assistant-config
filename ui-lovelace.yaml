@@ -24,6 +24,13 @@ views:
 
     cards:
 
+      - title: Bathroom
+        type: entities      
+        entities:
+          - light.bathroom_ceiling
+          - binary_sensor.mqtt_bathroom_motion
+        show_header_toggle: true
+
       - title: Bedroom
         type: entities      
         entities:

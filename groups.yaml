@@ -6,6 +6,11 @@ bedroom:
     - switch.bedroom_bedside_table_2
     - switch.bedroom_sideboard_light
 
+bathroom:
+  name: Bathroom
+  entities:
+    - light.bathroom_ceiling
+
 hallway:
   name: Hallway
   entities:
@@ -46,6 +51,7 @@ office:
   entities:
     - light.office_spotlights
     - light.office_top_corner
+    - light.office_desk_lamp
     - media_player.chromecast_audio
 
 all_lamps:

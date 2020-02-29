@@ -277,11 +277,11 @@ android_ip_webcam:
 # Light groups 
 light:
   - platform: group
-    name: Kids Room Ceiling
+    name: Living Room Ceiling
     entities:
-      - light.kids_room_ceiling_1
-      - light.kids_room_ceiling_2
-      - light.kids_room_ceiling_3
+      - light.living_room_ceiling_1
+      - light.living_room_ceiling_2
+      - light.living_room_ceiling_3
 
 # Philips 55OLED803
 media_player:
