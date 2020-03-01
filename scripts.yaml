@@ -30,12 +30,12 @@ turn_tv_off:
 turn_everything_off:
   alias: Turn everything off
   sequence:
-    - service: homeassistant.turn_off
-      data:
-        entity_id:
-          - group.all_lights
-          - group.all_switches
-          - media_player.tv  
+    - service: light.turn_off
+      entity_id: all
+    - service: switch.turn_off
+      entity_id: all
+    - service: media_player.turn_off
+      entity_id: media_player.tv  
 
 cast_youtube:
   alias: Cast YouTube
