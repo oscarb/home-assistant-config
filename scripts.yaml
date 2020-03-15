@@ -30,12 +30,12 @@ turn_tv_off:
 turn_everything_off:
   alias: Turn everything off
   sequence:
-    - service: homeassistant.turn_off
-      data:
-        entity_id:
-          - group.all_lights
-          - group.all_switches
-          - media_player.tv  
+    - service: light.turn_off
+      entity_id: all
+    - service: switch.turn_off
+      entity_id: all
+    - service: media_player.turn_off
+      entity_id: media_player.tv  
 
 cast_youtube:
   alias: Cast YouTube
@@ -59,7 +59,7 @@ cast_magic_mirror_camera:
 turn_magic_mirror_screen_on:
   alias: Turn on Magic Mirror screen
   sequence:
-    - service: rest_command.turn_on_screen_fully
+    - service: rest_command.fully_kiosk_browser_turn_screen_on
       data:
         device_ip: !secret magic_mirror_ip
         device_port: !secret magic_mirror_fully_port
@@ -69,7 +69,7 @@ turn_magic_mirror_screen_on:
 turn_magic_mirror_screen_off:
   alias: Turn off Magic Mirror screen
   sequence:
-    - service: rest_command.turn_off_screen_fully
+    - service: rest_command.fully_kiosk_browser_turn_screen_off
       data:
         device_ip: !secret magic_mirror_ip
         device_port: !secret magic_mirror_fully_port

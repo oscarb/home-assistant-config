@@ -1,2 +1,6 @@
 light.kitchen_ceiling:
   icon: mdi:ceiling-light
+sensor.mqtt_balcony_temperature:
+  friendly_name: Balcony Temperature
+light.bathroom_ceiling:
+  friendly_name: Bathroom Ceiling

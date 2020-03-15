@@ -1,7 +1,7 @@
 - id: '1564525145782'
   alias: Hallway motion turns on tablet
   trigger:
-  - entity_id: binary_sensor.hallway_motion
+  - entity_id: binary_sensor.mqtt_hallway_motion
     from: 'off'
     platform: state
     to: 'on'
@@ -11,7 +11,7 @@
 - id: '1564525145783'
   alias: Hallway motion absence turns off tablet
   trigger:
-  - entity_id: binary_sensor.hallway_motion
+  - entity_id: binary_sensor.mqtt_hallway_motion
     from: 'on'
     platform: state
     to: 'off'
@@ -21,7 +21,7 @@
 - id: '1569245264705'
   alias: Bathroom motion turns on bathroom ceiling lamp dimmed
   trigger:
-  - entity_id: binary_sensor.bathroom_motion
+  - entity_id: binary_sensor.mqtt_bathroom_motion
     from: 'off'
     platform: state
     to: 'on'
@@ -37,10 +37,10 @@
 - id: '1569245264706'
   alias: Bathroom motion turns on bathroom ceiling lamp strong
   trigger:
-  - entity_id: binary_sensor.bathroom_motion
+  - entity_id: binary_sensor.mqtt_bathroom_motion
     from: 'off'
     platform: state
-    to: 'on'
+    to: 'on'  
   condition:
   - after: 08:00
     before: '22:00'
@@ -53,7 +53,7 @@
 - id: '1569245490089'
   alias: Bathroom motion sensor disabled turns off light
   trigger:
-  - entity_id: binary_sensor.bathroom_motion
+  - entity_id: binary_sensor.mqtt_bathroom_motion
     from: 'on'
     platform: state
     to: 'off'
