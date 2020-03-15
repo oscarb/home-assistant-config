@@ -5,10 +5,6 @@
     from: 'off'
     platform: state
     to: 'on'
-  - entity_id: switch.hallway_motion_sensor
-    from: 'off'
-    platform: state
-    to: 'on'
   condition: []
   action:
   - service: script.turn_magic_mirror_screen_on
@@ -19,10 +15,6 @@
     from: 'on'
     platform: state
     to: 'off'
-  - entity_id: switch.hallway_motion_sensor
-    from: 'on'
-    platform: state
-    to: 'off'    
   condition: []
   action:
   - service: script.turn_magic_mirror_screen_off
@@ -33,10 +25,6 @@
     from: 'off'
     platform: state
     to: 'on'
-  - entity_id: switch.bathroom_motion_sensor
-    from: 'off'
-    platform: state
-    to: 'on'    
   condition:
   - after: '22:00'
     before: 08:00
@@ -52,11 +40,7 @@
   - entity_id: binary_sensor.mqtt_bathroom_motion
     from: 'off'
     platform: state
-    to: 'on'
-  - entity_id: switch.bathroom_motion_sensor
-    from: 'off'
-    platform: state
-    to: 'on'     
+    to: 'on'  
   condition:
   - after: 08:00
     before: '22:00'
@@ -70,10 +54,6 @@
   alias: Bathroom motion sensor disabled turns off light
   trigger:
   - entity_id: binary_sensor.mqtt_bathroom_motion
-    from: 'on'
-    platform: state
-    to: 'off'
-  - entity_id: switch.bathroom_motion_sensor
     from: 'on'
     platform: state
     to: 'off'
