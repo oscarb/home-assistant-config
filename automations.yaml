@@ -40,7 +40,7 @@
   - entity_id: binary_sensor.mqtt_bathroom_motion
     from: 'off'
     platform: state
-    to: 'on'  
+    to: 'on'
   condition:
   - after: 08:00
     before: '22:00'
@@ -76,4 +76,29 @@
     service: script.vacuum_room
     data_template:
       room_name: '{{ trigger.event.data.room }}'
-      
+- id: '1585509334461'
+  alias: Turn on office lights when PC turns on
+  description: ''
+  trigger:
+  - entity_id: switch.computer_power
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - data: {}
+    entity_id: group.office
+    service: light.turn_on
+- id: '1585509334461'
+  alias: Turn off office lights when PC turns off
+  description: ''
+  trigger:
+  - entity_id: switch.computer_power
+    from: 'on'
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data: {}
+    entity_id: group.office
+    service: light.turn_off    

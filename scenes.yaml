@@ -1,0 +1,49 @@
+- id: '1584305652435'
+  name: Evening
+  entities:
+    light.cabinet:
+      brightness: 175
+      friendly_name: Driver vitrinskåp
+      state: 'on'
+      supported_features: 33
+    light.kitchen_ceiling:
+      brightness: 201
+      color_temp: 370
+      friendly_name: Kökslampa
+      icon: mdi:ceiling-light
+      max_mireds: 454
+      min_mireds: 250
+      state: 'on'
+      supported_features: 35
+    light.living_room_ceiling:
+      friendly_name: Living Room Ceiling
+      state: 'off'
+      supported_features: 33
+    light.living_room_window_ceiling:
+      brightness: 209
+      color_temp: 370
+      friendly_name: Fönsterlampa tak
+      max_mireds: 454
+      min_mireds: 250
+      state: 'on'
+      supported_features: 35
+    light.living_room_window_sill:
+      brightness: 143
+      color_temp: 370
+      friendly_name: Fönsterlampa bänk
+      max_mireds: 454
+      min_mireds: 250
+      state: 'on'
+      supported_features: 35
+    light.office_spotlights:
+      friendly_name: Spotlights
+      state: 'off'
+      supported_features: 33
+    light.office_top_corner:
+      brightness: 226
+      color_temp: 370
+      friendly_name: Hörnlampan
+      max_mireds: 454
+      min_mireds: 250
+      state: 'on'
+      supported_features: 35
