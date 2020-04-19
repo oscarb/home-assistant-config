@@ -137,6 +137,10 @@ flic_button_lights_hold:
 send_robocop_to_waste_bin:
   alias: Send Robocop to waste bin
   sequence:
+  - service: vacuum.stop
+    entity_id: vacuum.robocop  
+  - delay:
+      seconds: 1
   - service: vacuum.send_command  
     entity_id: vacuum.robocop
     data:
