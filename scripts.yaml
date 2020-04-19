@@ -133,11 +133,12 @@ flic_button_lights_hold:
   alias: Flic button Lights hold 
   sequence:
   - service: script.turn_everything_off
-  send_robocop_to_waste_bin:
+
+send_robocop_to_waste_bin:
   alias: Send Robocop to waste bin
   sequence:
-  - data:
+  - service: vacuum.send_command  
+    entity_id: vacuum.robocop
+    data:
       command: app_goto_target
       params: !secret waste_bin_location
-    entity_id: vacuum.robocop
-    service: vacuum.send_command
