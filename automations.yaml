@@ -122,7 +122,7 @@
           title: Go to waste bin
         - action: URI
           title: Manual
-          uri: https://shop.textalk.se/shop/ws4/50604/files/Manualer/roborock-s6-svensk-manual.pdf
+          uri: !secret roborock_manual
 - id: '1587296067183'
   alias: Send Robocop to waste bin on notification action
   description: ''
