@@ -302,6 +302,12 @@ vacuum:
   host: !secret roborock_ip
   token: !secret roborock_token
 
+# Variables
+variable:
+  apartment_size:
+    value: !secret apartment_size
+    restore: true
+
 # Includes 
 group: !include groups.yaml
 automation: !include automations.yaml

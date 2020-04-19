@@ -63,19 +63,19 @@
       entity_id: light.bathroom_ceiling
     service: light.turn_off
 - id: '1577999538328'
-  alias: Ckean room
+  alias: Clean room
   description: Start Roborock room cleaning triggered from Google Assistant (IFTTT)
   trigger:
   - event_data:
       action: vacuum
-    platform: event
     event_type: ifttt_webhook_received
+    platform: event
   condition: []
   action:
   - alias: ''
-    service: script.vacuum_room
     data_template:
       room_name: '{{ trigger.event.data.room }}'
+    service: script.vacuum_room
 - id: '1585509334461'
   alias: Turn on office lights when PC turns on
   description: ''
@@ -101,4 +101,41 @@
   action:
   - data: {}
     entity_id: group.office
-    service: light.turn_off    
+    service: light.turn_off
+- id: '1587292652712'
+  alias: Send notification when vacuum returns to base with empty dustbin action
+  trigger:
+  - entity_id: vacuum.robocop
+    platform: state
+    to: returning
+  action:
+  - service: notify.mobile_app_oneplus_6t
+    data_template:
+      title: "Robocop - Clean-up complete: {{ trigger.to_state.attributes.cleaned_area }} m², {{ trigger.to_state.attributes.cleaning_time }} min"
+      message: >
+        {{ '⚠️ Check dustbin and filter.' if (trigger.to_state.attributes.total_cleaned_area / states('variable.apartment_size')|int * 2)|int > (trigger.from_state.attributes.total_cleaned_area / states('variable.apartment_size')|int * 2)|int else
+            '⚠️ Check dustbin.' if  (trigger.to_state.attributes.total_cleaned_area / states('variable.apartment_size')|int)|int > (trigger.from_state.attributes.total_cleaned_area / states('variable.apartment_size')|int)|int }} Finished cleaning, returning to base.       
+      data:
+        actions:
+        - action: send_robocop_to_waste_bin
+          title: Go to waste bin
+        - action: URI
+          title: Manual
+          uri: https://shop.textalk.se/shop/ws4/50604/files/Manualer/roborock-s6-svensk-manual.pdf
+- id: '1587296067183'
+  alias: Send Robocop to waste bin on notification action
+  description: ''
+  trigger:
+  - event_data:
+      action: send_robocop_to_waste_bin
+    event_type: mobile_app_notification_action
+    platform: event
+  condition: []
+  action:
+  - data: {}
+    service: script.send_robocop_to_waste_bin
+
+
+
+
+
