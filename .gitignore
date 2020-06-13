@@ -11,7 +11,7 @@ __pycache__
 deps
 tts
 @eaDir
-custom_components/hacs
+custom_components/hacs/
 
 # Ignore files
 .uuid
