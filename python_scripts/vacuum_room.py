@@ -9,13 +9,8 @@ if "living room" in roomString:
     rooms.append(29)
 if "kitchen" in roomString:
     rooms.append(19)
-if "kitchen" in roomString:
+if any(room in roomString for room in ["nursery", "kids room"]]):
     rooms.append(19)
-if "kitchen" in roomString:
-    rooms.append(19)
-if "kitchen" in roomString:
-    rooms.append(19)
-
 
 rooms = []
 roomString = data.get("room")
