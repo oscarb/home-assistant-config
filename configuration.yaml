@@ -28,6 +28,9 @@ config:
 # Enables the mobile companion app
 mobile_app:
 
+# Enable python scripts
+python_script:
+
 # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
 http:
 
