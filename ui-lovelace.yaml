@@ -45,7 +45,7 @@ views:
         entities:
           - switch.hallway_sideboard_light
           - media_player.hallway_speaker
-          - binary_sensor.mqtt_hallway_motion
+          - binary_sensor.hallway_motion
           - switch.magic_mirror
           - camera.ip_webcam
         show_header_toggle: true
