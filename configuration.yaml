@@ -87,6 +87,14 @@ binary_sensor:
     payload_off: "screenOff"
     json_attributes_topic: fully/deviceInfo/#
 
+  - platform: template
+    sensors: 
+      hallway_motion:
+        friendly_name: "Hallway motion sensor"
+        value_template: >-
+          {{ is_state('binary_sensor.mqtt_hallway_motion', 'on')
+             or (is_state('binary_sensor.mqtt_hallway_motion', 'unavailable') and is_state('switch.hallway_motion_sensor', 'on')) }}    
+
 # Switches
 switch:
   - platform: wake_on_lan
@@ -230,11 +238,7 @@ media_extractor:
 # Tibber
 tibber:
   access_token: !secret tibber_access_token
-
-# HACS
-hacs:
-  token: !secret github_hacs_token
-
+  
 # HTTP Requests
 rest_command:
   fully_kiosk_browser_turn_screen_on:
