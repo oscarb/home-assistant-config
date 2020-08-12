@@ -17,6 +17,7 @@
     to: 'off'
   condition: []
   action:
+  - delay: 00:00:05
   - service: script.turn_magic_mirror_screen_off
 - id: '1569245264705'
   alias: Bathroom motion turns on bathroom ceiling lamp dimmed

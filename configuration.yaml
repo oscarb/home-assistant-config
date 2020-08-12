@@ -12,6 +12,9 @@ homeassistant:
   time_zone: !secret home_timezone
   # Customization file
   customize: !include customize.yaml
+  # URLs
+  external_url: !secret external_url
+  internal_url: !secret internal_url
 
 # Show links to resources in log and frontend
 # introduction: false
@@ -27,7 +30,6 @@ mobile_app:
 
 # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
 http:
-   base_url: !secret http_base_url
 
 # Checks for available updates
 # Note: This component will send some information about your system to
@@ -40,8 +42,6 @@ updater:
 
 # Discover some devices automatically
 discovery:
-  ignore:
-    - igd
 
 # Allows you to issue voice commands from the frontend in enabled browsers
 conversation:
@@ -86,6 +86,14 @@ binary_sensor:
     payload_on: "screenOn"
     payload_off: "screenOff"
     json_attributes_topic: fully/deviceInfo/#
+
+  - platform: template
+    sensors: 
+      hallway_motion:
+        friendly_name: "Hallway motion sensor"
+        value_template: >-
+          {{ is_state('binary_sensor.mqtt_hallway_motion', 'on')
+             or (is_state('binary_sensor.mqtt_hallway_motion', 'unavailable') and is_state('switch.hallway_motion_sensor', 'on')) }}    
 
 # Switches
 switch:
@@ -230,11 +238,7 @@ media_extractor:
 # Tibber
 tibber:
   access_token: !secret tibber_access_token
-
-# HACS
-hacs:
-  token: !secret github_hacs_token
-
+  
 # HTTP Requests
 rest_command:
   fully_kiosk_browser_turn_screen_on:
