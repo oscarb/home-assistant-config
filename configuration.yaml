@@ -238,11 +238,7 @@ media_extractor:
 # Tibber
 tibber:
   access_token: !secret tibber_access_token
-
-# HACS
-# hacs:
-#  token: !secret github_hacs_token
-
+  
 # HTTP Requests
 rest_command:
   fully_kiosk_browser_turn_screen_on:
