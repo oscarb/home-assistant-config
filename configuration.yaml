@@ -311,6 +311,9 @@ variable:
   apartment_size:
     value: !secret apartment_size
     restore: true
+  spotify_user_name: 
+    value: !secret spotify_user_name
+    restore: true
 
 # Includes 
 group: !include groups.yaml
