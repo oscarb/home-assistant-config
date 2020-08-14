@@ -77,6 +77,36 @@
     data_template:
       room_name: '{{ trigger.event.data.room }}'
     service: script.vacuum_room
+- id: '1577999538329'
+  alias: Send notification when Spotify playlist is updated
+  description: Sends a rich notification when a track has been added to a Spotify playlist, as detected by IFTTT
+  trigger:
+  - event_data:
+      action: sharing
+    event_type: ifttt_webhook_received
+    platform: event
+  condition:
+    condition: template
+    value_template: >
+      {{ trigger.event.data["addedBy"] != states('variable.spotify_user_name') }}
+  action:
+  - service: notify.mobile_app_oneplus_6t
+    data_template:
+      title: "{{ trigger.event.data['playlistName'] }}"
+      message: >
+        🎵 {{ trigger.event.data['artistName'] ~ " - " ~ trigger.event.data['trackName'] }}    
+      data:
+        group: "{{ trigger.event.data['addedBy'] }}"
+        color: '#1DB954'
+        sticky: 'false'
+        clickAction: !secret spotify_shared_playlist
+        channel: Playlist updates
+        icon_url: !secret spotify_icon
+        image: "{{ trigger.event.data['albumCoverUrl'] }}"
+        actions:
+        - action: "URI" 
+          title: "Play"
+          uri: "{{ trigger.event.data['trackUrl'] }}"
 - id: '1585509334461'
   alias: Turn on office lights when PC turns on
   description: ''
@@ -118,6 +148,7 @@
         {{ '⚠️ Check dustbin and filter.' if (trigger.to_state.attributes.total_cleaned_area / states('variable.apartment_size')|int * 2)|int > (trigger.from_state.attributes.total_cleaned_area / states('variable.apartment_size')|int * 2)|int else
             '⚠️ Check dustbin.' if  (trigger.to_state.attributes.total_cleaned_area / states('variable.apartment_size')|int)|int > (trigger.from_state.attributes.total_cleaned_area / states('variable.apartment_size')|int)|int }} Finished cleaning, returning to base.       
       data:
+        channel: Vacuum
         actions:
         - action: send_robocop_to_waste_bin
           title: Go to waste bin
