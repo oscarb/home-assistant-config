@@ -2,7 +2,6 @@ title: !secret home_name
 views:
 
   - badges:
-      - sensor.yr_symbol
       - sensor.hacs
       - sensor.mqtt_balcony_temperature
       - sensor.fjarrkontroll_sovrum
