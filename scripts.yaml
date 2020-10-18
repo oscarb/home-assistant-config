@@ -92,28 +92,6 @@ turn_computer_off:
         ip: !secret computer_ip
         timeout: 10
 
-vacuum_room:
-  alias: Vacuum room
-  description: Start Roborock S6 room cleaning for a specific room
-  fields:
-    room_name:
-      description: Name of room to clean
-      example: kitchen
-  sequence:
-    - service: vacuum.send_command
-      data:
-        entity_id: vacuum.robocop
-        command: app_segment_clean
-      data_template: 
-        params: >-
-          {% if 'kitchen' in room_name %}
-            [19]
-          {% elif 'living room' in room_name %}
-            [20]
-          {% else %}
-            [21]
-          {% endif %}
-
 flic_button_lights_click:
   alias: Flic button Lights click
   sequence:

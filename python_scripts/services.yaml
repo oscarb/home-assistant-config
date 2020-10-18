@@ -1,0 +1,10 @@
+# services.yaml
+vacuum_room:
+  description: Vacuum specific room(s)
+  fields:
+    entity_id:
+      description: The vacuum to use for cleaning 
+      example: vacuum.roborock
+    area:
+      description: A string of rooms to be selected for cleaning
+      example: "kitchen and the hallway"
