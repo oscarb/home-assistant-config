@@ -19,6 +19,9 @@ homeassistant:
 # Show links to resources in log and frontend
 # introduction: false
 
+logger:
+  default: info
+  
 # Enables the frontend
 frontend:
 

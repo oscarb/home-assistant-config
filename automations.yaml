@@ -74,9 +74,10 @@
   condition: []
   action:
   - alias: ''
+    entity_id: vacuum.robocop
     data_template:
-      room_name: '{{ trigger.event.data.room }}'
-    service: script.vacuum_room
+      area: '{{ trigger.event.data.room }}'
+    service: python_script.vacuum_room
 - id: '1577999538329'
   alias: Send notification when Spotify playlist is updated
   description: Sends a rich notification when a track has been added to a Spotify playlist, as detected by IFTTT
@@ -120,7 +121,7 @@
   - data: {}
     entity_id: group.office
     service: light.turn_on
-- id: '1585509334461'
+- id: '1585509334462'
   alias: Turn off office lights when PC turns off
   description: ''
   trigger:
