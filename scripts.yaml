@@ -37,6 +37,20 @@ turn_everything_off:
     - service: switch.turn_off
       entity_id: all
 
+good_morning_home:
+  alias: Turn lights on in the morning
+  sequence:
+    - service: light.turn_on
+      entity_id:
+        - light.living_room_christmas_star
+        - light.kitchen_ceiling
+    - service: switch.turn_on
+      entity_id: 
+        - switch.advent_candlestick
+        - switch.christmas_tree
+        - switch.balcony_string_lights
+
+
 cast_youtube:
   alias: Cast YouTube
   sequence:

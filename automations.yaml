@@ -1,3 +1,72 @@
+# Turn off all lights 01 / 02 (when not home)
+
+- id: '1564525145700'
+  alias: Turn christmas lights on when dark outside
+  trigger:
+    entity_id: sun.sun
+    attribute: elevation
+    platform: numeric_state
+    below: -3.0
+  condition: []
+  action:
+  - service: homeassistant.turn_on
+    data:
+      entity_id: group.christmas_lights
+- id: '1564525145711'
+  alias: Turn christmas lights off when bright outside
+  trigger:
+  - platform: sun
+    entity_id: sun.sun
+    event: sunrise
+  condition: []
+  action:
+  - service: homeassistant.turn_off
+    data:
+      entity_id: group.christmas_lights
+- id: '1608504370538'
+  alias: Turn off Christmas lights at night
+  trigger:
+  - platform: time
+    at: 00:30
+  condition: []
+  action:
+  - service: homeassistant.turn_off
+    data:
+      entity_id: group.christmas_lights
+- id: '1564525145701'
+  alias: Turn office lights on when computer is active
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.macbook_pro
+    to: 'on'
+  condition: 
+    condition: state
+    entity_id: binary_sensor.macbook_pro_at_desk
+    state: 'on'
+  action:
+  - service: light.turn_on
+    data:
+      entity_id: group.office
+- id: '1564525145702'
+  alias: Turn office lights off when computer is inactive
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.macbook_pro
+    to: 'off'
+  condition: 
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.macbook_pro_at_desk
+        state: 'on'
+      - condition: time
+        after: '15:30:00'
+  action:
+  - service: light.turn_off
+    data:
+      entity_id: 
+        - office.office_spotlights
+        - office.office_desk_lamp
 - id: '1564525145782'
   alias: Hallway motion turns on tablet
   trigger:

@@ -51,13 +51,63 @@ conversation:
 
 # Enables support for tracking state changes over time
 history:
+  exclude:
+    domains:
+      - automation
+      - updater
+      - camera
+      - device_tracker
+      - group
+      - input_text
+      - persistent_notification
+      - script
+      - sensor
+      - variable
+    entities:
+      - binary_sensor.updater
+    entity_globs:
+      - binary_sensor.macbook_pro_*
+      - binary_sensor.mqtt_*
+      - switch.*_sensor
+      - switch.ip_webcam
+      - sensor.mqtt_*
+      - sensor.*dimmer*
+
+  include:
+    domains:
+      - light
+      - binary_sensor
+      - switch
+      - sensor
+      - sun
+      - switch
+      - vacuum
+    entities:
+      - sensor.ip_webcam_motion
+      - sensor.oneplus_6t_geocoded_location
+      - media_player.tv
+      - device_tracker.oneplus_a6013
+      - binary_sensor.macbook_pro 
+      - binary_sensor.macbook_pro_at_desk
 
 # View all events in a logbook
 logbook:
+  exclude:
+    domains:
+      - updater
+      - media_player
 
 # Purge database regularly
 recorder:
   purge_keep_days: 7
+  exclude:
+    domains:
+      - automation
+      - updater
+      - camera
+      - group
+      - persistent_notification
+      - script
 
 # Enables a map showing the location of tracked devices
 map:
@@ -97,6 +147,23 @@ binary_sensor:
         value_template: >-
           {{ is_state('binary_sensor.mqtt_hallway_motion', 'on')
              or (is_state('binary_sensor.mqtt_hallway_motion', 'unavailable') and is_state('switch.hallway_motion_sensor', 'on')) }}    
+
+  - platform: template
+    sensors: 
+      macbook_pro:
+        friendly_name: "MacBook Pro active"
+        value_template: >-
+          {{ is_state('binary_sensor.macbook_pro_active', 'on')
+             or is_state('binary_sensor.macbook_pro_active_work', 'on') 
+          }}
+
+  - platform: template
+    sensors: 
+      macbook_pro_at_desk:
+        friendly_name: "MacBook Pro at desk"
+        value_template: >-
+          {{ not is_state('sensor.macbook_pro_internal_battery_state', 'Not Charging') }}                  
+
 
 # Switches
 switch:
