@@ -98,7 +98,10 @@ turn_computer_on:
 
 turn_computer_off:
   alias: Turn off computer
-  sequence: 
+  sequence:
+    - condition: state
+      entity_id: switch.computer_power
+      state: "on" 
     - service: shell_command.turn_off_computer
       data:
         ssh_user: !secret shutdown_ssh_user
