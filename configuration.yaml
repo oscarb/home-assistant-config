@@ -22,6 +22,9 @@ homeassistant:
 # Enables the frontend
 frontend:
 
+# Handles redirects from the My Home Assistant service.
+my:
+
 # Enables configuration UI
 config:
 
@@ -33,6 +36,9 @@ python_script:
 
 # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
 http:
+  use_x_forwarded_for: true
+  trusted_proxies: 
+    - !secret reverse_proxy_server
 
 # Checks for available updates
 # Note: This component will send some information about your system to
@@ -351,15 +357,6 @@ light:
       - light.living_room_ceiling_1
       - light.living_room_ceiling_2
       - light.living_room_ceiling_3
-
-# Philips 55OLED803
-media_player:
-  - platform: philips_android_tv
-    name: TV
-    host: !secret philips_host
-    mac: !secret philips_password
-    username: !secret philips_username
-    password: !secret philips_password
 
 shell_command: 
   turn_off_computer: ssh {{ ssh_user }} net rpc shutdown -I {{ ip }} -U {{ user }} -t {{ timeout }}

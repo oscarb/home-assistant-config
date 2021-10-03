@@ -19,6 +19,7 @@ custom_components/hacs/
 *.db
 *.db-*
 *.log
+*.log.*
 tellduslive.conf
 
 # Ensure these YAML files are ignored, otherwise your secret data/credentials will leak.
