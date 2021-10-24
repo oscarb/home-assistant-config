@@ -234,3 +234,14 @@
   action:
   - data: {}
     service: script.send_robocop_to_waste_bin
+- id: '1587296067185'
+  alias: "TV volume control"
+  trigger:
+    platform: state
+    entity_id: input_number.tv_volume
+  action:
+    - service: media_player.volume_set
+      target:
+        entity_id: media_player.tv
+      data:
+        volume_level: '{{ trigger.to_state.state | float / 60  }}'
