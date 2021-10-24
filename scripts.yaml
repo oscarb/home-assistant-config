@@ -27,6 +27,42 @@ turn_tv_off:
     data: 
       entity_id: media_player.tv
 
+turn_tv_volume_up:
+  alias: Turn TV volume up 
+  sequence:
+  - service: media_player.volume_up
+    data: 
+      entity_id: media_player.tv
+
+turn_tv_volume_down:
+  alias: Turn TV volume down
+  sequence:
+  - service: media_player.volume_down
+    data: 
+      entity_id: media_player.tv
+
+toggle_tv_mute:
+  alias: Toggle TV mute 
+  sequence:
+  - service: media_player.volume_mute
+    data: 
+      entity_id: media_player.tv
+      is_volume_muted: "{{ not state_attr('media_player.tv', 'is_volume_muted') }}"
+
+play_pause_tv:
+  alias: Play/pause TV
+  sequence:
+  - service: media_player.media_play_pause
+    data: 
+      entity_id: media_player.tv
+
+stop_tv_media:
+  alias: Stop TV media
+  sequence:
+  - service: media_player.media_stop
+    data: 
+      entity_id: media_player.tv
+
 turn_everything_off:
   alias: Turn everything off
   sequence:
