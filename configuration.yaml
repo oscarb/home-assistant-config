@@ -330,13 +330,6 @@ rest_command:
   fully_kiosk_browser_turn_screen_off:
     url: http://{{ device_ip }}:{{ device_port }}/?cmd=screenOff&type=json&password={{ password }}
 
-# Generic camera
-camera:
-  - platform: onvif
-    host: !secret magic_mirror_ip
-    name: Hallway camera
-    port: 8080
-
 # Android IP Webcam
 android_ip_webcam:
   - host: !secret magic_mirror_ip
