@@ -9,7 +9,7 @@
   action:
   - service: homeassistant.turn_on
     data:
-      entity_id: switch.balcony_string_lights
+      entity_id: group.christmas_lights
 - id: '1564525145711'
   alias: Turn christmas lights off when bright outside
   trigger:
@@ -19,7 +19,7 @@
   action:
   - service: homeassistant.turn_off
     data:
-      entity_id: switch.balcony_string_lights
+      entity_id: group.christmas_lights
 - id: '1608504370538'
   alias: Turn off Christmas lights at night
   trigger:
@@ -29,7 +29,7 @@
   action:
   - service: homeassistant.turn_off
     data:
-      entity_id: switch.balcony_string_lights
+      entity_id: group.christmas_lights
 - id: '1564525145701'
   alias: Turn office lights on when computer is active
   trigger:
