@@ -173,7 +173,7 @@ binary_sensor:
       macbook_pro_at_desk:
         friendly_name: "MacBook Pro at desk"
         value_template: >-
-          {{ not is_state('sensor.macbook_pro_internal_battery_state', 'Not Charging') }}                  
+          {{ not is_state('sensor.macbook_pro_internal_battery_state', 'Not Charging') }}
 
 
 # Switches
@@ -318,7 +318,14 @@ system_health:
 
 # For casting YouTube videos
 media_extractor:
-  
+
+# Notify Group
+notify: 
+  - name: mobile_app
+    platform: group
+    services: 
+      - service: !secret mobile_device_name
+
 # HTTP Requests
 rest_command:
   fully_kiosk_browser_turn_screen_on:

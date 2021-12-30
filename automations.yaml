@@ -166,7 +166,7 @@
     value_template: >
       {{ trigger.event.data["addedBy"] != states('variable.spotify_user_name') }}
   action:
-  - service: notify.mobile_app_oneplus_6t
+  - service: notify.mobile_app
     data_template:
       title: "{{ trigger.event.data['playlistName'] }}"
       message: >
@@ -217,7 +217,7 @@
     from: cleaning
     to: returning
   action:
-  - service: notify.mobile_app_oneplus_6t
+  - service: notify.mobile_app
     data_template:
       title: "Robocop - Clean-up complete: {{ trigger.to_state.attributes.cleaned_area }} m², {{ trigger.to_state.attributes.cleaning_time }} min"
       message: >
