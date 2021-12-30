@@ -5,7 +5,10 @@
     attribute: elevation
     platform: numeric_state
     below: -3.0
-  condition: []
+  condition: 
+    - condition: state
+      entity_id: input_boolean.is_christmas_time
+      state: "on"
   action:
   - service: homeassistant.turn_on
     data:
@@ -15,7 +18,10 @@
   trigger:
     platform: sun
     event: sunrise
-  condition: []
+  condition:
+    - condition: state
+      entity_id: input_boolean.is_christmas_time
+      state: "on"
   action:
   - service: homeassistant.turn_off
     data:
@@ -25,7 +31,10 @@
   trigger:
     platform: time
     at: 00:30
-  condition: []
+  condition: 
+    - condition: state
+      entity_id: input_boolean.is_christmas_time
+      state: "on"
   action:
   - service: homeassistant.turn_off
     data:

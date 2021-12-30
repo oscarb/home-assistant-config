@@ -381,6 +381,12 @@ input_number:
     max: 16
     step: 1
 
+# Input booleans
+input_boolean:
+  is_christmas_time:
+    name: Is Christmas time
+    icon: mdi:string-lights
+
 # Includes 
 group: !include groups.yaml
 automation: !include automations.yaml
