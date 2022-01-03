@@ -368,7 +368,7 @@ light:
       - light.living_room_ceiling_3
 
 shell_command: 
-  turn_off_computer: ssh {{ ssh_user }} net rpc shutdown -I {{ ip }} -U {{ user }} -t {{ timeout }}
+  turn_off_computer: ssh {{ ssh_user }} net rpc shutdown -I {{ ip }} -U {{ user }} -t {{ timeout }}
 
 # Variables
 variable:
