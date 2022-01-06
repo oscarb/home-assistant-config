@@ -210,21 +210,34 @@
     entity_id: group.office
     service: light.turn_off
 - id: '1587292652712'
-  alias: Send notification when vacuum returns to base with empty dustbin action
+  alias: Send notification when vacuum returns to base with action to go to waste bin
   trigger:
-    entity_id: vacuum.robocop
+    entity_id: sensor.robocop_total_clean_area
     platform: state
-    from: cleaning
-    to: returning
   action:
   - service: notify.mobile_app
     data_template:
-      title: "Robocop - Clean-up complete: {{ trigger.to_state.attributes.cleaned_area }} m², {{ trigger.to_state.attributes.cleaning_time }} min"
+      title: >
+        {% set clean_area = states('sensor.robocop_last_clean_area') | round(0, 0) ~ ' ' ~ state_attr('sensor.robocop_last_clean_area', 'unit_of_measurement') %}
+        {% set clean_duration = int(states('sensor.robocop_last_clean_duration')) // 60 ~ ' min' %}
+        Robocop - Clean-up complete: {{ clean_area }}, {{ clean_duration }}
       message: >
-        {{ '⚠️ Check dustbin and filter.' if (trigger.to_state.attributes.total_cleaned_area / states('variable.apartment_size')|int * 2)|int > (trigger.from_state.attributes.total_cleaned_area / states('variable.apartment_size')|int * 2)|int else
-            '⚠️ Check dustbin.' if  (trigger.to_state.attributes.total_cleaned_area / states('variable.apartment_size')|int)|int > (trigger.from_state.attributes.total_cleaned_area / states('variable.apartment_size')|int)|int }} Finished cleaning, returning to base.       
+        {% set apartment_size = states('variable.apartment_size') | int %}
+        {% set clean_area_old = trigger.from_state.state | int %} 
+        {% set clean_area_new = trigger.to_state.state | int %}
+        {% if clean_area_new // (apartment_size*2) > clean_area_old // (apartment_size*2) -%}
+          ⚠️ Empty dustbin and clean filter.
+        {%- elif clean_area_new // apartment_size > clean_area_old // apartment_size -%}
+          ⚠️ Empty dustbin.
+        {%- endif %}
+        {%- if is_state('binary_sensor.robocop_mop_attached', 'on') %}
+          ⚠️ Remove water tank. 
+        {%- endif %}
+        Finished cleaning, returning to base.
       data:
         channel: Vacuum
+        clickAction: "app://com.xiaomi.smarthome"
+        notification_icon: "mdi:robot-vacuum"
         actions:
         - action: send_robocop_to_waste_bin
           title: Go to waste bin
