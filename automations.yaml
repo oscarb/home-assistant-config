@@ -210,19 +210,17 @@
     entity_id: group.office
     service: light.turn_off
 - id: '1587292652712'
-  alias: Send notification when vacuum returns to base with empty dustbin action
+  alias: Send notification when vacuum returns to base with action to empty dustbin
   trigger:
-    entity_id: vacuum.robocop
+    entity_id: sensor.robocop_total_clean_area
     platform: state
-    from: cleaning
-    to: returning
   action:
   - service: notify.mobile_app
     data_template:
-      title: "Robocop - Clean-up complete: {{ trigger.to_state.attributes.cleaned_area }} m², {{ trigger.to_state.attributes.cleaning_time }} min"
+      title: "Robocop - Clean-up complete: {{ states('sensor.robocop_last_clean_area') | round (1, 0) ~ ' ' ~ state_attr('sensor.robocop_last_clean_area', 'unit_of_measurement') }}, {{ int(states('sensor.robocop_last_clean_duration')) // 60 }} min"
       message: >
-        {{ '⚠️ Check dustbin and filter.' if (trigger.to_state.attributes.total_cleaned_area / states('variable.apartment_size')|int * 2)|int > (trigger.from_state.attributes.total_cleaned_area / states('variable.apartment_size')|int * 2)|int else
-            '⚠️ Check dustbin.' if  (trigger.to_state.attributes.total_cleaned_area / states('variable.apartment_size')|int)|int > (trigger.from_state.attributes.total_cleaned_area / states('variable.apartment_size')|int)|int }} Finished cleaning, returning to base.       
+        {{ '⚠️ Empty dustbin and clean filter.' if (int(trigger.to_state.state) / states('variable.apartment_size') | int * 2) | int > (int(trigger.from_state.state) / states('variable.apartment_size') | int * 2) | int else
+            '⚠️ Empty dustbin.' if (int(trigger.to_state.state) / states('variable.apartment_size')|int) | int > (int(trigger.from_state.state) / states('variable.apartment_size')|int)|int }} Finished cleaning, returning to base.
       data:
         channel: Vacuum
         actions:
