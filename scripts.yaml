@@ -13,12 +13,12 @@ turn_tv_on:
   sequence:
   - service: media_player.turn_on
     data: 
-      entity_id: media_player.chromecast_ultra
+      entity_id: media_player.google_tv
   - delay:
       seconds: 2
   - service: media_player.turn_off
     data: 
-      entity_id: media_player.chromecast_ultra  
+      entity_id: media_player.google_tv  
 
 turn_tv_off:
   alias: Turn TV off 
@@ -91,7 +91,7 @@ cast_youtube:
   alias: Cast YouTube
   sequence:
     - service: media_extractor.play_media
-      entity_id: media_player.chromecast_ultra
+      entity_id: media_player.google_tv
       data:
         media_content_id: "https://www.youtube.com/watch?v=ROkXM3csNWY"
         media_content_type: video/youtube
