@@ -214,6 +214,14 @@
   trigger:
     entity_id: sensor.robocop_total_clean_area
     platform: state
+  condition: 
+    - condition: template
+      value_template: >
+        {{ trigger.from_state is not none and 
+           trigger.to_state is not none and
+           trigger.from_state.state not in ["unavailable"] and 
+           trigger.to_state.state | float > trigger.from_state.state | float 
+        }}
   action:
   - service: notify.mobile_app
     data_template:
@@ -230,7 +238,7 @@
         {%- elif clean_area_new // apartment_size > clean_area_old // apartment_size -%}
           ⚠️ Empty dustbin.
         {%- endif %}
-        {%- if is_state('binary_sensor.robocop_mop_attached', 'on') %}
+        {%- if is_state('binary_sensor.robocop_mop_attached', 'on') -%}
           ⚠️ Remove water tank. 
         {%- endif %}
         Finished cleaning, returning to base.
