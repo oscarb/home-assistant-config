@@ -4,7 +4,7 @@ name: Add tickets automatically to projects
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [opened]
 
 jobs:
   track_tickets:
@@ -33,9 +33,8 @@ jobs:
             }' -f user=$USER -F number=$PROJECT_NUMBER > project_data.json
 
           echo 'PROJECT_ID='$(jq '.data.user.projectNext.id' project_data.json) >> $GITHUB_ENV
-          echo 'DATE_FIELD_ID='$(jq '.data.user.projectNext.fields.nodes[] | select(.name== "Date posted") | .id' project_data.json) >> $GITHUB_ENV
           echo 'STATUS_FIELD_ID='$(jq '.data.user.projectNext.fields.nodes[] | select(.name== "Status") | .id' project_data.json) >> $GITHUB_ENV
-          echo 'TODO_OPTION_ID='$(jq '.data.user.projectNext.fields.nodes[] | select(.name== "Status") |.settings | fromjson.options[] | select(.name=="Todo") |.id' project_data.json) >> $GITHUB_ENV
+          echo 'TODO_OPTION_ID='$(jq '.data.user.projectNext.fields.nodes[] | select(.name== "Status") |.settings | fromjson.options[] | select(.name=="Backlog") |.id' project_data.json) >> $GITHUB_ENV
 
       - name: Add ticket to project
         env:
@@ -66,8 +65,6 @@ jobs:
               $item: ID!
               $status_field: ID!
               $status_value: String!
-              $date_field: ID!
-              $date_value: String!
             ) {
               set_status: updateProjectNextItemField(input: {
                 projectId: $project
@@ -78,15 +75,5 @@ jobs:
                 projectNextItem {
                   id
                   }
-              }
-              set_date_posted: updateProjectNextItemField(input: {
-                projectId: $project
-                itemId: $item
-                fieldId: $date_field
-                value: $date_value
-              }) {
-                projectNextItem {
-                  id
-                }
               }
             }' -f project=$PROJECT_ID -f item=$ITEM_ID -f status_field=$STATUS_FIELD_ID -f status_value=${{ env.TODO_OPTION_ID }} -f date_field=$DATE_FIELD_ID -f date_value=$DATE --silent
