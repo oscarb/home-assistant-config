@@ -112,11 +112,6 @@ map:
 # Track the sun
 sun:
 
-# Spotify 
-spotify:
-  client_id: !secret spotify_client_id
-  client_secret:  !secret spotify_client_secret
-
 # Global variables for templates
 input_text:
   video_url:
