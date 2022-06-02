@@ -123,15 +123,15 @@ input_text:
     name: Video URL
     initial: !secret magic_mirror_video
 
-# Binary sensors
-binary_sensor:
-  - platform: mqtt
-    name: Magic Mirror Screen
-    state_topic: fully/event/#
-    value_template: "{{ value_json.event }}"
-    payload_on: "screenOn"
-    payload_off: "screenOff"
-    json_attributes_topic: fully/deviceInfo/#
+# MQTT Binary sensors
+mqtt:
+  sensor:
+   - name: Magic Mirror Screen
+     state_topic: fully/event/#
+     value_template: "{{ value_json.event }}"
+     payload_on: "screenOn"
+     payload_off: "screenOff"
+     json_attributes_topic: fully/deviceInfo/#
 
   - platform: template
     sensors: 
