@@ -120,7 +120,7 @@ input_text:
 
 # MQTT Binary sensors
 mqtt:
-  sensor:
+  binary_sensor:
    - name: Magic Mirror Screen
      state_topic: fully/event/#
      value_template: "{{ value_json.event }}"
