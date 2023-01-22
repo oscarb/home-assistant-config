@@ -275,3 +275,12 @@
         entity_id: media_player.tv
       data:
         volume_level: '{{ trigger.to_state.state | float / 60  }}'
+- id: '1587296067187'
+  alias: "TV device trigger (turn on)"
+  trigger:
+    platform: device
+    device_id: 3db85e45506d5575e3ab481d650bf776
+    domain: philips_js
+    type: turn_on
+  action:
+    - service: script.turn_tv_on

@@ -21,6 +21,8 @@ homeassistant:
   
 # Enables the frontend
 frontend:
+  extra_module_url:
+    - /local/plugins/card-mod.js?v=3.1.1
 
 # Handles redirects from the My Home Assistant service.
 my:
@@ -39,15 +41,6 @@ http:
   use_x_forwarded_for: true
   trusted_proxies: 
     - !secret reverse_proxy_server
-
-# Checks for available updates
-# Note: This component will send some information about your system to
-# the developers to assist with development of Home Assistant.
-# For more information, please see:
-# https://home-assistant.io/blog/2016/10/25/explaining-the-updater/
-updater:
-  # Optional, allows Home Assistant developers to focus on popular components.
-  # include_used_components: true
 
 # Discover some devices automatically
 discovery:
@@ -121,60 +114,50 @@ map:
 # Track the sun
 sun:
 
-# Spotify 
-spotify:
-  client_id: !secret spotify_client_id
-  client_secret:  !secret spotify_client_secret
-
-# MQTT
-mqtt:
-  broker: !secret mqtt_broker_ip
-  port: !secret mqtt_broker_port
-  username: !secret mqtt_broker_username
-  password: !secret mqtt_broker_password
-  discovery: true
-  discovery_prefix: homeassistant
-
 # Global variables for templates
 input_text:
   video_url:
     name: Video URL
     initial: !secret magic_mirror_video
 
-# Binary sensors
-binary_sensor:
-  - platform: mqtt
-    name: Magic Mirror Screen
-    state_topic: fully/event/#
-    value_template: "{{ value_json.event }}"
-    payload_on: "screenOn"
-    payload_off: "screenOff"
-    json_attributes_topic: fully/deviceInfo/#
+# MQTT Binary sensors
+mqtt:
+  binary_sensor:
+   - name: Magic Mirror Screen
+     state_topic: fully/event/#
+     value_template: "{{ value_json.event }}"
+     payload_on: "screenOn"
+     payload_off: "screenOff"
+     json_attributes_topic: fully/deviceInfo/#
 
-  - platform: template
-    sensors: 
-      hallway_motion:
-        friendly_name: "Hallway motion sensor"
-        value_template: >-
-          {{ is_state('binary_sensor.mqtt_hallway_motion', 'on')
-             or (is_state('binary_sensor.mqtt_hallway_motion', 'unavailable') and is_state('switch.hallway_motion_sensor', 'on')) }}    
+# Template
+template:
+  - binary_sensor: 
+    - name: IKEA lights
+      state: > 
+        {{ states.light
+        | selectattr('object_id', '!=', 'foo')
+        | selectattr('state', '!=', 'unavailable')
+        | list
+        | length
+        }}
 
-  - platform: template
-    sensors: 
-      macbook_pro:
-        friendly_name: "MacBook Pro active"
-        value_template: >-
+    - name: Hallway motion
+      device_class: motion
+      state: >
+        {{ is_state('binary_sensor.mqtt_hallway_motion', 'on')
+          or (is_state('binary_sensor.mqtt_hallway_motion', 'unavailable') and is_state('switch.hallway_motion_sensor', 'on')) }}
+
+    - name: MacBook Pro
+      state: >
           {{ is_state('binary_sensor.macbook_pro_active', 'on')
              or is_state('binary_sensor.macbook_pro_active_work', 'on') 
           }}
 
-  - platform: template
-    sensors: 
-      macbook_pro_at_desk:
-        friendly_name: "MacBook Pro at desk"
-        value_template: >-
+    - name: MacBook Pro at desk
+      state: >
           {{ not is_state('sensor.macbook_pro_internal_battery_state', 'Not Charging') }}
-
+ 
 
 # Switches
 switch:
@@ -301,6 +284,24 @@ stream:
 # Channge UI config mode
 lovelace:
   mode: yaml
+  resources:
+    - url: /local/plugins/slider-entity-row.js?v=17.2.1
+      type: module
+    - url: /local/plugins/fold-entity-row.js?v=2.0.14
+      type: module
+    - url: /local/plugins/button-card.js?v=3.4.2
+      type: module
+    - url: /local/plugins/homekit-panel-card.js?v=0.6.2
+      type: module
+    - url: /local/plugins/slider-button-card.js?v=1.10.3
+      type: module
+    - url: /local/plugins/vacuum-card.js?v=2.2.5
+      type: module
+    - url: /local/plugins/mini-media-player-bundle.js?v1.15.0
+      type: module
+    - url: /local/plugins/auto-entities.js?v1.9.1
+      type: module
+
 
 # Text to speech
 tts:
@@ -366,6 +367,114 @@ light:
       - light.living_room_ceiling_1
       - light.living_room_ceiling_2
       - light.living_room_ceiling_3
+  - platform: group
+    name: Office lights
+    entities:
+      - light.office_top_corner
+      - light.office_spotlights
+      - light.office_desk_lamp
+  - platform: template
+    lights:
+      office_lights_smart: &smart_light
+        friendly_name: "Office lights smart"
+        unique_id: office_lights_dimming
+        level_template: >
+          {{ (expand('group.office') 
+            | map(attribute='attributes.brightness', default=0) 
+            | select("greaterthan", 0)
+            | list or [0])
+            | average 
+            | round }}
+        value_template: >
+          {{ expand('group.office') 
+            | map(attribute='attributes.brightness', default=0) 
+            | sum > 0  }}
+        temperature_template: >
+          {{ ((expand('group.office') 
+          | map(attribute='attributes.color_temp', default=-1)
+          | select("greaterthan", 0)
+          | list or [0])| average | round) or Undefined }}
+        min_mireds_template: >
+          {{ expand('group.office') 
+          | selectattr('domain', '==', 'light')
+          | selectattr('attributes.min_mireds')
+          | map(attribute='attributes.min_mireds')
+          | list | min | int }}
+        max_mireds_template: >
+          {{ expand('group.office') 
+          | selectattr('domain', '==', 'light')
+          | selectattr('attributes.max_mireds')
+          | map(attribute='attributes.max_mireds')
+          | list | max | int }}
+        turn_on:
+          service: light.turn_on
+          target:
+            entity_id: group.office
+        turn_off:
+          service: light.turn_off
+          target:
+            entity_id: group.office
+        set_temperature: 
+          - service: light.turn_on
+            data:
+              color_temp: "{{ color_temp }}"
+            target:
+              entity_id: >
+                {{ expand('group.office') 
+                  | selectattr('attributes.brightness')
+                  | map(attribute='entity_id') 
+                  | list }}
+        set_level:
+          # Set brightness by amount to all lights (when all are off), OR only the lights that would remain on by the brightness change
+          - service: light.turn_on
+            data:
+              brightness_step: "{{ brightness - state_attr('light.office_lights_smart', 'brightness')|int }}"
+            target:
+              entity_id: >
+                {% set brightness_from = state_attr('light.office_lights_smart', 'brightness')|int %}
+                {% set brightness_change = brightness - brightness_from %}
+                {{ expand("group.office") 
+                  | selectattr('attributes.brightness')
+                  | selectattr('attributes.brightness', '>', -brightness_change)
+                  | map(attribute='entity_id') 
+                  | list or 
+                  expand('group.office') 
+                  | selectattr('domain', '==', 'light')
+                  | map(attribute='entity_id') 
+                  | list if brightness != 255 else [] }}
+          # Set brightness to 1 for all lights that would turn off, keeping them on
+          - service: light.turn_on
+            data:
+              brightness_pct: 1
+            target:
+              entity_id: >
+                {% set brightness_from = state_attr('light.office_lights_smart', 'brightness')|int %}
+                {% set brightness_change = brightness - brightness_from %}
+                {{ expand('group.office') 
+                | selectattr('attributes.brightness')
+                | selectattr('attributes.brightness', '<=', -brightness_change)
+                | map(attribute='entity_id') 
+                | list 
+                }}
+          # Set brightness to 100 for all lights currently on when slider moves to 100%, or all the lights if all are currently off
+          - service: light.turn_on
+            data:
+              brightness_pct: 100
+            target:
+              entity_id: >
+                {{ expand("group.office") 
+                  | selectattr('attributes.brightness')
+                  | map(attribute='entity_id') 
+                  | list or 
+                    expand('group.office') 
+                  | selectattr('domain', '==', 'light')
+                  | map(attribute='entity_id') 
+                  | list if brightness == 255 else [] }}
+
+      office_smart_lights_v: 
+        <<: *smart_light
+        friendly_name: "Office lights smart V2"
+        unique_id: office_lights_dimming_v2
 
 shell_command: 
   turn_off_computer: ssh {{ ssh_user }} net rpc shutdown -I {{ ip }} -U {{ user }} -t {{ timeout }}

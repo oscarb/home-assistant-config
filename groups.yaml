@@ -52,7 +52,6 @@ office:
     - light.office_spotlights
     - light.office_top_corner
     - light.office_desk_lamp
-    - media_player.chromecast_audio
 
 all_lamps:
   entities:
@@ -75,5 +74,5 @@ christmas_lights:
     - switch.advent_candlestick
     - switch.christmas_tree
     - light.living_room_christmas_star
-    - switch.balcony_string_lights
+    - switch.balcony_lights
     - switch.star
