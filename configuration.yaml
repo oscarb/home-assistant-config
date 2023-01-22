@@ -128,30 +128,23 @@ mqtt:
      payload_off: "screenOff"
      json_attributes_topic: fully/deviceInfo/#
 
-  - platform: template
-    sensors: 
-      hallway_motion:
-        friendly_name: "Hallway motion sensor"
-        value_template: >-
-          {{ is_state('binary_sensor.mqtt_hallway_motion', 'on')
-             or (is_state('binary_sensor.mqtt_hallway_motion', 'unavailable') and is_state('switch.hallway_motion_sensor', 'on')) }}    
 
-  - platform: template
-    sensors: 
-      macbook_pro:
-        friendly_name: "MacBook Pro active"
-        value_template: >-
+    - name: Hallway motion
+      device_class: motion
+      state: >
+        {{ is_state('binary_sensor.mqtt_hallway_motion', 'on')
+          or (is_state('binary_sensor.mqtt_hallway_motion', 'unavailable') and is_state('switch.hallway_motion_sensor', 'on')) }}
+
+    - name: MacBook Pro
+      state: >
           {{ is_state('binary_sensor.macbook_pro_active', 'on')
              or is_state('binary_sensor.macbook_pro_active_work', 'on') 
           }}
 
-  - platform: template
-    sensors: 
-      macbook_pro_at_desk:
-        friendly_name: "MacBook Pro at desk"
-        value_template: >-
+    - name: MacBook Pro at desk
+      state: >
           {{ not is_state('sensor.macbook_pro_internal_battery_state', 'Not Charging') }}
-
+ 
 
 # Switches
 switch:
