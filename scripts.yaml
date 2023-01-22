@@ -186,3 +186,72 @@ send_robocop_to_waste_bin:
     data:
       command: app_goto_target
       params: !secret waste_bin_location
+
+dim_without_turn_off:
+  alias: Change brightness in steps without turning lights off
+  sequence:
+    - data_template:
+        brightness: 10
+        entity_id: "{{ entities | join(', ') }}"
+      service: light.turn_on
+
+test_script: 
+  alias: For testing purposes
+  sequence:
+  - service: system_log.write
+    data:
+      message: >
+        {{ expand(entity_id)
+          | map(attribute='entity_id') 
+          | list }}
+      logger: mycomponent.myplatform
+
+
+smart_dimming_set_level:
+  alias: Smart dimming of groups with lights in them
+  sequence: 
+    # Set brightness by amount to all lights (when all are off), OR only the lights that would remain on by the brightness change
+    - service: light.turn_on
+      data:
+        brightness_step: "{{ brightness - state_attr('light.office_lights_smart', 'brightness')|int }}"
+      target:
+        entity_id: >
+          {% set brightness_from = state_attr('light.office_lights_smart', 'brightness')|int %}
+          {% set brightness_change = brightness - brightness_from %}
+          {{ expand(entity_id) 
+            | selectattr('attributes.brightness')
+            | selectattr('attributes.brightness', '>', -brightness_change)
+            | map(attribute='entity_id') 
+            | list or 
+            expand(entity_id) 
+            | selectattr('domain', '==', 'light')
+            | map(attribute='entity_id') 
+            | list if brightness != 255 else [] }}
+    # Set brightness to 1 for all lights that would turn off, keeping them on
+    - service: light.turn_on
+      data:
+        brightness_pct: 1
+      target:
+        entity_id: >
+          {% set brightness_from = state_attr('light.office_lights_smart', 'brightness')|int %}
+          {% set brightness_change = brightness - brightness_from %}
+          {{ expand(entity_id) 
+          | selectattr('attributes.brightness')
+          | selectattr('attributes.brightness', '<=', -brightness_change)
+          | map(attribute='entity_id') 
+          | list 
+          }}
+    # Set brightness to 100 for all lights currently on when slider moves to 100%, or all the lights if all are currently off
+    - service: light.turn_on
+      data:
+        brightness_pct: 100
+      target:
+        entity_id: >
+          {{ expand("group.office") 
+            | selectattr('attributes.brightness')
+            | map(attribute='entity_id') 
+            | list or 
+              expand(entity_id) 
+            | selectattr('domain', '==', 'light')
+            | map(attribute='entity_id') 
+            | list if brightness == 255 else [] }}  
