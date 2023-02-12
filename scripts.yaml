@@ -1,7 +1,7 @@
 toggle_tv_power:
   alias: TV on/off
   sequence:
-  - service_template: >
+  - service: >
       {% if is_state('media_player.tv', 'off') %}
         script.turn_tv_on
       {% else %}
