@@ -70,8 +70,7 @@ turn_everything_off:
       entity_id: media_player.tv  
     - service: light.turn_off
       entity_id: all
-    - service: switch.turn_off
-      entity_id: all
+    # TODO Turn off switches thar are safe to turn off 
 
 good_morning_home:
   alias: Turn lights on in the morning
