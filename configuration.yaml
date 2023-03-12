@@ -8,6 +8,9 @@ homeassistant:
   elevation: !secret home_elevation
   # metric for Metric, imperial for Imperial
   unit_system: metric
+  # Localization
+  currency: !secret home_currency
+  country: !secret home_country 
   # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   time_zone: !secret home_timezone
   # Customization file
