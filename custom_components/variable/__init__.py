@@ -1,15 +1,13 @@
-"""variable implementation for Home Assistant."""
-import asyncio
+"""Variable implementation for Home Assistant."""
 import logging
-import json
 
-import voluptuous as vol
-
-from homeassistant.const import CONF_NAME, ATTR_ICON
+from homeassistant.const import ATTR_ICON, CONF_NAME
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
-from homeassistant.loader import bind_hass
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers.typing import ConfigType
+import voluptuous as vol
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,13 +18,26 @@ CONF_ATTRIBUTES = "attributes"
 CONF_VALUE = "value"
 CONF_RESTORE = "restore"
 CONF_FORCE_UPDATE = "force_update"
+CONF_DOMAIN = "domain"
 
+ATTR_ENTITY = "entity"
 ATTR_VARIABLE = "variable"
 ATTR_VALUE = "value"
 ATTR_ATTRIBUTES = "attributes"
 ATTR_REPLACE_ATTRIBUTES = "replace_attributes"
+ATTR_DOMAIN = "domain"
 
+SERVICE_SET_ENTITY = "set_entity"
 SERVICE_SET_VARIABLE = "set_variable"
+
+SERVICE_SET_ENTITY_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY): cv.string,
+        vol.Optional(ATTR_VALUE): cv.match_all,
+        vol.Optional(ATTR_ATTRIBUTES): dict,
+        vol.Optional(ATTR_REPLACE_ATTRIBUTES): cv.boolean,
+    }
+)
 SERVICE_SET_VARIABLE_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_VARIABLE): cv.string,
@@ -47,6 +58,7 @@ CONFIG_SCHEMA = vol.Schema(
                         vol.Optional(CONF_ATTRIBUTES): dict,
                         vol.Optional(CONF_RESTORE): cv.boolean,
                         vol.Optional(CONF_FORCE_UPDATE): cv.boolean,
+                        vol.Optional(ATTR_DOMAIN): cv.string,
                     },
                     None,
                 )
@@ -57,28 +69,12 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 
-@bind_hass
-def set_variable(
-    hass,
-    variable,
-    value,
-    attributes,
-    replace_attributes,
-):
-    """Set input_boolean to True."""
-    hass.services.call(
-        DOMAIN,
-        SERVICE_SET_VARIABLE,
-        {
-            ATTR_VARIABLE: variable,
-            ATTR_VALUE: value,
-            ATTR_ATTRIBUTES: attributes,
-            ATTR_REPLACE_ATTRIBUTES: replace_attributes,
-        },
-    )
+def get_entity_id_format(domain: str) -> str:
+    """Get the entity id format."""
+    return domain + ".{}"
 
 
-async def async_setup(hass, config):
+async def async_setup(hass: HomeAssistant, config: ConfigType):
     """Set up variables."""
     component = EntityComponent(_LOGGER, DOMAIN, hass)
 
@@ -93,41 +89,59 @@ async def async_setup(hass, config):
         attributes = variable_config.get(CONF_ATTRIBUTES)
         restore = variable_config.get(CONF_RESTORE, False)
         force_update = variable_config.get(CONF_FORCE_UPDATE, False)
+        domain = variable_config.get(CONF_DOMAIN, DOMAIN)
 
         entities.append(
-            Variable(variable_id, name, value,
-                     attributes, restore, force_update)
+            Variable(
+                variable_id, name, value, attributes, restore, force_update, domain
+            )
         )
 
-    @asyncio.coroutine
-    def async_set_variable_service(call):
+    async def async_set_variable_service(call):
         """Handle calls to the set_variable service."""
         entity_id = ENTITY_ID_FORMAT.format(call.data.get(ATTR_VARIABLE))
         entity = component.get_entity(entity_id)
 
         if entity:
-            target_variables = [entity]
-            tasks = [
-                variable.async_set_variable(
-                    call.data.get(ATTR_VALUE),
-                    call.data.get(ATTR_ATTRIBUTES),
-                    call.data.get(ATTR_REPLACE_ATTRIBUTES, False),
-                )
-                for variable in target_variables
-            ]
-            if tasks:
-                yield from asyncio.wait(tasks, loop=hass.loop)
-
-        else:
-            _LOGGER.warning(
-                f"Failed to set unknown variable: {entity_id}"
+            await entity.async_set_variable(
+                call.data.get(ATTR_VALUE),
+                call.data.get(ATTR_ATTRIBUTES),
+                call.data.get(ATTR_REPLACE_ATTRIBUTES, False),
             )
+        else:
+            _LOGGER.warning("Failed to set unknown variable: %s", entity_id)
+
+    async def async_set_entity_service(call):
+        """Handle calls to the set_entity service."""
+
+        entity_id: str = call.data.get(ATTR_ENTITY)
+        state_value = call.data.get(ATTR_VALUE)
+        attributes = call.data.get(ATTR_ATTRIBUTES, {})
+        replace_attributes = call.data.get(ATTR_REPLACE_ATTRIBUTES, False)
+
+        if replace_attributes:
+            updated_attributes = attributes
+        else:
+            cur_state = hass.states.get(entity_id)
+            if cur_state is None or cur_state.attributes is None:
+                updated_attributes = attributes
+            else:
+                updated_attributes = dict(cur_state.attributes)
+                updated_attributes.update(attributes)
+
+        hass.states.async_set(entity_id, state_value, updated_attributes)
 
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_VARIABLE,
         async_set_variable_service,
         schema=SERVICE_SET_VARIABLE_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_ENTITY,
+        async_set_entity_service,
+        schema=SERVICE_SET_ENTITY_SCHEMA,
     )
 
     await component.async_add_entities(entities)
@@ -137,9 +151,19 @@ async def async_setup(hass, config):
 class Variable(RestoreEntity):
     """Representation of a variable."""
 
-    def __init__(self, variable_id, name, value, attributes, restore, force_update):
+    def __init__(
+        self,
+        variable_id,
+        name,
+        value,
+        attributes,
+        restore,
+        force_update,
+        domain
+    ):
         """Initialize a variable."""
-        self.entity_id = ENTITY_ID_FORMAT.format(variable_id)
+
+        self.entity_id = get_entity_id_format(domain).format(variable_id)
         self._name = name
         self._value = value
         self._attributes = attributes
@@ -182,23 +206,21 @@ class Variable(RestoreEntity):
 
     @property
     def state_attributes(self):
-        """Return the state attributes."""
+        """Return the attributes of the variable."""
         return self._attributes
 
     @property
     def force_update(self) -> bool:
-        """Force update"""
+        """Force update of the entity."""
         return self._force_update
 
-    @asyncio.coroutine
-    def async_set_variable(
+    async def async_set_variable(
         self,
         value,
         attributes,
         replace_attributes,
     ):
         """Update variable."""
-        current_state = self.hass.states.get(self.entity_id)
         updated_attributes = None
         updated_value = None
 
@@ -219,4 +241,4 @@ class Variable(RestoreEntity):
         if updated_value is not None:
             self._value = updated_value
 
-        yield from self.async_update_ha_state()
+        await self.async_update_ha_state()
