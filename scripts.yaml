@@ -66,11 +66,11 @@ stop_tv_media:
 turn_everything_off:
   alias: Turn everything off
   sequence:
-    - service: media_player.turn_off
-      entity_id: media_player.tv  
-    - service: light.turn_off
-      entity_id: all
-    # TODO Turn off switches thar are safe to turn off 
+    service: homeassistant.turn_off
+    entity_id:
+    - group.all_lamps
+    - media_player.tv 
+    - switch.magic_mirror
 
 good_morning_home:
   alias: Turn lights on in the morning
@@ -84,7 +84,6 @@ good_morning_home:
         - switch.advent_candlestick
         - switch.christmas_tree
         - switch.balcony_string_lights
-
 
 cast_youtube:
   alias: Cast YouTube
@@ -204,7 +203,6 @@ test_script:
           | map(attribute='entity_id') 
           | list }}
       logger: mycomponent.myplatform
-
 
 smart_dimming_set_level:
   alias: Smart dimming of groups with lights in them
