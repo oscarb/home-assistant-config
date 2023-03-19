@@ -32,11 +32,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
           TICKET_ID: ${{ github.event.issue.node_id }}
         run: |
-          item_id="$( gh api graphql -f query='
+          gh api graphql -f query='
             mutation($project:ID!, $issue:ID!) {
               addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
                 item {
                   id
                 }
               }
-            }' -f project=$PROJECT_ID -f issue=$TICKET_ID"
+            }' -f project=$PROJECT_ID -f issue=$TICKET_ID
