@@ -16,7 +16,7 @@ views:
       - title: Balcony
         type: entities      
         entities:
-          - switch.balcony_string_lights
+          - switch.balcony_lights
           - sensor.mqtt_balcony_temperature
         show_header_toggle: true
 
