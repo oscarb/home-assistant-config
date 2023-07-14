@@ -315,6 +315,16 @@ tts:
   - platform: google_translate
     service_name: google_say
 
+# History stats
+sensor:
+  - platform: history_stats
+    name: TV on time
+    entity_id: media_player.tv
+    state: "on"
+    type: time
+    start: "{{ 0 }}"
+    end: "{{ now() }}"
+
 # Cloud
 cloud:
 
