@@ -136,6 +136,10 @@ mqtt:
 # Template
 template:
   - binary_sensor: 
+    - name: Bill Device On
+      state: >
+        {{ states("sensor.tasmota_bill_energy_power") | float(0) > 1 | float(0) }}
+
     - name: IKEA lights
       state: > 
         {{ states.light
