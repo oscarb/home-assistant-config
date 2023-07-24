@@ -204,6 +204,20 @@ test_script:
           | list }}
       logger: mycomponent.myplatform
 
+cast_goodnight_playlist:
+  alias: Play goodnight playlist on kids room speaker 
+  sequence:
+    - service: spotcast.start
+      data:
+        device_name: Kids room speaker
+        uri: !secret spotify_goodnight_playlist
+        repeat: context
+        shuffle: false
+        offset: > 
+          {{ states('sensor.goodnight_playlist_story_indexes') 
+            | from_json() 
+            | random() }}
+        
 smart_dimming_set_level:
   alias: Smart dimming of groups with lights in them
   sequence: 

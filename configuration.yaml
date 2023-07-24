@@ -325,6 +325,13 @@ sensor:
     start: "{{ 0 }}"
     end: "{{ now() }}"
 
+  - platform: rest
+    name: Goodnight playlist story indexes
+    resource: !secret spotify_sectionize_url
+    verify_ssl: false
+    scan_interval: 14400
+
+
 # Cloud
 cloud:
 
@@ -479,6 +486,11 @@ variable:
   spotify_user_name: 
     value: !secret spotify_user_name
     restore: true
+
+# Spotcast 
+spotcast: 
+  sp_dc: !secret spotify_sp_dc
+  sp_key: !secret spotify_sp_key
 
 # Input numbers
 input_number:

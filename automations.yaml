@@ -284,3 +284,27 @@
     type: turn_on
   action:
     - service: script.turn_tv_on
+- id: '1587296067189'
+  alias: "Kids room button clicked"
+  trigger:
+    platform: event
+    event_type: flic_button
+    event_data:
+      button: "kids room"
+      action: CLICK 
+  action:
+      # Turn off lights
+    - service: light.turn_off
+      entity_id: light.kids_room_ceiling
+    - service: switch.turn_off
+      entity_id: switch.star
+    - service: switch.turn_off
+      entity_id: switch.reading_lamp
+    - delay: 1
+    - service: switch.turn_off
+      entity_id: switch.butterfly
+    # Play Spotify goodnight playlist
+    - service: script.cast_goodnight_playlist
+    # Sing happy birthday? 
+    # Send notification if daytime? 
+    # Count button presses
