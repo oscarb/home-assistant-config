@@ -492,6 +492,9 @@ spotcast:
   sp_dc: !secret spotify_sp_dc
   sp_key: !secret spotify_sp_key
 
+# Timer
+timer:
+
 # Input numbers
 input_number:
   tv_volume:
