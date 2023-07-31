@@ -492,6 +492,23 @@ spotcast:
   sp_dc: !secret spotify_sp_dc
   sp_key: !secret spotify_sp_key
 
+## HELPERS
+
+# Button
+input_button:
+
+# Counter
+counter: 
+
+# Date/time 
+input_datetime:
+
+# Select
+input_select:
+
+# Schedule
+schedule: 
+
 # Timer
 timer:
 
