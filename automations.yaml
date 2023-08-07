@@ -13,6 +13,7 @@
   - service: homeassistant.turn_on
     data:
       entity_id: group.christmas_lights
+
 - id: '1564525145711'
   alias: Turn christmas lights off when bright outside
   trigger:
@@ -26,6 +27,7 @@
   - service: homeassistant.turn_off
     data:
       entity_id: group.christmas_lights
+      
 - id: '1608504370538'
   alias: Turn off Christmas lights at night
   trigger:
@@ -39,6 +41,7 @@
   - service: homeassistant.turn_off
     data:
       entity_id: group.christmas_lights
+
 - id: '1564525145701'
   alias: Turn office lights on when computer is active
   trigger:
@@ -53,6 +56,7 @@
   - service: light.turn_on
     data:
       entity_id: group.office
+
 - id: '1564525145702'
   alias: Turn office lights off when computer is inactive
   trigger:
@@ -73,6 +77,7 @@
       entity_id: 
        - office.office_spotlights
        - office.office_desk_lamp
+
 - id: '1564525145782'
   alias: Hallway motion turns on tablet
   trigger:
@@ -83,6 +88,7 @@
   condition: []
   action:
   - service: script.turn_magic_mirror_screen_on
+
 - id: '1564525145783'
   alias: Hallway motion absence turns off tablet
   trigger:
@@ -94,6 +100,7 @@
   action:
   - delay: 00:00:05
   - service: script.turn_magic_mirror_screen_off
+
 - id: '1569245264705'
   alias: Bathroom motion turns on bathroom ceiling lamp dimmed
   trigger:
@@ -126,6 +133,7 @@
       brightness: 255
       entity_id: light.bathroom_ceiling
     service: light.turn_on
+
 - id: '1569245490089'
   alias: Bathroom motion sensor disabled turns off light
   trigger:
@@ -138,6 +146,7 @@
   - data:
       entity_id: light.bathroom_ceiling
     service: light.turn_off
+
 - id: '1577999538328'
   alias: Clean room
   description: Start Roborock room cleaning triggered from Google Assistant (IFTTT)
@@ -153,6 +162,7 @@
     data_template:
       area: '{{ trigger.event.data.room }}'
     service: python_script.vacuum_room
+
 - id: '1577999538329'
   alias: Send notification when Spotify playlist is updated
   description: Sends a rich notification when a track has been added to a Spotify playlist, as detected by IFTTT
@@ -183,6 +193,7 @@
         - action: "URI" 
           title: "Play"
           uri: "{{ trigger.event.data['trackUrl'] }}"
+
 - id: '1585509334461'
   alias: Turn on office lights when PC turns on
   description: ''
@@ -196,6 +207,7 @@
   - data: {}
     entity_id: group.office
     service: light.turn_on
+
 - id: '1585509334462'
   alias: Turn off office lights when PC turns off
   description: ''
@@ -209,6 +221,7 @@
   - data: {}
     entity_id: group.office
     service: light.turn_off
+
 - id: '1587292652712'
   alias: Send notification when vacuum returns to base with action to go to waste bin
   trigger:
@@ -252,6 +265,7 @@
         - action: URI
           title: Manual
           uri: !secret roborock_manual
+
 - id: '1587296067183'
   alias: Send Robocop to waste bin on notification action
   description: ''
@@ -264,6 +278,7 @@
   action:
   - data: {}
     service: script.send_robocop_to_waste_bin
+
 - id: '1587296067185'
   alias: "TV volume control"
   trigger:
@@ -275,6 +290,7 @@
         entity_id: media_player.tv
       data:
         volume_level: '{{ trigger.to_state.state | float / 60  }}'
+
 - id: '1587296067187'
   alias: "TV device trigger (turn on)"
   trigger:
@@ -284,6 +300,7 @@
     type: turn_on
   action:
     - service: script.turn_tv_on
+
 - id: '1587296067189'
   alias: "Kids room button clicked"
   trigger:
@@ -310,6 +327,7 @@
     # Sing happy birthday? 
     # Send notification if daytime? 
     # Count button presses
+
 - id: '1587296067192'
   alias: Stop kids room playback when sleep timer finishes
   trigger:
