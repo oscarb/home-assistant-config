@@ -176,7 +176,7 @@
     value_template: >
       {{ trigger.event.data["addedBy"] != states('variable.spotify_user_name') }}
   action:
-  - service: notify.mobile_app
+  - service: "{{ states('input_text.notify_service_mobile_oscar') }}"
     data_template:
       title: "{{ trigger.event.data['playlistName'] }}"
       message: >
@@ -236,7 +236,7 @@
            trigger.to_state.state | float(0) > trigger.from_state.state | float(0)
         }}
   action:
-  - service: notify.mobile_app
+  - service: "{{ states('input_text.notify_service_mobile_oscar') }}"
     data_template:
       title: >
         {% set clean_area = states('sensor.robocop_last_clean_area') | round(0, 0) ~ ' ' ~ state_attr('sensor.robocop_last_clean_area', 'unit_of_measurement') %}
