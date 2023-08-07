@@ -45,8 +45,6 @@ http:
   trusted_proxies: 
     - !secret reverse_proxy_server
 
-# Discover some devices automatically
-discovery:
 
 # Allows you to issue voice commands from the frontend in enabled browsers
 conversation:
