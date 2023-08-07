@@ -300,11 +300,24 @@
       entity_id: switch.star
     - service: switch.turn_off
       entity_id: switch.reading_lamp
-    - delay: 1
+    - delay: 2
     - service: switch.turn_off
       entity_id: switch.butterfly
     # Play Spotify goodnight playlist
     - service: script.cast_goodnight_playlist
+    - service: timer.start
+      entity_id: timer.kids_room_sleep_timer
     # Sing happy birthday? 
     # Send notification if daytime? 
     # Count button presses
+- id: '1587296067192'
+  alias: Stop kids room playback when sleep timer finishes
+  trigger:
+    platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.kids_room_sleep_timer
+  action:
+    - service: media_player.media_stop
+      entity_id: media_player.kids_room_speaker
+
