@@ -149,7 +149,7 @@
 
 - id: '1577999538328'
   alias: Clean room
-vava  description: Start Roborock room cleaning triggered from Assist
+  description: Start Roborock room cleaning triggered from Assist
   trigger:
    - platform: conversation
      command:
