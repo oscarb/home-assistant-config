@@ -45,9 +45,14 @@ http:
   trusted_proxies: 
     - !secret reverse_proxy_server
 
-
 # Allows you to issue voice commands from the frontend in enabled browsers
 conversation:
+
+# Voice assistant
+assist_pipeline:
+
+# Required for text-to-speech
+media_source:
 
 # Enables support for tracking state changes over time
 history:
@@ -530,6 +535,7 @@ group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
+intent_script: !include intent_scripts.yaml
 
 
 # TODO 

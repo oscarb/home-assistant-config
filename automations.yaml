@@ -149,19 +149,16 @@
 
 - id: '1577999538328'
   alias: Clean room
-  description: Start Roborock room cleaning triggered from Google Assistant (IFTTT)
+vava  description: Start Roborock room cleaning triggered from Assist
   trigger:
-    event_data:
-      action: vacuum
-    event_type: ifttt_webhook_received
-    platform: event
-  condition: []
+   - platform: conversation
+     command:
+      - "(clean|vacuum) (the) {rooms}"
   action:
-  - alias: ''
+  - service: python_script.vacuum_room
     entity_id: vacuum.robocop
     data_template:
-      area: '{{ trigger.event.data.room }}'
-    service: python_script.vacuum_room
+      area: '{{ trigger.slots.rooms }}'    
 
 - id: '1577999538329'
   alias: Send notification when Spotify playlist is updated
@@ -339,3 +336,12 @@
     - service: media_player.media_stop
       entity_id: media_player.kids_room_speaker
 
+- id: '1587296067195'
+  alias: Clean home when being told so
+  trigger:
+    - platform: conversation
+      command:
+        - "(clean|vacumm) (the|my) (home|apartment)"
+  action:
+    - service: vacuum.start
+      entity_id: vacuum.robocop

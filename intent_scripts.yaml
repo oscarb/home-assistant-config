@@ -1,0 +1,3 @@
+CustomOutsideTemperature:
+  speech:
+    text: "It is currently {{ states('sensor.balcony_temperature') }} degrees outside."

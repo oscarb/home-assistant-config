@@ -1,0 +1,7 @@
+# Temperature 
+language: "en"
+intents:
+  CustomOutsideTemperature:
+    data:
+      - sentences:
+          - "(What is|what's) the temperature outside"
