@@ -377,6 +377,19 @@ light:
       - light.office_desk_lamp
   - platform: template
     lights:
+      flic_twist:
+        friendly_name: Flic Twist
+        turn_on:
+
+        turn_off:
+
+        set_level:
+          # service: media_player.volume_set
+          # target:
+          #   entity_id: media_player.spotify_paq
+          # data:
+          #   volume_level: "{{ (brightness / 255 * 100)|int / 100 }}"        
+
       office_lights_smart: &smart_light
         friendly_name: "Office lights smart"
         unique_id: office_lights_dimming
