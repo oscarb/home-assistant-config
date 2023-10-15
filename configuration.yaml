@@ -180,6 +180,24 @@ switch:
 
   - platform: template
     switches:
+
+      speakers:
+        friendly_name: Speakers
+        icon_template: mdi:speaker
+        value_template: "{{ is_state('switch.tasmota_bill', 'on') or is_state('switch.tasmota_bob', 'on') }}"
+        turn_on:
+          service: switch.turn_on
+          target:
+            entity_id:
+              - switch.tasmota_bill
+              - switch.tasmota_bob
+        turn_off:
+          service: switch.turn_off
+          target:
+            entity_id:
+              - switch.tasmota_bill
+              - switch.tasmota_bob
+
       tv_sound:
         friendly_name: TV sound
         value_template: "{{ is_state_attr('media_player.tv', 'is_volume_muted', 'true') }}"
