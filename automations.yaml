@@ -302,10 +302,10 @@
   alias: "Kids room button clicked"
   trigger:
     platform: event
-    event_type: flic_button
+    event_type: flic
     event_data:
-      button: "kids room"
-      action: CLICK 
+      name: "kids room"
+      action: PUSH 
   action:
       # Turn off lights
     - service: light.turn_off
