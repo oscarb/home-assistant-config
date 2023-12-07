@@ -293,7 +293,7 @@ google_assistant:
       expose: true
 
     # Balcony
-    sensor.mqtt_balcony_temperature:
+    sensor.balcony_climate_temperature:
       name: Outdoors temperature
       room: Balcony
       aliases:

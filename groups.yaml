@@ -59,19 +59,17 @@ all_lamps:
     - switch.balcony_lights
     # Bedroom
     - light.bedroom_ceiling
-    - switch.bedroom_bedside_table_1
-    - switch.bedroom_bedside_table_2
-    - switch.bedroom_sideboard_light
-    # Hallway
-    - switch.hallway_sideboard_light
+    - light.bedroom_bedside_table_1
+    - light.bedroom_bedside_table_2
+    - light.bedroom_sideboard
     # Kitchen 
     - light.cabinet
     - light.kitchen_ceiling
     # Kids room
     - light.kids_room_ceiling
-    - switch.butterfly
-    - switch.reading_lamp
-    - switch.star    
+    - switch.kids_room_butterfly
+    - switch.kids_room_reading_lamp
+    - switch.kids_room_star    
     # Living room
     - light.living_room_ceiling
     - light.living_room_window_ceiling
@@ -82,7 +80,7 @@ all_lamps:
     # Office
     - light.office_spotlights
     - light.office_top_corner
-    - light.office_desk_lamp
+    - light.office_desk
 
 christmas_lights:
   entities:

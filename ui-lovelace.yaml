@@ -3,7 +3,6 @@ views:
 
   - badges:
       - sensor.hacs
-      - sensor.mqtt_balcony_temperature
       - sensor.electricity_price
       - sun.sun
       - sensor.ip_webcam_video_connections
@@ -17,7 +16,6 @@ views:
         type: entities      
         entities:
           - switch.balcony_lights
-          - sensor.mqtt_balcony_temperature
         show_header_toggle: true
 
       - title: Bathroom

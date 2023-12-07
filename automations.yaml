@@ -313,12 +313,12 @@
     - service: light.turn_off
       entity_id: light.kids_room_ceiling
     - service: switch.turn_off
-      entity_id: switch.star
+      entity_id: switch.kids_room_star
     - service: switch.turn_off
-      entity_id: switch.reading_lamp
+      entity_id: switch.kids_room_reading_lamp
     - delay: 2
     - service: switch.turn_off
-      entity_id: switch.butterfly
+      entity_id: switch.kids_room_butterfly
     # Play Spotify goodnight playlist
     - service: script.cast_goodnight_playlist
     - service: timer.start
