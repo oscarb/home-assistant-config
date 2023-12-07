@@ -88,6 +88,8 @@
   condition: []
   action:
   - service: script.turn_magic_mirror_screen_on
+  - service: homeassistant.turn_on
+    entity_id: switch.hallway_christmas_tree_mini
 
 - id: '1564525145783'
   alias: Hallway motion absence turns off tablet

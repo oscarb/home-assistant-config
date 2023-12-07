@@ -175,6 +175,22 @@ switch:
     turn_off: 
       service: script.turn_computer_off
 
+  - platform: group
+    name: Kitchen advent candlestick
+    entities:
+      - switch.tasmota_bub
+
+  - platform: group
+    name: Living room christmas tree
+    entities:
+      - switch.tasmota_bob
+
+  - platform: group
+    name: Bedroom advent candlestick
+    entities:
+      - switch.tasmota_bill
+
+
   - platform: template
     switches:
 

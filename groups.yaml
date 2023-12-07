@@ -87,8 +87,9 @@ all_lamps:
 christmas_lights:
   entities:
     - switch.bedroom_advent_candlestick
-    - switch.advent_candlestick
-    - switch.christmas_tree
+    - switch.kitchen_advent_candlestick
+    - switch.living_room_christmas_tree
     - light.living_room_christmas_star
     - switch.balcony_lights
-    - switch.star
+    - switch.kids_room_star
+    - switch.hallway_christmas_tree_mini

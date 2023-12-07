@@ -71,6 +71,7 @@ turn_everything_off:
     - group.all_lamps
     - media_player.tv 
     - switch.magic_mirror
+    - group.christmas_lights
 
 good_morning_home:
   alias: Turn lights on in the morning
