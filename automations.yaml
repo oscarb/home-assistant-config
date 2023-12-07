@@ -87,9 +87,11 @@
     to: 'on'
   condition: []
   action:
-  - service: script.turn_magic_mirror_screen_on
   - service: homeassistant.turn_on
-    entity_id: switch.hallway_christmas_tree_mini
+    target:
+      entity_id: 
+        - switch.magic_mirror
+        - switch.hallway_christmas_tree_mini
 
 - id: '1564525145783'
   alias: Hallway motion absence turns off tablet
@@ -101,7 +103,8 @@
   condition: []
   action:
   - delay: 00:00:05
-  - service: script.turn_magic_mirror_screen_off
+  - service: homeassistant.turn_off
+    entity_id: switch.magic_mirror
 
 - id: '1569245264705'
   alias: Bathroom motion turns on bathroom ceiling lamp dimmed

@@ -129,12 +129,6 @@ input_text:
 # MQTT Binary sensors
 mqtt:
   binary_sensor:
-   - name: Magic Mirror Screen
-     state_topic: fully/event/#
-     value_template: "{{ value_json.event }}"
-     payload_on: "screenOn"
-     payload_off: "screenOff"
-     json_attributes_topic: fully/deviceInfo/#
    - name: Hallway motion sensor 
      state_topic: "home/OMG_lilygo_rtl_433_ESP/RTL_433toMQTT/Nexa-Security/1/25412630"
      value_template: "{{ value_json.state }}"
@@ -167,7 +161,7 @@ mqtt:
 # Template
 template:
   - binary_sensor: 
-    - name: Bill Device On
+    - name: Bill Device On  
       state: >
         {{ states("sensor.tasmota_bill_energy_power") | float(0) > 1 | float(0) }}
 
@@ -212,6 +206,10 @@ switch:
     entities:
       - switch.tasmota_bill
 
+  - platform: group
+    name: Magic mirror
+    entities:
+      - switch.galaxy_tab_s2_screen
 
   - platform: template
     switches:
@@ -223,14 +221,6 @@ switch:
           service: script.toggle_tv_mute
         turn_off:
           service: script.toggle_tv_mute
-
-      magic_mirror:
-        friendly_name: Magic Mirror
-        value_template: "{{ is_state('binary_sensor.magic_mirror_screen', 'on') }}"
-        turn_on:
-          service: script.turn_magic_mirror_screen_on
-        turn_off:
-          service: script.turn_magic_mirror_screen_off
 
       hallway_camera: 
         friendly_name: Show hallway camera on TV
@@ -389,13 +379,6 @@ notify:
     platform: group
     services: 
       - service: !secret mobile_device_name
-
-# HTTP Requests
-rest_command:
-  fully_kiosk_browser_turn_screen_on:
-    url: http://{{ device_ip }}:{{ device_port }}/?cmd=screenOn&type=json&password={{ password }}
-  fully_kiosk_browser_turn_screen_off:
-    url: http://{{ device_ip }}:{{ device_port }}/?cmd=screenOff&type=json&password={{ password }}
 
 # Light groups 
 light:

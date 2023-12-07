@@ -105,25 +105,6 @@ cast_magic_mirror_camera:
         media_content_id: !secret magic_mirror_video
         media_content_type: image/jpg
 
-turn_magic_mirror_screen_on:
-  alias: Turn on Magic Mirror screen
-  sequence:
-    - service: rest_command.fully_kiosk_browser_turn_screen_on
-      data:
-        device_ip: !secret magic_mirror_ip
-        device_port: !secret magic_mirror_fully_port
-        password: !secret magic_mirror_fully_password   
-
-
-turn_magic_mirror_screen_off:
-  alias: Turn off Magic Mirror screen
-  sequence:
-    - service: rest_command.fully_kiosk_browser_turn_screen_off
-      data:
-        device_ip: !secret magic_mirror_ip
-        device_port: !secret magic_mirror_fully_port
-        password: !secret magic_mirror_fully_password
-
 turn_computer_on:
   alias: Turn on computer 
   sequence:
