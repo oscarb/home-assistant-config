@@ -367,3 +367,30 @@
   action:
     - service: vacuum.start
       entity_id: vacuum.robocop
+
+- id: '15872960672055'
+  alias: Turn light on/off when pressing remote
+  mode: parallel
+  trigger:
+    - platform: state
+      entity_id: event.kids_room_remote
+      variables:
+        button1: switch.kids_room_butterfly
+        button2: switch.kids_room_reading_lamp
+        button3: switch.kids_room_star
+  action:
+    - service: >
+        {% if trigger.to_state.attributes.event_type == 'on' %}
+          homeassistant.turn_on
+        {% else %}
+          homeassistant.turn_off
+        {% endif %}
+      target: 
+        entity_id: >
+          {% if trigger.to_state.attributes.group %}
+            {{ [button1, button2, button3] }}
+          {% else %}
+            {% set i = trigger.to_state.attributes.unit | int - 1 %}
+            {{ [button3, button2, button1][i] }}
+          {% endif %}
+

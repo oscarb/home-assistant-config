@@ -147,6 +147,22 @@ mqtt:
      payload_on: "ON"
      payload_off: "OFF"
      device_class: motion     
+  event:
+    - name: Kids Room Remote
+      event_types: 
+        - 'on' 
+        - 'off'
+      state_topic: "home/OMG_lilygo_rtl_433_ESP/RTL_433toMQTT/Nexa-Security/3/32595538"
+      device_class: "button"
+      value_template: |
+        { 
+          "button": "{{ value_json['id'] }}",
+          "unit": "{{ value_json['unit']}}",
+          "event_type": "{{ value_json['state'] | lower }}",
+          "group": {{ iif(value_json['group']) | to_json }}
+        }
+
+
 
 # Template
 template:
