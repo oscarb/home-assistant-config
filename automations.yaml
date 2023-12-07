@@ -327,6 +327,26 @@
     # Send notification if daytime? 
     # Count button presses
 
+- id: '1587296067190'
+  alias: "Flic Twist ⚫️"
+  trigger:
+    platform: event
+    event_type: flic
+    event_data:
+      name: "office"
+  action:
+    - choose:
+      - conditions: "{{ trigger.event.data.action == 'PUSH'}}"
+        sequence:
+        - service: switch.toggle
+          entity_id: switch.speakers
+      - conditions: "{{ trigger.event.data.action == 'DOUBLE_PUSH'}}"
+        sequence:
+          - service: persistent_notification.create
+            data: 
+              title: "DOUBLE PUSH"
+              message: "TEST"
+
 - id: '1587296067192'
   alias: Stop kids room playback when sleep timer finishes
   trigger:
