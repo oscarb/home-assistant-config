@@ -81,7 +81,7 @@
 - id: '1564525145782'
   alias: Hallway motion turns on tablet
   trigger:
-    entity_id: binary_sensor.mqtt_hallway_motion
+    entity_id: binary_sensor.hallway_motion_sensor
     from: 'off'
     platform: state
     to: 'on'
@@ -92,7 +92,7 @@
 - id: '1564525145783'
   alias: Hallway motion absence turns off tablet
   trigger:
-    entity_id: binary_sensor.mqtt_hallway_motion
+    entity_id: binary_sensor.hallway_motion_sensor
     from: 'on'
     platform: state
     to: 'off'

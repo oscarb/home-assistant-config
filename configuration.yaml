@@ -135,6 +135,18 @@ mqtt:
      payload_on: "screenOn"
      payload_off: "screenOff"
      json_attributes_topic: fully/deviceInfo/#
+   - name: Hallway motion sensor 
+     state_topic: "home/OMG_lilygo_rtl_433_ESP/RTL_433toMQTT/Nexa-Security/1/25412630"
+     value_template: "{{ value_json.state }}"
+     payload_on: "ON"
+     payload_off: "OFF"
+     device_class: motion
+   - name: Bathroom motion sensor 
+     state_topic: "home/OMG_lilygo_rtl_433_ESP/RTL_433toMQTT/Nexa-Security/1/29404962"
+     value_template: "{{ value_json.state }}"
+     payload_on: "ON"
+     payload_off: "OFF"
+     device_class: motion     
 
 # Template
 template:
@@ -142,21 +154,6 @@ template:
     - name: Bill Device On
       state: >
         {{ states("sensor.tasmota_bill_energy_power") | float(0) > 1 | float(0) }}
-
-    - name: IKEA lights
-      state: > 
-        {{ states.light
-        | selectattr('object_id', '!=', 'foo')
-        | selectattr('state', '!=', 'unavailable')
-        | list
-        | length
-        }}
-
-    - name: Hallway motion
-      device_class: motion
-      state: >
-        {{ is_state('binary_sensor.mqtt_hallway_motion', 'on')
-          or (is_state('binary_sensor.mqtt_hallway_motion', 'unavailable') and is_state('switch.hallway_motion_sensor', 'on')) }}
 
     - name: MacBook Pro
       state: >
