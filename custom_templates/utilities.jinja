@@ -1,0 +1,11 @@
+{% macro flatten() %}
+  {% set ns = namespace(new_list=[]) %}
+  {% for item in varargs %}
+      {% if item is string %}
+          {% set ns.new_list = ns.new_list + [item] %}
+      {% elif item is list %}
+          {% set ns.new_list = ns.new_list + item %}    
+      {% endif %}
+  {% endfor %}
+  {{ ns.new_list }}
+{% endmacro %}

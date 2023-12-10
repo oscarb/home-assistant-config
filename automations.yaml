@@ -400,8 +400,9 @@
         {% endif %}
       target: 
         entity_id: >
+          {% from 'utilities.jinja' import flatten %}
           {% if trigger.to_state.attributes.group %}
-            {{ [button1, button2, button3] }}
+            {{ flatten(button1, button2, button3)  }}
           {% else %}
             {% set i = trigger.to_state.attributes.unit | int - 1 %}
             {{ [button3, button2, button1][i] }}
