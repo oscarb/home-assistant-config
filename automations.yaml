@@ -381,6 +381,16 @@
         button1: switch.kids_room_butterfly
         button2: switch.kids_room_reading_lamp
         button3: switch.kids_room_star
+    - platform: state
+      entity_id: event.christmas_remote
+      variables:
+        button1: 
+          - switch.living_room_christmas_tree
+          - switch.hallway_christmas_tree_mini
+        button2: 
+          - switch.kitchen_advent_candlestick
+          - switch.bedroom_advent_candlestick
+        button3: switch.balcony_lights
   action:
     - service: >
         {% if trigger.to_state.attributes.event_type == 'on' %}
