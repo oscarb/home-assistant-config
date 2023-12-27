@@ -379,18 +379,26 @@
       entity_id: event.kids_room_remote
       variables:
         button1: switch.kids_room_butterfly
-        button2: switch.kids_room_reading_lamp
-        button3: switch.kids_room_star
+        button2: switch.kids_room_star
+        button3: switch.kids_room_reading_lamp
+    - platform: state
+      entity_id: 
+        - event.bedroom_remote_1
+        - event.bedroom_remote_2
+      variables:
+        button1: light.bedroom_bedside_table_1
+        button2: light.bedroom_bedside_table_2
+        button3: light.bedroom_sideboard
     - platform: state
       entity_id: event.christmas_remote
       variables:
         button1: 
           - switch.living_room_christmas_tree
           - switch.hallway_christmas_tree_mini
-        button2: 
+        button2: switch.balcony_lights
+        button3:
           - switch.kitchen_advent_candlestick
           - switch.bedroom_advent_candlestick
-        button3: switch.balcony_lights
   action:
     - service: >
         {% if trigger.to_state.attributes.event_type == 'on' %}
@@ -404,8 +412,8 @@
           {% if trigger.to_state.attributes.group %}
             {{ flatten(button1, button2, button3)  }}
           {% else %}
-            {% set i = trigger.to_state.attributes.unit | int - 1 %}
-            {{ [button3, button2, button1][i] }}
+            {% set i = trigger.to_state.attributes.unit % 3 %}
+            {{ [button1, button2, button3][i] }}
           {% endif %}
 
 - id: '15872960672384'

@@ -152,15 +152,19 @@ mqtt:
         value_template: |
           { 
             "button": "{{ value_json['id'] }}",
-            "unit": "{{ value_json['unit']}}",
+            "unit": {{ value_json['unit'] }},
             "event_type": "{{ value_json['state'] | lower }}",
             "group": {{ iif(value_json['group']) | to_json }}
           }
     - name: Christmas remote
       state_topic: "home/OMG_lilygo_rtl_433_ESP/RTL_433toMQTT/Nexa-Security/3/27478810"
       <<: *nexa_remote_defaults
-
-
+    - name: Bedroom remote 1
+      state_topic: "home/OMG_lilygo_rtl_433_ESP/RTL_433toMQTT/Nexa-Security/0/14508010"
+      <<: *nexa_remote_defaults
+    - name: Bedroom remote 2
+      state_topic: "home/OMG_lilygo_rtl_433_ESP/RTL_433toMQTT/Nexa-Security/0/30301174"
+      <<: *nexa_remote_defaults
 
 # Template
 template:
