@@ -408,3 +408,14 @@
             {{ [button3, button2, button1][i] }}
           {% endif %}
 
+- id: '15872960672384'
+  alias: Christmas feelings
+  trigger:
+    - platform: sun
+      event: sunrise
+  condition:
+    alias: Christmas
+    condition: template
+    value_template: '{{ now().month == 12 and now().day == 24 }}'
+  action:
+    - service: script.initiate_christmas_feeling

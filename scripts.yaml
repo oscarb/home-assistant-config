@@ -186,6 +186,61 @@ test_script:
           | list }}
       logger: mycomponent.myplatform
 
+initiate_christmas_feeling:
+  alias: Initiate Christmas feeling
+  sequence: 
+    # Turn on christmas tree hallway
+    - service: homeassistant.turn_on
+      entity_id: switch.hallway_christmas_tree_mini
+    - delay: 5
+    # Turn on speakers
+    - service: homeassistant.turn_on
+      entity_id: switch.speaker_right
+    - delay: 2
+    # Turn on speakers
+    - service: homeassistant.turn_on
+      entity_id: switch.speaker_left 
+    - delay: 2
+    # Turn on advent candle kitchen
+    - service: homeassistant.turn_on
+      entity_id: switch.kitchen_advent_candlestick
+    - delay: 4
+    # Start playing christmas music
+    - service: spotcast.start
+      data:
+        device_name: Chromecast Audio
+        uri: !secret spotify_christmas_playlist
+        repeat: off
+        shuffle: false
+        offset: 0            
+    - delay: 4
+    # Turn on christmas tree
+    - service: homeassistant.turn_on
+      entity_id: switch.living_room_christmas_tree    
+    - delay: 3
+    # Cast youtube fireplace
+    - service: media_extractor.play_media
+      entity_id: media_player.google_tv
+      data:
+        media_content_id: "https://www.youtube.com/watch?v=LDL888gcPv8"
+        media_content_type: video/youtube
+    - delay: 4
+    # Christmas star
+    - service: homeassistant.turn_on
+      entity_id: light.living_room_christmas_star
+    - delay: 3
+    # Balcony lights
+    - service: homeassistant.turn_on
+      entity_id: switch.balcony_lights      
+    - delay: 5
+    # Star 
+    - service: homeassistant.turn_on
+      entity_id: switch.kids_room_star
+    - delay: 5
+    # Advent bedroom
+    - service: homeassistant.turn_on
+      entity_id: switch.bedroom_advent_candlestick
+
 cast_goodnight_playlist:
   alias: Play goodnight playlist on kids room speaker 
   sequence:
