@@ -417,7 +417,7 @@
           {% endif %}
 
 - id: '15872960672384'
-  alias: Christmas feelings
+  alias: Initiate Christmas feelings on Christmas Eve morning
   trigger:
     - platform: sun
       event: sunrise
@@ -427,3 +427,22 @@
     value_template: '{{ now().month == 12 and now().day == 24 }}'
   action:
     - service: script.initiate_christmas_feeling
+
+- id: '15872960672394'
+  alias: Turn on/off speakers when audio available
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.speakers_audio_available
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.speakers_audio_available
+      to: 'off'
+      for: '00:05:00'
+  action:
+    - service: > 
+        {% if trigger.to_state.state == 'on' %}
+          homeassistant.turn_on
+        {% else %}
+          homeassistant.turn_off
+        {% endif %}
+      entity_id: switch.speakers

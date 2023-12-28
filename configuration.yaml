@@ -172,17 +172,19 @@ template:
     - name: Bill Device On  
       state: >
         {{ states("sensor.tasmota_bill_energy_power") | float(0) > 1 | float(0) }}
-
     - name: MacBook Pro
       state: >
           {{ is_state('binary_sensor.macbook_pro_active', 'on')
              or is_state('binary_sensor.macbook_pro_active_work', 'on') 
           }}
-
     - name: MacBook Pro at desk
       state: >
           {{ not is_state('sensor.macbook_pro_internal_battery_state', 'Not Charging') }}
- 
+    - name: Speakers audio available
+      state: >
+        {{ is_state('sensor.macbook_pro_oscar_active_audio_output', 'Scarlett 6i6 USB')
+            and is_state('binary_sensor.macbook_pro_oscar_audio_output_in_use', 'on') 
+            or is_state('media_player.chromecast_audio', ['paused', 'buffering', 'playing']) }} 
 
 # Switches
 switch:
