@@ -1,0 +1,448 @@
+- alias: Turn christmas lights on when dark outside
+  trigger:
+    entity_id: sun.sun
+    attribute: elevation
+    platform: numeric_state
+    below: -3.0
+  condition: 
+    - condition: state
+      entity_id: input_boolean.is_christmas_time
+      state: "on"
+  action:
+  - service: homeassistant.turn_on
+    data:
+      entity_id: group.christmas_lights
+
+- id: '1564525145711'
+  alias: Turn christmas lights off when bright outside
+  trigger:
+    platform: sun
+    event: sunrise
+  condition:
+    - condition: state
+      entity_id: input_boolean.is_christmas_time
+      state: "on"
+  action:
+  - service: homeassistant.turn_off
+    data:
+      entity_id: group.christmas_lights
+      
+- id: '1608504370538'
+  alias: Turn off Christmas lights at night
+  trigger:
+    platform: time
+    at: 00:30
+  condition: 
+    - condition: state
+      entity_id: input_boolean.is_christmas_time
+      state: "on"
+  action:
+  - service: homeassistant.turn_off
+    data:
+      entity_id: group.christmas_lights
+
+- id: '1564525145701'
+  alias: Turn office lights on when computer is active
+  trigger:
+    platform: state
+    entity_id: binary_sensor.macbook_pro
+    to: 'on'
+  condition: 
+    condition: state
+    entity_id: binary_sensor.macbook_pro_at_desk
+    state: 'on'
+  action:
+  - service: light.turn_on
+    data:
+      entity_id: group.office
+
+- id: '1564525145702'
+  alias: Turn office lights off when computer is inactive
+  trigger:
+    platform: state
+    entity_id: binary_sensor.macbook_pro
+    to: 'off'
+  condition: 
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.macbook_pro_at_desk
+        state: 'on'
+      - condition: time
+        after: '15:30:00'
+  action:
+  - service: light.turn_off
+    data:
+      entity_id: 
+       - office.office_spotlights
+       - office.office_desk_lamp
+
+- id: '1564525145782'
+  alias: Hallway motion turns on tablet
+  trigger:
+    entity_id: binary_sensor.hallway_motion_sensor
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - service: homeassistant.turn_on
+    target:
+      entity_id: 
+        - switch.magic_mirror
+        - switch.hallway_christmas_tree_mini
+
+- id: '1564525145783'
+  alias: Hallway motion absence turns off tablet
+  trigger:
+    entity_id: binary_sensor.hallway_motion_sensor
+    from: 'on'
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - delay: 00:00:05
+  - service: homeassistant.turn_off
+    entity_id: switch.magic_mirror
+
+- id: '1569245264705'
+  alias: Bathroom motion turns on bathroom ceiling lamp dimmed
+  trigger:
+    entity_id: binary_sensor.mqtt_bathroom_motion
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition:
+  - after: '22:00'
+    before: 08:00
+    condition: time
+  action:
+  - data:
+      brightness: 1
+      entity_id: light.bathroom_ceiling
+    service: light.turn_on
+- id: '1569245264706'
+  alias: Bathroom motion turns on bathroom ceiling lamp strong
+  trigger:
+    entity_id: binary_sensor.mqtt_bathroom_motion
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition:
+  - after: 08:00
+    before: '22:00'
+    condition: time
+  action:
+  - data:
+      brightness: 255
+      entity_id: light.bathroom_ceiling
+    service: light.turn_on
+
+- id: '1569245490089'
+  alias: Bathroom motion sensor disabled turns off light
+  trigger:
+    entity_id: binary_sensor.mqtt_bathroom_motion
+    from: 'on'
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data:
+      entity_id: light.bathroom_ceiling
+    service: light.turn_off
+
+- id: '1577999538328'
+  alias: Clean room
+  description: Start Roborock room cleaning triggered from Assist
+  trigger:
+   - platform: conversation
+     command:
+      - "(clean|vacuum) (the) {rooms}"
+  action:
+  - service: python_script.vacuum_room
+    entity_id: vacuum.robocop
+    data_template:
+      area: '{{ trigger.slots.rooms }}'    
+
+- id: '1577999538329'
+  alias: Send notification when Spotify playlist is updated
+  description: Sends a rich notification when a track has been added to a Spotify playlist, as detected by IFTTT
+  trigger:
+    event_data:
+      action: sharing
+    event_type: ifttt_webhook_received
+    platform: event
+  condition:
+    condition: template
+    value_template: >
+      {{ trigger.event.data["addedBy"] != states('variable.spotify_user_name') }}
+  action:
+  - service: "{{ states('input_text.notify_service_mobile_oscar') }}"
+    data_template:
+      title: "{{ trigger.event.data['playlistName'] }}"
+      message: >
+        🎵 {{ trigger.event.data['artistName'] ~ " - " ~ trigger.event.data['trackName'] }}    
+      data:
+        group: "{{ trigger.event.data['addedBy'] }}"
+        color: '#1DB954'
+        sticky: 'false'
+        clickAction: !secret spotify_shared_playlist
+        channel: Playlist updates
+        icon_url: !secret spotify_icon
+        image: "{{ trigger.event.data['albumCoverUrl'] }}"
+        actions:
+        - action: "URI" 
+          title: "Play"
+          uri: "{{ trigger.event.data['trackUrl'] }}"
+
+- id: '1585509334461'
+  alias: Turn on office lights when PC turns on
+  description: ''
+  trigger:
+    entity_id: switch.computer_power
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - data: {}
+    entity_id: group.office
+    service: light.turn_on
+
+- id: '1585509334462'
+  alias: Turn off office lights when PC turns off
+  description: ''
+  trigger:
+    entity_id: switch.computer_power
+    from: 'on'
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data: {}
+    entity_id: group.office
+    service: light.turn_off
+
+- id: '1587292652712'
+  alias: Send notification when vacuum returns to base with action to go to waste bin
+  trigger:
+    entity_id: sensor.robocop_total_clean_area
+    platform: state
+  condition: 
+    - condition: template
+      value_template: >
+        {{ trigger.from_state is not none and 
+           trigger.to_state is not none and
+           trigger.from_state.state not in ["unavailable"] and  
+           trigger.to_state.state | float(0) > trigger.from_state.state | float(0)
+        }}
+  action:
+  - service: "{{ states('input_text.notify_service_mobile_oscar') }}"
+    data_template:
+      title: >
+        {% set clean_area = states('sensor.robocop_last_clean_area') | round(0, 0) ~ ' ' ~ state_attr('sensor.robocop_last_clean_area', 'unit_of_measurement') %}
+        {% set clean_duration = int(states('sensor.robocop_last_clean_duration')) // 60 ~ ' min' %}
+        Robocop - Clean-up complete: {{ clean_area }}, {{ clean_duration }}
+      message: >
+        {% set apartment_size = states('variable.apartment_size') | int %}
+        {% set clean_area_old = trigger.from_state.state | int %} 
+        {% set clean_area_new = trigger.to_state.state | int %}
+        {% if clean_area_new // (apartment_size*2) > clean_area_old // (apartment_size*2) -%}
+          ⚠️ Empty dustbin and clean filter.
+        {%- elif clean_area_new // apartment_size > clean_area_old // apartment_size -%}
+          ⚠️ Empty dustbin.
+        {%- endif %}
+        {%- if is_state('binary_sensor.robocop_mop_attached', 'on') -%}
+          ⚠️ Remove water tank. 
+        {%- endif %}
+        Finished cleaning, returning to base.
+      data:
+        channel: Vacuum
+        clickAction: "app://com.xiaomi.smarthome"
+        notification_icon: "mdi:robot-vacuum"
+        actions:
+        - action: send_robocop_to_waste_bin
+          title: Go to waste bin
+        - action: URI
+          title: Manual
+          uri: !secret roborock_manual
+
+- id: '1587296067183'
+  alias: Send Robocop to waste bin on notification action
+  description: ''
+  trigger:
+    event_data:
+      action: send_robocop_to_waste_bin
+    event_type: mobile_app_notification_action
+    platform: event
+  condition: []
+  action:
+  - data: {}
+    service: script.send_robocop_to_waste_bin
+
+- id: '1587296067185'
+  alias: "TV volume control"
+  trigger:
+    platform: state
+    entity_id: input_number.tv_volume
+  action:
+    - service: media_player.volume_set
+      target:
+        entity_id: media_player.tv
+      data:
+        volume_level: '{{ trigger.to_state.state | float / 60  }}'
+
+- id: '1587296067187'
+  alias: "TV device trigger (turn on)"
+  trigger:
+    platform: device
+    device_id: 3db85e45506d5575e3ab481d650bf776
+    domain: philips_js
+    type: turn_on
+  action:
+    - service: script.turn_tv_on
+
+- id: '1587296067189'
+  alias: "Kids room button clicked"
+  trigger:
+    platform: event
+    event_type: flic
+    event_data:
+      name: "kids room"
+      action: PUSH 
+  action:
+      # Turn off lights
+    - service: light.turn_off
+      entity_id: light.kids_room_ceiling
+    - service: switch.turn_off
+      entity_id: switch.kids_room_star
+    - service: switch.turn_off
+      entity_id: switch.kids_room_reading_lamp
+    - delay: 2
+    - service: switch.turn_off
+      entity_id: switch.kids_room_butterfly
+    # Play Spotify goodnight playlist
+    - service: script.cast_goodnight_playlist
+    - service: timer.start
+      entity_id: timer.kids_room_sleep_timer
+    # Sing happy birthday? 
+    # Send notification if daytime? 
+    # Count button presses
+
+- id: '1587296067190'
+  alias: "Flic Twist ⚫️"
+  trigger:
+    platform: event
+    event_type: flic
+    event_data:
+      name: "office"
+  action:
+    - choose:
+      - conditions: "{{ trigger.event.data.action == 'PUSH'}}"
+        sequence:
+        - service: switch.toggle
+          entity_id: switch.speakers
+      - conditions: "{{ trigger.event.data.action == 'DOUBLE_PUSH'}}"
+        sequence:
+          - service: persistent_notification.create
+            data: 
+              title: "DOUBLE PUSH"
+              message: "TEST"
+
+- id: '1587296067192'
+  alias: Stop kids room playback when sleep timer finishes
+  trigger:
+    platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.kids_room_sleep_timer
+  action:
+    - service: media_player.media_stop
+      entity_id: media_player.kids_room_speaker
+
+- id: '1587296067195'
+  alias: Clean home when being told so
+  trigger:
+    - platform: conversation
+      command:
+        - "(clean|vacumm) (the|my) (home|apartment)"
+  action:
+    - service: vacuum.start
+      entity_id: vacuum.robocop
+
+- id: '15872960672055'
+  alias: Turn light on/off when pressing remote
+  mode: parallel
+  trigger:
+    - platform: state
+      entity_id: event.kids_room_remote
+      variables:
+        button1: switch.kids_room_butterfly
+        button2: switch.kids_room_star
+        button3: switch.kids_room_reading_lamp
+    - platform: state
+      entity_id: 
+        - event.bedroom_remote_1
+        - event.bedroom_remote_2
+      variables:
+        button1: light.bedroom_bedside_table_1
+        button2: light.bedroom_bedside_table_2
+        button3: light.bedroom_sideboard
+    - platform: state
+      entity_id: event.christmas_remote
+      variables:
+        button1: 
+          - switch.living_room_christmas_tree
+          - switch.hallway_christmas_tree_mini
+        button2: switch.balcony_lights
+        button3:
+          - switch.kitchen_advent_candlestick
+          - switch.bedroom_advent_candlestick
+  action:
+    - service: >
+        {% if trigger.to_state.attributes.event_type == 'on' %}
+          homeassistant.turn_on
+        {% else %}
+          homeassistant.turn_off
+        {% endif %}
+      target: 
+        entity_id: >
+          {% from 'utilities.jinja' import flatten %}
+          {% if trigger.to_state.attributes.group %}
+            {{ flatten(button1, button2, button3)  }}
+          {% else %}
+            {% set i = trigger.to_state.attributes.unit % 3 %}
+            {{ [button1, button2, button3][i] }}
+          {% endif %}
+
+- id: '15872960672384'
+  alias: Initiate Christmas feelings on Christmas Eve morning
+  trigger:
+    - platform: sun
+      event: sunrise
+  condition:
+    alias: Christmas
+    condition: template
+    value_template: '{{ now().month == 12 and now().day == 24 }}'
+  action:
+    - service: script.initiate_christmas_feeling
+
+- id: '15872960672394'
+  alias: Turn on/off speakers when audio available
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.speakers_audio_available
+      to: 'on'
+      for: '00:00:01'      
+    - platform: state
+      entity_id: binary_sensor.speakers_audio_available
+      to: 'off'
+      for: '00:05:00'
+  action:
+    - service: > 
+        {% if trigger.to_state.state == 'on' %}
+          homeassistant.turn_on
+        {% else %}
+          homeassistant.turn_off
+        {% endif %}
+      entity_id: switch.speakers
