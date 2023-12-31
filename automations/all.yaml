@@ -13,8 +13,7 @@
     data:
       entity_id: group.christmas_lights
 
-- id: '1564525145711'
-  alias: Turn christmas lights off when bright outside
+- alias: Turn christmas lights off when bright outside
   trigger:
     platform: sun
     event: sunrise
@@ -27,8 +26,7 @@
     data:
       entity_id: group.christmas_lights
       
-- id: '1608504370538'
-  alias: Turn off Christmas lights at night
+- alias: Turn off Christmas lights at night
   trigger:
     platform: time
     at: 00:30
@@ -41,8 +39,7 @@
     data:
       entity_id: group.christmas_lights
 
-- id: '1564525145701'
-  alias: Turn office lights on when computer is active
+- alias: Turn office lights on when computer is active
   trigger:
     platform: state
     entity_id: binary_sensor.macbook_pro
@@ -56,8 +53,7 @@
     data:
       entity_id: group.office
 
-- id: '1564525145702'
-  alias: Turn office lights off when computer is inactive
+- alias: Turn office lights off when computer is inactive
   trigger:
     platform: state
     entity_id: binary_sensor.macbook_pro
@@ -77,8 +73,7 @@
        - office.office_spotlights
        - office.office_desk_lamp
 
-- id: '1564525145782'
-  alias: Hallway motion turns on tablet
+- alias: Hallway motion turns on tablet
   trigger:
     entity_id: binary_sensor.hallway_motion_sensor
     from: 'off'
@@ -92,8 +87,7 @@
         - switch.magic_mirror
         - switch.hallway_christmas_tree_mini
 
-- id: '1564525145783'
-  alias: Hallway motion absence turns off tablet
+- alias: Hallway motion absence turns off tablet
   trigger:
     entity_id: binary_sensor.hallway_motion_sensor
     from: 'on'
@@ -105,8 +99,7 @@
   - service: homeassistant.turn_off
     entity_id: switch.magic_mirror
 
-- id: '1569245264705'
-  alias: Bathroom motion turns on bathroom ceiling lamp dimmed
+- alias: Bathroom motion turns on bathroom ceiling lamp dimmed
   trigger:
     entity_id: binary_sensor.mqtt_bathroom_motion
     from: 'off'
@@ -121,8 +114,8 @@
       brightness: 1
       entity_id: light.bathroom_ceiling
     service: light.turn_on
-- id: '1569245264706'
-  alias: Bathroom motion turns on bathroom ceiling lamp strong
+
+- alias: Bathroom motion turns on bathroom ceiling lamp strong
   trigger:
     entity_id: binary_sensor.mqtt_bathroom_motion
     from: 'off'
@@ -138,8 +131,7 @@
       entity_id: light.bathroom_ceiling
     service: light.turn_on
 
-- id: '1569245490089'
-  alias: Bathroom motion sensor disabled turns off light
+- alias: Bathroom motion sensor disabled turns off light
   trigger:
     entity_id: binary_sensor.mqtt_bathroom_motion
     from: 'on'
@@ -151,8 +143,7 @@
       entity_id: light.bathroom_ceiling
     service: light.turn_off
 
-- id: '1577999538328'
-  alias: Clean room
+- alias: Clean room
   description: Start Roborock room cleaning triggered from Assist
   trigger:
    - platform: conversation
@@ -164,8 +155,7 @@
     data_template:
       area: '{{ trigger.slots.rooms }}'    
 
-- id: '1577999538329'
-  alias: Send notification when Spotify playlist is updated
+- alias: Send notification when Spotify playlist is updated
   description: Sends a rich notification when a track has been added to a Spotify playlist, as detected by IFTTT
   trigger:
     event_data:
@@ -195,8 +185,7 @@
           title: "Play"
           uri: "{{ trigger.event.data['trackUrl'] }}"
 
-- id: '1585509334461'
-  alias: Turn on office lights when PC turns on
+- alias: Turn on office lights when PC turns on
   description: ''
   trigger:
     entity_id: switch.computer_power
@@ -209,8 +198,7 @@
     entity_id: group.office
     service: light.turn_on
 
-- id: '1585509334462'
-  alias: Turn off office lights when PC turns off
+- alias: Turn off office lights when PC turns off
   description: ''
   trigger:
     entity_id: switch.computer_power
@@ -223,8 +211,7 @@
     entity_id: group.office
     service: light.turn_off
 
-- id: '1587292652712'
-  alias: Send notification when vacuum returns to base with action to go to waste bin
+- alias: Send notification when vacuum returns to base with action to go to waste bin
   trigger:
     entity_id: sensor.robocop_total_clean_area
     platform: state
@@ -267,8 +254,7 @@
           title: Manual
           uri: !secret roborock_manual
 
-- id: '1587296067183'
-  alias: Send Robocop to waste bin on notification action
+- alias: Send Robocop to waste bin on notification action
   description: ''
   trigger:
     event_data:
@@ -280,8 +266,7 @@
   - data: {}
     service: script.send_robocop_to_waste_bin
 
-- id: '1587296067185'
-  alias: "TV volume control"
+- alias: "TV volume control"
   trigger:
     platform: state
     entity_id: input_number.tv_volume
@@ -292,8 +277,7 @@
       data:
         volume_level: '{{ trigger.to_state.state | float / 60  }}'
 
-- id: '1587296067187'
-  alias: "TV device trigger (turn on)"
+- alias: "TV device trigger (turn on)"
   trigger:
     platform: device
     device_id: 3db85e45506d5575e3ab481d650bf776
@@ -302,8 +286,7 @@
   action:
     - service: script.turn_tv_on
 
-- id: '1587296067189'
-  alias: "Kids room button clicked"
+- alias: "Kids room button clicked"
   trigger:
     platform: event
     event_type: flic
@@ -329,8 +312,7 @@
     # Send notification if daytime? 
     # Count button presses
 
-- id: '1587296067190'
-  alias: "Flic Twist ⚫️"
+- alias: "Flic Twist ⚫️"
   trigger:
     platform: event
     event_type: flic
@@ -349,8 +331,7 @@
               title: "DOUBLE PUSH"
               message: "TEST"
 
-- id: '1587296067192'
-  alias: Stop kids room playback when sleep timer finishes
+- alias: Stop kids room playback when sleep timer finishes
   trigger:
     platform: event
     event_type: timer.finished
@@ -360,8 +341,7 @@
     - service: media_player.media_stop
       entity_id: media_player.kids_room_speaker
 
-- id: '1587296067195'
-  alias: Clean home when being told so
+- alias: Clean home when being told so
   trigger:
     - platform: conversation
       command:
@@ -370,8 +350,7 @@
     - service: vacuum.start
       entity_id: vacuum.robocop
 
-- id: '15872960672055'
-  alias: Turn light on/off when pressing remote
+- alias: Turn light on/off when pressing remote
   mode: parallel
   trigger:
     - platform: state
@@ -415,8 +394,7 @@
             {{ [button1, button2, button3][i] }}
           {% endif %}
 
-- id: '15872960672384'
-  alias: Initiate Christmas feelings on Christmas Eve morning
+- alias: Initiate Christmas feelings on Christmas Eve morning
   trigger:
     - platform: sun
       event: sunrise
@@ -427,8 +405,7 @@
   action:
     - service: script.initiate_christmas_feeling
 
-- id: '15872960672394'
-  alias: Turn on/off speakers when audio available
+- alias: Turn on/off speakers when audio available
   trigger:
     - platform: state
       entity_id: binary_sensor.speakers_audio_available
