@@ -1,0 +1,82 @@
+blueprint:
+  name: 'REMOTE: Tradfri Wireless Dimmer for light'
+  description: 'Control light with IKEA ICTC-G-1 Tradfri Wireless Dimmer
+
+    Usage:
+
+    rotation right/left with stop: turn on/off light
+
+    rotation right: dim up light
+
+    rotation left: dim down light
+
+    '
+  domain: automation
+  input:
+    remote:
+      name: Tradfri Wireless Dimmer
+      description: 'ZHA: Tradfri Wireless Dimmer to use (IKEA ICTC-G-1)'
+      selector:
+        device:
+          integration: zha
+          manufacturer: IKEA of Sweden
+          model: TRADFRI wireless dimmer
+          multiple: false
+    light:
+      name: Light
+      description: Light to control with Tradfri Wireless Dimmer
+      selector:
+        entity:
+          domain:
+          - light
+          multiple: false
+  source_url: https://community.home-assistant.io/t/zha-remote-tradfri-wireless-dimmer-ictc-g-1-for-light/459873
+mode: restart
+max_exceeded: silent
+variables:
+  LIGHT: !input light
+trigger:
+- platform: event
+  event_type: zha_event
+  event_data:
+    device_id: !input remote
+action:
+- choose:
+  - alias: Fast rotation right or left with stop - on/off
+    conditions: '{{ trigger.event.data.command == ''move_to_level_with_on_off'' }}'
+    sequence:
+    - service: light.turn_on
+      target:
+        entity_id: '{{ LIGHT }}'
+      data:
+        brightness: '{{ trigger.event.data.params.level }}'
+  - alias: Rotation right - dim up
+    conditions: '{{ trigger.event.data.command == ''move_with_on_off'' }}'
+    sequence:
+    - repeat:
+        while: '{{ is_state(LIGHT, ''on'') and state_attr(LIGHT, ''brightness'') |
+          int != 255 }}'
+        sequence:
+        - service: light.turn_on
+          target:
+            entity_id: '{{ LIGHT }}'
+          data:
+            brightness_step: '{{ trigger.event.data.params.rate | float / 10 }}'
+            transition: 0.5
+        - delay:
+            seconds: 0.5
+  - alias: Rotation left - dim down
+    conditions: '{{ trigger.event.data.command == ''move'' }}'
+    sequence:
+    - repeat:
+        while: '{{ is_state(LIGHT, ''on'') }}'
+        sequence:
+        - service: light.turn_on
+          target:
+            entity_id: '{{ LIGHT }}'
+          data:
+            brightness_step: '{{ trigger.event.data.params.rate | float / -10 }}'
+            transition: 0.5
+        - delay:
+            seconds: 0.5
+  default: []
