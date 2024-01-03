@@ -1,0 +1,106 @@
+blueprint:
+  name: IKEA E1743 Trådfri on/off switch (ZHA)
+  description: Dim or turn on/off a light using the IKEA Trådfri E1743 switch remote.
+    Works with ZHA.
+  author: oscarb
+  domain: automation
+  input:
+    light:
+      name: Light
+      description: Entiy ID of light to control
+      selector:
+        entity:
+          filter:
+          - domain:
+            - light
+          multiple: false
+    remote:
+      name: Trådfri on/off switch
+      description: The IKEA Trådfri on/off switch remote to use
+      selector:
+        device:
+          filter:
+          - integration: zha
+            manufacturer: IKEA of Sweden
+            model: TRADFRI on/off switch
+          multiple: false
+    fade_speed:
+      name: Fade speed
+      description: The speed used for dimming the light )brightness steps per second)
+      default: 80
+      selector:
+        number:
+          min: 1.0
+          max: 255.0
+          unit_of_measurement: brightness steps/second
+          step: 1.0
+          mode: slider
+    default_brightness:
+      name: Default brightness
+      description: The brightness to set when turning on the light
+      default: 128
+      selector:
+        number:
+          min: 1.0
+          max: 255.0
+          step: 1.0
+          mode: slider
+  source_url: https://gist.github.com/oscarb/1e295b636d27559aa6c4d45c9ccd24ae
+mode: restart
+max_exceeded: silent
+variables:
+  input_light: !input light
+  fade_speed: !input fade_speed
+trigger:
+- platform: event
+  event_type: zha_event
+  event_data:
+    device_id: !input remote
+action:
+- choose:
+  - conditions: '{{ trigger.event.data.command == ''on'' }}'
+    sequence:
+    - service: light.turn_on
+      entity_id: !input light
+      data:
+        brightness: !input default_brightness
+  - conditions: '{{ trigger.event.data.command == ''off'' }}'
+    sequence:
+    - service: light.turn_off
+      entity_id: !input light
+  - conditions: '{{ trigger.event.data.command in [''move'', ''move_with_on_off'']
+      }}'
+    sequence:
+    - alias: Set up variables
+      variables:
+        brightness_from: '{{ state_attr(input_light, ''brightness'') | int(0) }}'
+        brightness_target: '{{ 0 if trigger.event.data.command == ''move'' else 255
+          }}'
+        brightness_delta: '{{ (brightness_target - brightness_from) | abs }}'
+        brightness_direction: '{{ -1 if trigger.event.data.command == ''move'' else
+          1 }}'
+        transition_time: '{{ brightness_delta / fade_speed }}'
+    - service: light.turn_on
+      entity_id: !input light
+      data:
+        transition: '{{ transition_time }}'
+        brightness: '{{ brightness_target }}'
+    - wait_for_trigger:
+      - platform: event
+        event_type: zha_event
+        event_data:
+          device_id: !input remote
+          command: stop_with_on_off
+        variables:
+          timestamp_end: '{{ now() }}'
+      timeout: '{{ transition_time }}'
+      continue_on_timeout: false
+    - alias: Estimate current brightness
+      variables:
+        brightness_current: "{{ brightness_from + \n    brightness_direction * fade_speed
+          * (wait.trigger.event.time_fired - trigger.event.time_fired).total_seconds()
+          \n}}\n"
+    - service: light.turn_on
+      entity_id: !input light
+      data:
+        brightness: '{{ brightness_current }}'
