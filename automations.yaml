@@ -1,1 +1,8 @@
-[]
+- id: '1704037367965'
+  alias: Adjust desk office brightness using Tradfri wireless dimmer
+  description: ''
+  use_blueprint:
+    path: dieneuser/zha-remote-tradfri-wireless-dimmer-ictc-g-1-for-light.yaml
+    input:
+      remote: 5093364d7cf432e4ada7f489d8fd0d30
+      light: light.office_desk
