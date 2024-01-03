@@ -398,6 +398,13 @@
         button3:
           - switch.kitchen_advent_candlestick
           - switch.bedroom_advent_candlestick
+  condition:
+    alias: Ensure LilyGO was not recently restarted
+    condition: state
+    entity_id: binary_sensor.omg_lilygo_rtl_433_esp_sys_connectivity
+    state: 'on'
+    for: 
+      minutes: 1 
   action:
     - service: >
         {% if trigger.to_state.attributes.event_type == 'on' %}
