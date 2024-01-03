@@ -6,3 +6,11 @@
     input:
       remote: 5093364d7cf432e4ada7f489d8fd0d30
       light: light.office_desk
+- id: '1704039775290'
+  alias: IKEA Rodret Dimmer Light Control (ZHA/Z2M)
+  description: ''
+  use_blueprint:
+    path: damru/ikea-rodret_E2201_ZHA-Z2M_control-light.yaml
+    input:
+      remote_device: de92640f89b2ee6968d48f4ab01827eb
+      light: light.color_temperature_light_1
