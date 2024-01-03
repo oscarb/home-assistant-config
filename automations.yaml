@@ -14,3 +14,11 @@
     input:
       remote_device: de92640f89b2ee6968d48f4ab01827eb
       light: light.color_temperature_light_1
+- id: '1704206458274'
+  alias: IKEA E1743 Trådfri on/off switch - Cabinet Light
+  description: ''
+  use_blueprint:
+    path: oscarb/ikea_tradfri_e1743_light.yaml
+    input:
+      light: light.cabinet
+      remote: 9e898747b9d814c5d3b5b904ac8a9a59
