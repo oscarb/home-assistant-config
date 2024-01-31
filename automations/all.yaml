@@ -453,3 +453,19 @@
           homeassistant.turn_off
         {% endif %}
       entity_id: switch.speakers
+
+- id: 'BZqOlbuJ'
+  alias: "Music button clicked"
+  trigger:
+    platform: event
+    event_type: flic
+    event_data:
+      name: "Music"
+  action:
+    - service: >
+        {% if trigger.event.data.action == 'PUSH' %}
+          media_player.media_next_track
+        {% elif trigger.event.data.action == 'DOUBLE_PUSH' %}
+          media_player.media_play_pause
+        {% endif %}
+      entity_id: media_player.spotify_paq
