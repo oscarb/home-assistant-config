@@ -185,6 +185,11 @@ template:
         {{ is_state('sensor.macbook_pro_oscar_active_audio_output', 'Scarlett 6i6 USB')
             and is_state('binary_sensor.macbook_pro_oscar_audio_output_in_use', 'on') 
             or is_state('media_player.chromecast_audio', ['paused', 'buffering', 'playing']) }} 
+  - sensor:
+      - name: "Flossing"
+        icon: 'mdi:alert'
+        state: >
+          {{ (now().timetuple().tm_yday % 2 == 0) | iif('🦷', '😁') }}
 
 # Switches
 switch:
