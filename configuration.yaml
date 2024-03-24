@@ -397,6 +397,29 @@ notify:
 
 # Light groups 
 light:
+  - platform: relative_brightness_light_group
+    name: Bedroom
+    entities:
+      - light.bedroom_ceiling
+      - light.bedroom_bedside_table_1
+      - light.bedroom_bedside_table_2
+      - light.bedroom_sideboard
+  - platform: relative_brightness_light_group
+    name: Kitchen
+    entities:
+      - light.kitchen_ceiling
+      - light.cabinet
+  - platform: relative_brightness_light_group
+    name: Living room
+    entities:
+      - light.living_room_window_sill
+      - light.cabinet
+  - platform: relative_brightness_light_group
+    name: Office
+    entities:
+      - light.office_desk
+      - light.office_spotlights
+      - light.office_top_corner
   - platform: group
     name: Living Room Ceiling
     entities:
