@@ -440,7 +440,7 @@
     - platform: state
       entity_id: binary_sensor.speakers_audio_available
       to: 'on'
-      for: '00:00:02'      
+      for: '00:00:02'
     - platform: state
       entity_id: binary_sensor.speakers_audio_available
       to: 'off'
