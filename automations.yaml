@@ -22,3 +22,11 @@
     input:
       light: light.cabinet
       remote: 9e898747b9d814c5d3b5b904ac8a9a59
+- id: '1707650578350'
+  alias: Trådfri remote - office desk
+  description: ''
+  use_blueprint:
+    path: oscarb/ikea_tradfri_e1743_light.yaml
+    input:
+      light: light.office_desk
+      remote: 9e898747b9d814c5d3b5b904ac8a9a59
