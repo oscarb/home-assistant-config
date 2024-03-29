@@ -23,9 +23,9 @@ kids_room:
   name: Kids room 
   entities:
     - light.kids_room_ceiling
-    - switch.butterfly
-    - switch.reading_lamp
-    - switch.star
+    - switch.kids_room_butterfly
+    - switch.kids_room_reading_lamp
+    - switch.kids_room_star
 
 kitchen:
   name: Kitchen
@@ -62,6 +62,8 @@ all_lamps:
     - light.bedroom_bedside_table_1
     - light.bedroom_bedside_table_2
     - light.bedroom_sideboard
+    # Bathroom
+    - light.bathroom_ceiling
     # Kitchen 
     - light.cabinet
     - light.kitchen_ceiling
