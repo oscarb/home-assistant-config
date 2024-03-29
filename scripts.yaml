@@ -175,6 +175,23 @@ dim_without_turn_off:
         entity_id: "{{ entities | join(', ') }}"
       service: light.turn_on
 
+smart_living_room_toggle: 
+  alias: Turn on/off lights in a smart way
+  sequence:
+    - service: >
+        {% if is_state('light.living_room', 'on') %}
+          homeassistant.turn_off
+        {% else %}
+          homeassistant.turn_on
+        {% endif %}
+      target:
+        entity_id: >
+          {% if is_state('light.living_room', 'on') %}
+            light.living_room
+          {% else %}
+            ['light.living_room_window_sill', 'light.cabinet']
+          {% endif %}
+
 test_script: 
   alias: For testing purposes
   sequence:
