@@ -56,6 +56,17 @@ media_source:
 
 # Enables support for tracking state changes over time
 history:
+
+# View all events in a logbook
+logbook:
+  exclude:
+    domains:
+      - updater
+      - media_player
+
+# Purge database regularly
+recorder:
+  purge_keep_days: 7
   exclude:
     domains:
       - automation
@@ -95,24 +106,6 @@ history:
       - binary_sensor.macbook_pro 
       - binary_sensor.macbook_pro_at_desk
 
-# View all events in a logbook
-logbook:
-  exclude:
-    domains:
-      - updater
-      - media_player
-
-# Purge database regularly
-recorder:
-  purge_keep_days: 7
-  exclude:
-    domains:
-      - automation
-      - updater
-      - camera
-      - group
-      - persistent_notification
-      - script
 
 # Enables a map showing the location of tracked devices
 map:
