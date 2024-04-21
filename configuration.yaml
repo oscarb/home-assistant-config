@@ -406,6 +406,7 @@ light:
     name: Living room
     entities:
       - light.living_room_window_sill
+      - light.living_room_ceiling
       - light.cabinet
   - platform: relative_brightness_light_group
     name: Office
