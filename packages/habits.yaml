@@ -1,0 +1,51 @@
+# Habits
+
+## Sweets
+
+input_button:
+  habit_sweets:
+    name: Sweets habit
+    icon: mdi:candy
+
+
+template: 
+  - trigger: 
+    - platform: time_pattern
+      hours: 0
+      minutes: 7
+    - platform: state
+      entity_id: input_button.habit_sweets
+    sensor: 
+    - name: Time since last habit sweets
+      state: >-
+        {{ ((now() - as_datetime(states('input_button.habit_sweets'))).total_seconds() / (60*60*24)) | round(3) | round(0, 'ceil') }}
+      unit_of_measurement: days
+      attributes:
+        is_record: >-
+          {{ int(this.state, 0) > state_attr('sensor.longest_time_since_habit_sweets', 'total_days')  }}
+        best_streak: >-
+          {% set nrOfDays = state_attr('sensor.longest_time_since_habit_sweets', 'total_days') %}
+          {{ "%d %s" % (nrOfDays, 'day' if nrOfDays == 1 else 'days') }}
+          
+  - trigger:
+    - platform: state
+      entity_id: input_button.habit_sweets
+    sensor:
+      - name: Longest time since habit sweets
+        state: >-
+          {{ [this.state, (now() - as_datetime(trigger.from_state.state)).total_seconds()] | map('int', 0) | max }}
+        unit_of_measurement: seconds
+        attributes:
+          total_days: >
+            {{ (( this.state | int(0)) / (60*60*24)) | round(3) | round(0, 'ceil') }}
+
+
+# {% set nrOfDays = states('sensor.time_since_last_habit_sweets') | int -%}
+# {% set heading = "%d %s" % (nrOfDays, 'day' if nrOfDays == 1 else 'days') -%}
+# <h1>🚫🍫</h1><h1>{{ heading }}</h1>
+# {%- set record = state_attr('sensor.longest_time_since_habit_sweets', 'total_days') | int -%}
+# {%- if state_attr('sensor.time_since_last_habit_sweets', 'is_record') -%}
+#   <b><font color=#81C784>NEW RECORD!</font></b>
+# {%- else -%}
+#   {{ "Record: %d %s" % (record, 'day' if record == 1 else 'days') }}
+# {% endif %}

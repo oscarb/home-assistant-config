@@ -18,6 +18,8 @@ homeassistant:
   # URLs
   external_url: !secret external_url
   internal_url: !secret internal_url
+  # Packages
+  packages: !include_dir_named packages
 
 # Show links to resources in log and frontend
 # introduction: false
