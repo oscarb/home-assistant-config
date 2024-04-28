@@ -1,3 +1,19 @@
+group_toggle: 
+  alias: Toggle grpup on/off
+  fields:
+    group:
+      description: Group to toggle on/off
+      example: "group.kitchen"
+  sequence:
+    - service: >
+        {% if is_state(group, 'on') %}
+          homeassistant.turn_off
+        {% else %}
+          homeassistant.turn_on
+        {% endif %}
+      target: 
+        entity_id: "{{ group }}"
+
 toggle_tv_power:
   alias: TV on/off
   sequence:
