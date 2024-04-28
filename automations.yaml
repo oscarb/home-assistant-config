@@ -30,3 +30,39 @@
     input:
       light: light.office_desk
       remote: 9e898747b9d814c5d3b5b904ac8a9a59
+- id: '1714303256311'
+  alias: IKEA TRADFRI Remote - Kids room
+  description: Control lights in kids room with IKEA Tradfri remote
+  use_blueprint:
+    path: niro1987/zha_ikea_tradfri_5button_remote_custom.yaml
+    input:
+      remote: 2629c586f4e4647f1ecdd1be567ca8ba
+      power_short:
+      - service: light.toggle
+        metadata: {}
+        data: {}
+        target:
+          entity_id: light.kids_room_ceiling
+      dimup_short:
+      - service: switch.toggle
+        metadata: {}
+        data: {}
+        target:
+          entity_id: switch.kids_room_star
+      colorup_short:
+      - service: switch.toggle
+        metadata: {}
+        data: {}
+        target:
+          entity_id: switch.kids_room_reading_lamp
+      colordown_short:
+      - service: switch.toggle
+        metadata: {}
+        data: {}
+        target:
+          entity_id: switch.kids_room_butterfly
+      dimdown_short:
+      - service: script.group_toggle
+        metadata: {}
+        data:
+          group: group.kids_room
