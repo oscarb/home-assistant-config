@@ -66,3 +66,22 @@
         metadata: {}
         data:
           group: group.kids_room
+- id: '1714317708649'
+  alias: Philips Tap Dial - Spotify volume
+  description: ''
+  use_blueprint:
+    path: Ddemooij1984/philips_tap_dial_switch volume-and-actions.yaml
+    input:
+      remote: de15c1b3e9b21af302b60512baa104a7
+      turnwheel_left:
+      - service: media_player.volume_down
+        metadata: {}
+        data: {}
+        target:
+          entity_id: media_player.spotify_paq
+      turnwheel_right:
+      - service: media_player.volume_up
+        metadata: {}
+        data: {}
+        target:
+          entity_id: media_player.spotify_paq
