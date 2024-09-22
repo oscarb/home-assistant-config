@@ -23,6 +23,9 @@
 
 - id: 'TaAgXTBO'
   alias: Send notification when vacuum returns to base with action to go to waste bin
+  variables:
+    apartment_size: !secret apartment_size
+    notify_service: "{{ states('input_text.notify_service_mobile_oscar') }}"
   trigger:
     entity_id: sensor.robocop_total_clean_area
     platform: state
@@ -35,14 +38,13 @@
            trigger.to_state.state | float(0) > trigger.from_state.state | float(0)
         }}
   action:
-  - service: "{{ states('input_text.notify_service_mobile_oscar') }}"
+  - service: "{{ notify_service }}"
     data_template:
       title: >
         {% set clean_area = states('sensor.robocop_last_clean_area') | round(0, 0) ~ ' ' ~ state_attr('sensor.robocop_last_clean_area', 'unit_of_measurement') %}
         {% set clean_duration = int(states('sensor.robocop_last_clean_duration')) // 60 ~ ' min' %}
         Robocop - Clean-up complete: {{ clean_area }}, {{ clean_duration }}
       message: >
-        {% set apartment_size = states('variable.apartment_size') | int %}
         {% set clean_area_old = trigger.from_state.state | int %} 
         {% set clean_area_new = trigger.to_state.state | int %}
         {% if clean_area_new // (apartment_size*2) > clean_area_old // (apartment_size*2) -%}
