@@ -1,0 +1,61 @@
+# Selective Room Cleaning
+
+script:
+  start_selective_room_cleaning:
+    alias: Start selective room cleaning
+    sequence:
+    - service: python_script.vacuum_room
+      entity_id: vacuum.robocop
+      data_template:
+        area: >
+          {{ label_entities('selective_room_cleaning') 
+            | select('is_state', 'on') 
+            | map('state_attr', 'friendly_name') 
+            | list 
+            | join(', ')  
+          }}
+
+
+automation:
+  - id: 'tiykEfAD'
+    alias: Reset selected rooms when docked
+    trigger:
+      platform: state
+      entity_id: vacuum.robocop
+      to: 'docked'
+    action:
+    - service: input_boolean.turn_off
+      target:
+        label_id: selective_room_cleaning
+        
+
+input_boolean:
+  clean_entrance:
+    name: Entrance
+    icon: mdi:shoe-sneaker
+
+  clean_hallway:
+    name: Hallway
+    icon: mdi:image-frame
+
+  clean_bedroom:
+    name: Bedroom
+    icon: mdi:bed-empty
+
+  clean_kitchen:
+    name: Kitchen
+    icon: mdi:silverware-fork-knife
+
+  clean_office:
+    name: Office
+    icon: mdi:laptop
+
+  clean_living_room:
+    name: Living room
+    icon: mdi:sofa
+
+  clean_kids_room:
+    name: Kids room
+    icon: mdi:teddy-bear
+
+  # {{ label_entities('selective_room_cleaning') | select('is_state', 'on') | map('state_attr', 'friendly_name') | list | join(', ')  }} 
