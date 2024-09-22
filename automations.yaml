@@ -85,3 +85,43 @@
         data: {}
         target:
           entity_id: media_player.spotify_paq
+- id: '1722513643379'
+  alias: Increase bathroom brightness with remote
+  description: ''
+  trigger:
+  - device_id: de92640f89b2ee6968d48f4ab01827eb
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+  condition: []
+  action:
+  - service: light.turn_on
+    metadata: {}
+    data:
+      brightness_pct: 100
+    target:
+      entity_id: light.bathroom_ceiling
+  mode: single
+- id: '1722513747771'
+  alias: Decrease bathroom brightness using remote
+  description: ''
+  trigger:
+  - device_id: de92640f89b2ee6968d48f4ab01827eb
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_off
+  condition:
+  - condition: numeric_state
+    entity_id: light.bathroom_ceiling
+    attribute: brightness
+    above: 1
+  action:
+  - service: light.turn_on
+    metadata: {}
+    data:
+      brightness: 1
+    target:
+      entity_id: light.bathroom_ceiling
+  mode: single
