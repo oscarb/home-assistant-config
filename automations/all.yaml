@@ -153,37 +153,6 @@
       entity_id: light.bathroom_ceiling
     service: light.turn_off
 
-- id: 'GiPhqk31'
-  alias: Send notification when Spotify playlist is updated
-  description: Sends a rich notification when a track has been added to a Spotify playlist, as detected by IFTTT
-  trigger:
-    event_data:
-      action: sharing
-    event_type: ifttt_webhook_received
-    platform: event
-  condition:
-    condition: template
-    value_template: >
-      {{ trigger.event.data["addedBy"] != states('variable.spotify_user_name') }}
-  action:
-  - service: "{{ states('input_text.notify_service_mobile_oscar') }}"
-    data_template:
-      title: "{{ trigger.event.data['playlistName'] }}"
-      message: >
-        🎵 {{ trigger.event.data['artistName'] ~ " - " ~ trigger.event.data['trackName'] }}    
-      data:
-        group: "{{ trigger.event.data['addedBy'] }}"
-        color: '#1DB954'
-        sticky: 'false'
-        clickAction: !secret spotify_shared_playlist
-        channel: Playlist updates
-        icon_url: !secret spotify_icon
-        image: "{{ trigger.event.data['albumCoverUrl'] }}"
-        actions:
-        - action: "URI" 
-          title: "Play"
-          uri: "{{ trigger.event.data['trackUrl'] }}"
-
 - id: 'w5g7FTpO'
   alias: Turn on office lights when PC turns on
   description: ''
