@@ -247,81 +247,10 @@ switch:
 # Google Assistant - https://www.home-assistant.io/components/google_assistant
 google_assistant:
   project_id: !secret ga_project_id
-  service_account:
-    private_key: !secret ga_private_key
-    client_email: !secret ga_client_email
+  service_account: !include google_assistant/service_account.json
+  report_state: true
   expose_by_default: false
-  entity_config:
-    # Bedroom
-    switch.bedroom_bedside_table_1:
-      name: Crib side light
-      room: Bedroom / Sovrum 
-      expose: true
-    switch.bedroom_bedside_table_2:
-      name: Window side light
-      room: Bedroom / Sovrum 
-      expose: true
-    switch.bedroom_sideboard_light:
-      name: Sideboard light
-      room: Bedroom / Sovrum 
-      expose: true
-
-    # Hallway
-    switch.magic_mirror:
-      name: Magic Mirror
-      room: Hallway / Hallen
-      aliases:
-        - Mirror
-      expose: true
-
-    switch.hallway_sideboard_light:
-      name: Sideobard light
-      room: Hallway / Hallen
-      expose: true
-      
-    switch.hallway_camera:
-      name: Hallway camera
-      room: Hallway / Hallen
-      aliases:
-        - Kameran i hallen
-        - Security camera
-      expose: true
-
-    # Kitchen 
-    sensor.mqtt_kitchen_temperature:
-      name: Indoors temperature
-      room: Kitchen / Kök
-      aliases:
-        - Kitchen temperature
-        - Temperature
-      expose: true
-
-    # Balcony
-    sensor.balcony_climate_temperature:
-      name: Outdoors temperature
-      room: Balcony
-      aliases:
-        - Balcony temperature
-        - Outside temperature
-        - Temperature outdoors
-        - Temperature
-      expose: true
-
-    # Living room
-    media_player.tv:
-      name: Philips TV
-      room: LivingroomVardagsrum
-      aliases: 
-        - TV Screen
-      expose: false
-
-    # Office
-    switch.computer_power:
-      name: Computer
-      room: Office
-      aliases:
-        - PC
-      expose: true
+  entity_config: !include google_assistant/entity_config.yaml
 
 # Proxy stream
 stream: 

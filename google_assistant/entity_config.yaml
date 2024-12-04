@@ -1,0 +1,215 @@
+# Input buttons
+input_button.habit_sweets:
+  name: Sweets habit
+
+# Scene 
+scene.evening:
+  name: Evening
+  aliases:
+    - Night
+    - Kväll
+
+# Scripts
+script.cast_goodnight_playlist: 
+  name: Goodnight playlist
+  room: Barnrummet
+  aliases:
+    - Kids playlist
+    - Nighttime stories
+    - Music in the kids room
+
+script.initiate_christmas_feeling:
+  name: Christmas feelings
+
+script.send_robocop_to_waste_bin:
+  name: Send robocop to waste bin
+  room: Vardagsrummet
+  aliases: 
+    - Send robocop to trash can
+    - Empty the vacuum
+    - Empty robocop
+    - Clean robocop
+    - Töm robocop
+    - Tom robotdammsugaren
+    - Skicka robocop till köket
+
+# ROOMS
+
+# Hallway
+switch.magic_mirror:
+  name: Magic Mirror
+  room: Hallen
+  aliases:
+    - Mirror
+    - Spegeln
+
+camera.magic_mirror_camera:
+  name: Magic Mirror camera
+  room: Hallen  
+  
+switch.hallway_camera:
+  name: Hallway camera
+  room: Hallen
+  aliases:
+    - Kameran i hallen
+    - Security camera
+
+
+# Bedroom
+light.bedroom_bedside_table_1:
+  name: Sänglampa höger
+  room: Sovrummet
+light.bedroom_bedside_table_2:
+  name: Sänglampa vänster
+  room: Sovrummet
+light.bedroom_ceiling:
+  name: Taklampan i sovrummet
+  room: Sovrummet
+  aliases: 
+    - Taklampa
+light.bedroom_sideboard:
+  name: Lampan på byrån
+  room: Sovrummet
+  aliases: 
+    - Lampan i hörnet
+    - Lampan på avlastningsbordet
+
+sensor.bedroom_climate_temperature: 
+  name: Temperatur sovrum
+  room: Sovrummet
+  aliases:
+    - Temperaturen i sovrummet
+sensor.bedroom_climate_humidity: 
+  name: Luftfuktighet sovrum
+  room: Sovrum 
+  aliases:
+    - Luftfuktigheten i sovrummet
+
+
+# Bathroom
+light.bathroom_ceiling:
+  name: Badrumslampan
+  room: Badrummet
+  aliases:
+    - Taklampan i badrummet
+    - Lampan på toaletten
+    - Toaletten
+
+
+# Kitchen 
+light.kitchen_ceiling:
+  name: Kökslampan
+  room: Köket
+  aliases:
+    - Taklampan i köket
+light.cabinet: 
+  name: Vitrinskåpet
+  room: Köket
+
+sensor.kitchen_climate_temperature:
+  name: Temperatur köket
+  room: Köket
+  aliases:
+    - Temperaturen i köket
+sensor.kitchen_climate_humidity:
+  name: Luftfuktighet köket
+  room: Köket
+  aliases:
+    - Luftfuktigheten i köket
+
+
+# Office
+light.office_desk:
+  name: Skrivbordslampan
+  room: Kontoret
+  aliases: 
+    - Lampan på skrivbordet
+light.office_spotlights:
+  name: Spotlights
+  room: Kontoret
+  aliases: 
+    - Spotlights på kontoret
+light.office_top_corner:
+  name: Hörnlampan
+  room: Kontoret
+  aliases: 
+    - Hörnlampan på kontoret
+
+switch.speakers:
+  name: Högtalarna
+  room: Office
+  aliases: 
+    - Speakers
+
+
+# Living room
+light.living_room_window_sill:
+  name: Fönsterlampan
+  room: Vardagsrummet
+  aliases: 
+    - Lampan i fönstret
+    - Lampan på fönsterbrädan
+light.living_room_ceiling:
+  name: Taklampan i vardagsrummet  
+  room: Vardagsrummet
+
+
+# TODO Add Christmas lights
+
+# Kids room
+light.kids_room_ceiling:
+  name: Taklampan i barnrummet
+  room: Barnrummet
+
+switch.kids_room_butterfly:
+  name: Fjärilen
+  room: Barnrummet
+  aliases:
+    - Fjärilslampan
+switch.kids_room_reading_lamp:
+  name: Läslampan
+  room: Barnrummet
+switch.kids_room_star:
+  name: Stjärnan
+  room: Barnrummet
+  aliases:
+    - Stjärnlampan
+
+sensor.kids_room_climate_temperature: 
+  name: Temperatur barnrummet
+  room: Barnrummet
+  aliases:
+    - Temperaturen i barnrummet
+sensor.kids_room_climate_humidity: 
+  name: Luftfuktighet barnrummet
+  room: Barnrummet
+  aliases:
+    - Luftfuktigheten i barnrummet
+
+
+# Balcony
+sensor.balcony_climate_temperature:
+  name: Temperatur balkongen
+  room: Balkongen
+  aliases:
+    - Balcony temperature
+    - Outside temperature
+    - Outdoors temperature
+    - Temperature outdoors
+    - Temperature
+sensor.balcony_climate_humidity:
+  name: Luftfuktighet balkongen
+  room: Balkongen
+  aliases:
+    - Balcony humidity
+    - Outside humidity
+    - Humidity outdoors
+    - Humidity
+
+switch.balcony_lights:
+  name: Balkongbelysningen
+  room: Balkongen
+  aliases:
+    - Lamporna på balkongen
+    - Balkongbelysning
+    - Slingan på balkongen

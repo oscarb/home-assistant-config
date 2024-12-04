@@ -27,4 +27,4 @@ ip_bans.yaml
 secrets.yaml
 known_devices.yaml
 
-SERVICE_ACCOUNT.JSON
+service_account.json
