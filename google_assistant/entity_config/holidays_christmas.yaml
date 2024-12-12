@@ -1,0 +1,49 @@
+# CHRISTMAS ENTITIES
+
+# Hallway
+switch.hallway_christmas_tree_mini:
+  name: Lilla julgranen
+  room: Hallen
+  aliases: 
+    - Julgranen i hallen
+    - Julgranarna
+    - Julbelysning
+
+
+# Bedroom
+switch.bedroom_advent_candlestick:
+  name: Adventsljusstaken i sovrummet
+  room: Sovrummet
+  aliases: 
+    - Adventsstaken i sovrummet
+    - Adventsljusstakarna
+    - Adventsstakarna
+    - Julbelysning
+
+
+# Kitchen
+switch.kitchen_advent_candlestick:
+  name: Adventsljusstaken i köket
+  room: Köket
+  aliases: 
+    - Adventsstaken i köket
+    - Adventsljusstakarna
+    - Adventsstakarna
+    - Julbelysning
+
+
+# Living room
+switch.living_room_christmas_tree:
+  name: Julgranen
+  room: Vardagsrummet
+  aliases: 
+    - Stora julgranen
+    - Julgranen i vardagsrummet
+    - Julgranarna
+    - Julbelysning
+
+light.living_room_christmas_star:
+  name: Julstjärnan
+  room: Vardagsrummet
+  aliases:
+    - Julbelysning
