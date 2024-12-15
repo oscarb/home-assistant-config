@@ -314,9 +314,6 @@ wake_on_lan:
 # System health
 system_health:
 
-# For casting YouTube videos
-media_extractor:
-
 # Notify Group
 notify: 
   - name: mobile_app
