@@ -166,6 +166,12 @@ template:
     - name: Bill Device On  
       state: >
         {{ states("sensor.tasmota_bill_energy_power") | float(0) > 1 | float(0) }}
+    - name: Bedside charger 1 charging 
+      state: >
+        {{ states("sensor.bedside_charger_1_power") | float(0) > 0 | float(0) }}
+    - name: Bedside charger 2 charging 
+      state: >
+        {{ states("sensor.bedside_charger_2_power") | float(0) > 0 | float(0) }}
     - name: MacBook Pro
       state: >
           {{ is_state('binary_sensor.macbook_pro_active', 'on')

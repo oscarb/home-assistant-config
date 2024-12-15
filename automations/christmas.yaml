@@ -1,0 +1,16 @@
+- id: 'nte2ttE1'
+  alias: Turn off bedroom advent candlestick when charging phone by night
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.bedside_charger_1_charging
+        - binary_sensor.bedside_charger_2_charging
+      from: 'off'
+      to: 'on'
+  conditions:
+    - ondition: time
+      after: '21:00:00'      
+  actions:
+    - action: homeassistant.turn_off
+      target:
+        entity_id: switch.bedroom_advent_candlestick
