@@ -107,10 +107,6 @@ recorder:
       - binary_sensor.macbook_pro 
       - binary_sensor.macbook_pro_at_desk
 
-
-# Enables a map showing the location of tracked devices
-map:
-
 # Track the sun
 sun:
 
