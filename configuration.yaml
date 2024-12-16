@@ -133,7 +133,7 @@ mqtt:
      device_class: motion     
   event:
     - name: Kids Room Remote
-      state_topic: "home/OMG_lilygo_rtl_433_ESP/RTL_433toMQTT/Nexa-Security/3/32595538"
+      state_topic: "home/OMG_lilygo_rtl_433_ESP_OOK/RTL_433toMQTT/Nexa-Security/3/32595538"
       <<: &nexa_remote_defaults
         event_types: 
           - 'on' 
@@ -375,9 +375,9 @@ shell_command:
   turn_off_computer: ssh {{ ssh_user }} net rpc shutdown -I {{ ip }} -U {{ user }} -t {{ timeout }}
 
 # Spotcast 
-spotcast: 
-  sp_dc: !secret spotify_sp_dc
-  sp_key: !secret spotify_sp_key
+#spotcast: 
+#  sp_dc: !secret spotify_sp_dc
+#  sp_key: !secret spotify_sp_key
 
 ## HELPERS
 
