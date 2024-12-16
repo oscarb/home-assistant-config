@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import requests
+import urllib.parse
+import difflib
 import random
 import time
 from functools import partial, wraps
@@ -14,6 +17,7 @@ from spotipy import SpotifyException
 from homeassistant.components.cast.media_player import CastDevice
 from homeassistant.components.spotify.media_player import SpotifyMediaPlayer
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,7 +29,9 @@ def get_spotify_media_player(
     """Get the spotify media player entity from hass."""
     platforms = entity_platform.async_get_platforms(hass, "spotify")
     spotify_media_player = None
+
     for platform in platforms:
+
         if platform.domain != "media_player":
             continue
 
@@ -38,7 +44,10 @@ def get_spotify_media_player(
                 try:
                     entity_devices = entity._devices
                 except (AttributeError):
-                    entity_devices = entity.data.devices.data
+                    try:
+                        entity_devices = entity.data.devices.data
+                    except AttributeError:
+                        entity_devices = entity.devices.data
 
                 _LOGGER.debug(
                     f"get_spotify_devices: {entity.entity_id}: "
@@ -54,16 +63,20 @@ def get_spotify_media_player(
         raise HomeAssistantError("Could not find spotify media player.")
 
 
-def get_spotify_devices(spotify_media_player: SpotifyMediaPlayer):
+def get_spotify_devices(
+        spotify_media_player: SpotifyMediaPlayer,
+        hass: HomeAssistant
+):
+
     if spotify_media_player:
         # Need to come from media_player spotify's sp client due to
         # token issues
-        try:
-            spotify_devices = spotify_media_player._spotify.devices()
-        except (AttributeError):
-            spotify_devices = spotify_media_player.data.client.devices()
+        asyncio.run_coroutine_threadsafe(
+            spotify_media_player.devices.async_refresh(),
+            hass.loop,
+        ).result()
 
-        _LOGGER.debug("get_spotify_devices: %s", spotify_devices)
+        spotify_devices = spotify_media_player.devices.data
 
         return spotify_devices
     return []
@@ -420,6 +433,28 @@ def get_random_playlist_from_category(
     )
 
     return chosen["uri"]
+
+
+def url_to_spotify_uri(url: str) -> str:
+    """
+    Convert a spotify web url (e.g. https://open.spotify.com/track/XXXX) to
+    a spotify-style URI (spotify:track:XXXX). Returns None on error.
+    """
+
+    o: urllib.parse.ParseResult
+    # will raise ValueError if URL is invalid
+    o = urllib.parse.urlparse(url)
+
+    if o.hostname != "open.spotify.com":
+        raise ValueError(
+            'Spotify URLs must have a hostname of "open.spotify.com"')
+
+    path = o.path.split("/")
+    if len(path) != 3:
+        raise ValueError(
+            'Spotify URLs must be of the form "https://open.spotify.com/<kind>/<target>"')
+
+    return f'spotify:{path[1]}:{path[2]}'
 
 
 def is_valid_uri(uri: str) -> bool:
