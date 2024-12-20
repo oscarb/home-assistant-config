@@ -1,47 +1,3 @@
-- id: 'isRB46wN'
-  alias: Turn christmas lights on when dark outside
-  trigger:
-    entity_id: sun.sun
-    attribute: elevation
-    platform: numeric_state
-    below: -3.0
-  condition: 
-    - condition: state
-      entity_id: input_boolean.is_christmas_time
-      state: "on"
-  action:
-  - service: homeassistant.turn_on
-    data:
-      entity_id: group.christmas_lights
-
-- id: 'zQqB7S81'
-  alias: Turn christmas lights off when bright outside
-  trigger:
-    platform: sun
-    event: sunrise
-  condition:
-    - condition: state
-      entity_id: input_boolean.is_christmas_time
-      state: "on"
-  action:
-  - service: homeassistant.turn_off
-    data:
-      entity_id: group.christmas_lights
-
-- id: 'V14JZxnL'
-  alias: Turn off Christmas lights at night
-  trigger:
-    platform: time
-    at: 00:30
-  condition: 
-    - condition: state
-      entity_id: input_boolean.is_christmas_time
-      state: "on"
-  action:
-  - service: homeassistant.turn_off
-    data:
-      entity_id: group.christmas_lights
-
 - id: 'ktgrzl14'
   alias: Turn office lights on when computer is active
   trigger:
@@ -91,20 +47,24 @@
     target:
       entity_id: 
         - switch.magic_mirror
+        - switch.hallway_sideboard_light
         - switch.hallway_christmas_tree_mini
 
 - id: '100JZqsD'
   alias: Hallway motion absence turns off tablet
   trigger:
+    platform: state
     entity_id: binary_sensor.hallway_motion_sensor
     from: 'on'
-    platform: state
     to: 'off'
+    for: 
+      minutes: 2
   condition: []
   action:
-  - delay: 00:00:05
   - service: homeassistant.turn_off
-    entity_id: switch.magic_mirror
+    entity_id: 
+      - switch.magic_mirror
+      - switch.hallway_sideboard_light
 
 - id: 'qPY0qTsQ'
   alias: Bathroom motion turns on bathroom ceiling lamp dimmed

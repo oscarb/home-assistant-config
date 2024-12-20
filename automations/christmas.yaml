@@ -1,3 +1,47 @@
+- id: 'isRB46wN'
+  alias: Turn christmas lights on when dark outside
+  trigger:
+    entity_id: sun.sun
+    attribute: elevation
+    platform: numeric_state
+    below: -3.0
+  condition: 
+    - condition: state
+      entity_id: input_boolean.is_christmas_time
+      state: "on"
+  action:
+  - service: homeassistant.turn_on
+    data:
+      entity_id: group.christmas_lights
+
+- id: 'zQqB7S81'
+  alias: Turn christmas lights off when bright outside
+  trigger:
+    platform: sun
+    event: sunrise
+  condition:
+    - condition: state
+      entity_id: input_boolean.is_christmas_time
+      state: "on"
+  action:
+  - service: homeassistant.turn_off
+    data:
+      entity_id: group.christmas_lights
+
+- id: 'V14JZxnL'
+  alias: Turn off Christmas lights at night
+  trigger:
+    platform: time
+    at: 00:30
+  condition: 
+    - condition: state
+      entity_id: input_boolean.is_christmas_time
+      state: "on"
+  action:
+  - service: homeassistant.turn_off
+    data:
+      entity_id: group.christmas_lights
+
 - id: 'nte2ttE1'
   alias: Turn off bedroom advent candlestick when charging phone by night
   trigger:
