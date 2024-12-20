@@ -119,12 +119,6 @@ input_text:
 # MQTT Binary sensors
 mqtt:
   binary_sensor:
-   - name: Hallway motion sensor 
-     state_topic: "home/OMG_lilygo_rtl_433_ESP/RTL_433toMQTT/Nexa-Security/1/25412630"
-     value_template: "{{ value_json.state }}"
-     payload_on: "ON"
-     payload_off: "OFF"
-     device_class: motion
    - name: Bathroom motion sensor 
      state_topic: "home/OMG_lilygo_rtl_433_ESP/RTL_433toMQTT/Nexa-Security/1/29404962"
      value_template: "{{ value_json.state }}"

@@ -36,6 +36,10 @@ script.send_robocop_to_waste_bin:
 # ROOMS
 
 # Hallway
+switch.hallway_sideboard_light:
+  name: Byrån i hallen
+  room: Hallen
+
 switch.magic_mirror:
   name: Magic Mirror
   room: Hallen
@@ -53,6 +57,7 @@ switch.hallway_camera:
   aliases:
     - Kameran i hallen
     - Security camera
+
 
 
 # Bedroom
