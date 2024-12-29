@@ -1,0 +1,32 @@
+
+group:
+  bedroom:
+    entities:
+      - switch.bedroom_advent_candlestick
+
+  hallway:
+    entities:
+      - switch.hallway_christmas_tree_mini
+
+  kitchen:
+    entities:
+      - switch.kitchen_advent_candlestick
+
+  living_room:
+    entities:
+      - light.living_room_christmas_star
+      - switch.living_room_christmas_tree
+
+  all_lamps:
+    entities:
+      # Bedroom
+      - switch.bedroom_advent_candlestick
+      # Hallway
+      - switch.hallway_christmas_tree_mini
+      # Kitchen
+      - switch.kitchen_advent_candlestick
+      # Living room
+      - light.living_room_christmas_star
+      - switch.living_room_christmas_tree
+
+
