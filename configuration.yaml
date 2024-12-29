@@ -331,6 +331,7 @@ light:
       - light.living_room_window_sill
       - light.living_room_ceiling
       - light.cabinet
+      - light.living_room_christmas_star
   - platform: relative_brightness_light_group
     name: Office
     entities:

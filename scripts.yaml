@@ -205,7 +205,7 @@ smart_living_room_toggle:
           {% if is_state('light.living_room', 'on') %}
             light.living_room
           {% else %}
-            ['light.living_room_window_sill', 'light.cabinet']
+            ['light.living_room_window_sill', 'light.cabinet', 'light.living_room_christmas_star']
           {% endif %}
 
 test_script: 
@@ -288,3 +288,42 @@ cast_goodnight_playlist:
             | from_json() 
             | random() }}
 
+
+analyze_camera_image:
+  alias: Analyze camera image
+  sequence:
+    - action: llmvision.image_analyzer
+      data:
+        remember: false
+        include_filename: false
+        target_width: 1280
+        detail: low
+        max_tokens: 100
+        temperature: 0.2
+        expose_images: false
+        provider: 01JFSR6DB480BQ1J8WXBVWF8EG
+        message: Describe this image
+        image_entity:
+          - camera.magic_mirror_camera
+      response_variable: Response
+
+analyze_camera_stream:
+  sequence:
+    - action: llmvision.stream_analyzer
+      data:
+        remember: false
+        duration: 5
+        max_frames: 3
+        include_filename: true
+        target_width: 1280
+        detail: low
+        max_tokens: 100
+        temperature: 0.2
+        expose_images: false
+        provider: 01JFSR6DB480BQ1J8WXBVWF8EG
+        message: >-
+          Tell me how many people are leaveing and entering the video frame to
+          left respective right
+        image_entity:
+          - camera.magic_mirror_camera
+      response_variable: response
