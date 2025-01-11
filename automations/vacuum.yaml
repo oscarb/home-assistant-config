@@ -1,80 +1,82 @@
 - id: 'gt4n94pi'
   alias: Clean home when being told so
-  trigger:
-    - platform: conversation
+  triggers:
+    - trigger: conversation
       command:
-        - "(clean|vacumm) (the|my) (home|apartment)"
-  action:
+        - "(clean|vacuum) (the|my) (home|apartment)"
+  actions:
     - action: vacuum.start
-      entity_id: vacuum.robocop
+      target:
+        entity_id: vacuum.robocop
 
 - id: '6NYdgMcf'
   alias: Clean room
   description: Start Roborock room cleaning triggered from Assist
-  trigger:
-   - platform: conversation
-     command:
-      - "(clean|vacuum) (the) {rooms}"
-  action:
-  - action: python_script.vacuum_room
-    entity_id: vacuum.robocop
-    data_template:
-      area: '{{ trigger.slots.rooms }}'
+  triggers:
+    - trigger: conversation
+      command:
+        - "(clean|vacuum) (the) {rooms}"
+  actions:
+    - action: python_script.vacuum_room
+      target:
+        entity_id: vacuum.robocop
+      data_template:
+        area: '{{ trigger.slots.rooms }}'
 
 - id: 'TaAgXTBO'
   alias: Send notification when vacuum returns to base with action to go to waste bin
   variables:
     apartment_size: !secret apartment_size
     notify_service: "{{ states('input_text.notify_service_mobile_oscar') }}"
-  trigger:
-    entity_id: sensor.robocop_total_clean_area
-    platform: state
-  condition: 
+  triggers:
+    - trigger: state
+      entity_id: sensor.robocop_total_clean_area
+  conditions:
     - condition: template
       value_template: >
-        {{ trigger.from_state is not none and 
+        {{ trigger.from_state is not none and
            trigger.to_state is not none and
-           trigger.from_state.state not in ["unavailable"] and  
+           trigger.from_state.state not in ["unavailable"] and
            trigger.to_state.state | float(0) > trigger.from_state.state | float(0)
         }}
-  action:
-  - action: "{{ notify_service }}"
-    data_template:
-      title: >
-        {% set clean_area = states('sensor.robocop_last_clean_area') | round(0, 0) ~ ' ' ~ state_attr('sensor.robocop_last_clean_area', 'unit_of_measurement') %}
-        {% set clean_duration = int(states('sensor.robocop_last_clean_duration')) // 60 ~ ' min' %}
-        Robocop - Clean-up complete: {{ clean_area }}, {{ clean_duration }}
-      message: >
-        {% set clean_area_old = trigger.from_state.state | int %} 
-        {% set clean_area_new = trigger.to_state.state | int %}
-        {% if clean_area_new // (apartment_size*2) > clean_area_old // (apartment_size*2) -%}
-          ⚠️ Empty dustbin and clean filter.
-        {%- elif clean_area_new // apartment_size > clean_area_old // apartment_size -%}
-          ⚠️ Empty dustbin.
-        {%- endif %}
-        {%- if is_state('binary_sensor.robocop_mop_attached', 'on') -%}
-          ⚠️ Remove water tank. 
-        {%- endif %}
-        Finished cleaning, returning to base.
-      data:
-        channel: Vacuum
-        clickAction: "app://com.xiaomi.smarthome"
-        notification_icon: "mdi:robot-vacuum"
-        actions:
-        - action: send_robocop_to_waste_bin
-          title: Go to waste bin
-        - action: URI
-          title: Manual
-          uri: !secret roborock_manual
+  actions:
+    - action: "{{ notify_service }}"
+      data_template:
+        title: >
+          {% set clean_area = states('sensor.robocop_last_clean_area') | round(0, 0) ~ ' ' ~ state_attr('sensor.robocop_last_clean_area', 'unit_of_measurement') %}
+          {% set clean_duration = int(states('sensor.robocop_last_clean_duration')) // 60 ~ ' min' %}
+          Robocop - Clean-up complete: {{ clean_area }}, {{ clean_duration }}
+        message: >
+          {% set clean_area_old = trigger.from_state.state | int %}
+          {% set clean_area_new = trigger.to_state.state | int %}
+          {% if clean_area_new // (apartment_size * 2) > clean_area_old // (apartment_size * 2) -%}
+            ⚠️ Empty dustbin and clean filter.
+          {%- elif clean_area_new // apartment_size > clean_area_old // apartment_size -%}
+            ⚠️ Empty dustbin.
+          {%- endif %}
+          {%- if is_state('binary_sensor.robocop_mop_attached', 'on') -%}
+            ⚠️ Remove water tank.
+          {%- endif %}
+          Finished cleaning, returning to base.
+        data:
+          channel: Vacuum
+          clickAction: "app://com.xiaomi.smarthome"
+          notification_icon: "mdi:robot-vacuum"
+          actions:
+            - action: send_robocop_to_waste_bin
+              title: Go to waste bin
+            - action: URI
+              title: Manual
+              uri: !secret roborock_manual
 
 - id: 'jgu5sWGm'
   alias: Send Robocop to waste bin on notification action
-  trigger:
-    event_data:
-      action: send_robocop_to_waste_bin
-    event_type: mobile_app_notification_action
-    platform: event
-  condition: []
-  action:
-  - data: {}
-    action: script.send_robocop_to_waste_bin
+  triggers:
+    - trigger: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: send_robocop_to_waste_bin
+  conditions: []
+  actions:
+    - action: script.send_robocop_to_waste_bin
+      data: {}

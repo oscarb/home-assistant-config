@@ -1,152 +1,152 @@
 - id: 'ktgrzl14'
   alias: Turn office lights on when computer is active
-  trigger:
-    platform: state
-    entity_id: binary_sensor.macbook_pro
-    to: 'on'
-  condition: 
-    condition: state
-    entity_id: binary_sensor.macbook_pro_at_desk
-    state: 'on'
-  action:
-  - action: light.turn_on
-    data:
-      entity_id: group.office
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.macbook_pro
+      to: 'on'
+  conditions:
+    - condition: state
+      entity_id: binary_sensor.macbook_pro_at_desk
+      state: 'on'
+  actions:
+    - action: light.turn_on
+      data:
+        entity_id: group.office
 
 - id: 'zcbujwFc'
   alias: Turn office lights off when computer is inactive
-  trigger:
-    platform: state
-    entity_id: binary_sensor.macbook_pro
-    to: 'off'
-  condition: 
-    condition: and
-    conditions:
-      - condition: state
-        entity_id: binary_sensor.macbook_pro_at_desk
-        state: 'on'
-      - condition: time
-        after: '15:30:00'
-  action:
-  - action: light.turn_off
-    data:
-      entity_id: 
-       - office.office_spotlights
-       - office.office_desk_lamp
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.macbook_pro
+      to: 'off'
+  conditions:
+    - condition: and
+      conditions:
+        - condition: state
+          entity_id: binary_sensor.macbook_pro_at_desk
+          state: 'on'
+        - condition: time
+          after: '15:30:00'
+  actions:
+    - action: light.turn_off
+      data:
+        entity_id:
+          - office.office_spotlights
+          - office.office_desk_lamp
 
 - id: '5kRhfCr6'
   alias: Hallway motion turns on tablet
-  trigger:
-    entity_id: binary_sensor.hallway_motion_sensor
-    from: 'off'
-    platform: state
-    to: 'on'
-  condition: []
-  action:
-  - action: homeassistant.turn_on
-    target:
-      entity_id: 
-        - switch.magic_mirror
-        - switch.hallway_sideboard_light
-        - switch.hallway_christmas_tree_mini
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.hallway_motion_sensor
+      from: 'off'
+      to: 'on'
+  conditions: []
+  actions:
+    - action: homeassistant.turn_on
+      target:
+        entity_id:
+          - switch.magic_mirror
+          - switch.hallway_sideboard_light
+          - switch.hallway_christmas_tree_mini
 
 - id: '100JZqsD'
   alias: Hallway motion absence turns off tablet
-  trigger:
-    platform: state
-    entity_id: binary_sensor.hallway_motion_sensor
-    from: 'on'
-    to: 'off'
-    for: 
-      minutes: 2
-  condition: []
-  action:
-  - action: homeassistant.turn_off
-    entity_id: 
-      - switch.magic_mirror
-      - switch.hallway_sideboard_light
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.hallway_motion_sensor
+      from: 'on'
+      to: 'off'
+      for:
+        minutes: 2
+  conditions: []
+  actions:
+    - action: homeassistant.turn_off
+      entity_id:
+        - switch.magic_mirror
+        - switch.hallway_sideboard_light
 
 - id: 'qPY0qTsQ'
   alias: Bathroom motion turns on bathroom ceiling lamp dimmed
-  trigger:
-    entity_id: binary_sensor.mqtt_bathroom_motion
-    from: 'off'
-    platform: state
-    to: 'on'
-  condition:
-  - after: '22:00'
-    before: 08:00
-    condition: time
-  action:
-  - data:
-      brightness: 1
-      entity_id: light.bathroom_ceiling
-    action: light.turn_on
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.mqtt_bathroom_motion
+      from: 'off'
+      to: 'on'
+  conditions:
+    - condition: time
+      after: '22:00'
+      before: '08:00'
+  actions:
+    - action: light.turn_on
+      data:
+        brightness: 1
+        entity_id: light.bathroom_ceiling
 
 - id: 'Etd7vGR0'
   alias: Bathroom motion turns on bathroom ceiling lamp strong
-  trigger:
-    entity_id: binary_sensor.mqtt_bathroom_motion
-    from: 'off'
-    platform: state
-    to: 'on'
-  condition:
-  - after: 08:00
-    before: '22:00'
-    condition: time
-  action:
-  - data:
-      brightness: 255
-      entity_id: light.bathroom_ceiling
-    action: light.turn_on
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.mqtt_bathroom_motion
+      from: 'off'
+      to: 'on'
+  conditions:
+    - condition: time
+      after: '08:00'
+      before: '22:00'
+  actions:
+    - action: light.turn_on
+      data:
+        brightness: 255
+        entity_id: light.bathroom_ceiling
 
 - id: 'WRU2Iewy'
   alias: Bathroom motion sensor disabled turns off light
-  trigger:
-    entity_id: binary_sensor.mqtt_bathroom_motion
-    from: 'on'
-    platform: state
-    to: 'off'
-  condition: []
-  action:
-  - data:
-      entity_id: light.bathroom_ceiling
-    action: light.turn_off
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.mqtt_bathroom_motion
+      from: 'on'
+      to: 'off'
+  conditions: []
+  actions:
+    - action: light.turn_off
+      data:
+        entity_id: light.bathroom_ceiling
 
 - id: 'w5g7FTpO'
   alias: Turn on office lights when PC turns on
   description: ''
-  trigger:
-    entity_id: switch.computer_power
-    from: 'off'
-    platform: state
-    to: 'on'
-  condition: []
-  action:
-  - data: {}
-    entity_id: group.office
-    action: light.turn_on
+  triggers:
+    - trigger: state
+      entity_id: switch.computer_power
+      from: 'off'
+      to: 'on'
+  conditions: []
+  actions:
+    - action: light.turn_on
+      data: {}
+      entity_id: group.office
 
 - id: 'nzf1opOZ'
   alias: Turn off office lights when PC turns off
   description: ''
-  trigger:
-    entity_id: switch.computer_power
-    from: 'on'
-    platform: state
-    to: 'off'
-  condition: []
-  action:
-  - data: {}
-    entity_id: group.office
-    action: light.turn_off
+  triggers:
+    - trigger: state
+      entity_id: switch.computer_power
+      from: 'on'
+      to: 'off'
+  conditions: []
+  actions:
+    - action: light.turn_off
+      data: {}
+      entity_id: group.office
 
 - id: 'fRLa11Es'
   alias: "TV volume control"
-  trigger:
-    platform: state
-    entity_id: input_number.tv_volume
-  action:
+  triggers:
+    - trigger: state
+      entity_id: input_number.tv_volume
+  actions:
     - action: media_player.volume_set
       target:
         entity_id: media_player.tv
@@ -155,23 +155,23 @@
 
 - id: 'eFPBd9m3'
   alias: "TV device trigger (turn on)"
-  trigger:
-    platform: device
-    device_id: 3db85e45506d5575e3ab481d650bf776
-    domain: philips_js
-    type: turn_on
-  action:
+  triggers:
+    - trigger: device
+      device_id: 3db85e45506d5575e3ab481d650bf776
+      domain: philips_js
+      type: turn_on
+  actions:
     - action: script.turn_tv_on
 
 - id: 'MMpEZi5k'
   alias: "Kids room button clicked"
-  trigger:
-    platform: event
-    event_type: flic
-    event_data:
-      name: "kids room"
-      action: PUSH 
-  action:
+  triggers:
+    - trigger: event
+      event_type: flic
+      event_data:
+        name: "kids room"
+        action: PUSH
+  actions:
       # Turn off lights
     - action: light.turn_off
       entity_id: light.kids_room_ceiling
@@ -192,82 +192,84 @@
 
 - id: '3xnyaeC7'
   alias: "Flic Twist ⚫️"
-  trigger:
-    platform: event
-    event_type: flic
-    event_data:
-      name: "office"
-  action:
+  triggers:
+    - trigger: event
+      event_type: flic
+      event_data:
+        name: "office"
+  actions:
     - choose:
-      - conditions: "{{ trigger.event.data.action == 'PUSH'}}"
-        sequence:
-        - action: switch.toggle
-          entity_id: switch.speakers
-      - conditions: "{{ trigger.event.data.action == 'DOUBLE_PUSH'}}"
-        sequence:
-          - action: persistent_notification.create
-            data: 
-              title: "DOUBLE PUSH"
-              message: "TEST"
+        - conditions: "{{ trigger.event.data.action == 'PUSH' }}"
+          sequence:
+            - action: switch.toggle
+              target:
+                entity_id: switch.speakers
+        - conditions: "{{ trigger.event.data.action == 'DOUBLE_PUSH' }}"
+          sequence:
+            - action: persistent_notification.create
+              data:
+                title: "DOUBLE PUSH"
+                message: "TEST"
 
 - id: 'KhwCeo0X'
   alias: Stop kids room playback when sleep timer finishes
-  trigger:
-    platform: event
-    event_type: timer.finished
-    event_data:
-      entity_id: timer.kids_room_sleep_timer
-  action:
+  triggers:
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.kids_room_sleep_timer
+  actions:
     - action: media_player.media_stop
-      entity_id: media_player.kids_room_speaker
+      target:
+        entity_id: media_player.kids_room_speaker
 
 - id: 'eJqn2aZN'
   alias: Turn light on/off when pressing remote
   mode: parallel
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: event.kids_room_remote
       variables:
         button1: switch.kids_room_butterfly
         button2: switch.kids_room_star
         button3: switch.kids_room_reading_lamp
-    - platform: state
-      entity_id: 
+    - trigger: state
+      entity_id:
         - event.bedroom_remote_1
         - event.bedroom_remote_2
       variables:
         button1: light.bedroom_bedside_table_1
         button2: light.bedroom_bedside_table_2
         button3: light.bedroom_sideboard
-    - platform: state
+    - trigger: state
       entity_id: event.christmas_remote
       variables:
-        button1: 
+        button1:
           - switch.living_room_christmas_tree
           - switch.hallway_christmas_tree_mini
         button2: switch.balcony_lights
         button3:
           - switch.kitchen_advent_candlestick
           - switch.bedroom_advent_candlestick
-  condition:
-    alias: Ensure LilyGO was not recently restarted
-    condition: state
-    entity_id: binary_sensor.omg_lilygo_rtl_433_esp_sys_connectivity
-    state: 'on'
-    for: 
-      minutes: 1 
-  action:
+  conditions:
+    - condition: state
+      alias: Ensure LilyGO was not recently restarted
+      entity_id: binary_sensor.omg_lilygo_rtl_433_esp_sys_connectivity
+      state: 'on'
+      for:
+        minutes: 1
+  actions:
     - action: >
         {% if trigger.to_state.attributes.event_type == 'on' %}
           homeassistant.turn_on
         {% else %}
           homeassistant.turn_off
         {% endif %}
-      target: 
+      target:
         entity_id: >
           {% from 'utilities.jinja' import flatten %}
           {% if trigger.to_state.attributes.group %}
-            {{ flatten(button1, button2, button3)  }}
+            {{ flatten(button1, button2, button3) }}
           {% else %}
             {% set i = trigger.to_state.attributes.unit % 3 %}
             {{ [button1, button2, button3][i] }}
@@ -275,48 +277,50 @@
 
 - id: 'z3gStMbe'
   alias: Initiate Christmas feelings on Christmas Eve morning
-  trigger:
-    - platform: sun
+  triggers:
+    - trigger: sun
       event: sunrise
-  condition:
-    alias: Christmas
-    condition: template
-    value_template: '{{ now().month == 12 and now().day == 24 }}'
-  action:
+  conditions:
+    - condition: template
+      alias: Christmas
+      value_template: '{{ now().month == 12 and now().day == 24 }}'
+  actions:
     - action: script.initiate_christmas_feeling
 
 - id: 'Gh8A5yyM'
   alias: Turn on/off speakers when audio available
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.speakers_audio_available
       to: 'on'
       for: '00:00:02'
-    - platform: state
+    - trigger: state
       entity_id: binary_sensor.speakers_audio_available
       to: 'off'
       for: '00:05:00'
-  action:
-    - action: > 
+  actions:
+    - action: >
         {% if trigger.to_state.state == 'on' %}
           homeassistant.turn_on
         {% else %}
           homeassistant.turn_off
         {% endif %}
-      entity_id: switch.speakers
+      target:
+        entity_id: switch.speakers
 
 - id: 'BZqOlbuJ'
-  alias: "Music button clicked"
-  trigger:
-    platform: event
-    event_type: flic
-    event_data:
-      name: "Music"
-  action:
+  alias: Music button clicked
+  triggers:
+    - trigger: event
+      event_type: flic
+      event_data:
+        name: "Music"
+  actions:
     - action: >
         {% if trigger.event.data.action == 'PUSH' %}
           media_player.media_next_track
         {% elif trigger.event.data.action == 'DOUBLE_PUSH' %}
           media_player.media_play_pause
         {% endif %}
-      entity_id: media_player.spotify_paq
+      target:
+        entity_id: media_player.spotify_paq
