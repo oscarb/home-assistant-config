@@ -291,6 +291,9 @@ sensor:
   - platform: rest
     name: Goodnight playlist story indexes
     resource: !secret spotify_sectionize_url
+    json_attributes: [indexes]
+    value_template: >
+      {{ value_json.indexes | length }}
     verify_ssl: false
     scan_interval: 14400
 

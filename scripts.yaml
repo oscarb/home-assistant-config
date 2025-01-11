@@ -284,9 +284,7 @@ cast_goodnight_playlist:
         repeat: context
         shuffle: false
         offset: > 
-          {{ states('sensor.goodnight_playlist_story_indexes') 
-            | from_json() 
-            | random() }}
+          {{ state_attr('sensor.goodnight_playlist_story_indexes', 'indexes') | random }}
     - action: media_player.volume_set
       data: 
         volume_level: 0.4
