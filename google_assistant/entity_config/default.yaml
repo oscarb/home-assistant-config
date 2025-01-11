@@ -129,6 +129,7 @@ light.office_desk:
   room: Kontoret
   aliases: 
     - Lampan på skrivbordet
+    - Skrivbordslampan på kontoret
 light.office_spotlights:
   name: Spotlights
   room: Kontoret
@@ -158,8 +159,6 @@ light.living_room_ceiling:
   name: Taklampan i vardagsrummet  
   room: Vardagsrummet
 
-
-# TODO Add Christmas lights
 
 # Kids room
 light.kids_room_ceiling:
