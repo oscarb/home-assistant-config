@@ -308,7 +308,7 @@ system_health:
 notify: 
   - name: mobile_app
     platform: group
-    actions: 
+    services: 
       - action: !secret mobile_device_name
 
 # Light groups 
