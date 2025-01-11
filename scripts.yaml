@@ -287,7 +287,11 @@ cast_goodnight_playlist:
           {{ states('sensor.goodnight_playlist_story_indexes') 
             | from_json() 
             | random() }}
-
+    - action: media_player.volume_set
+      data: 
+        volume_level: 0.4
+      target:
+        entity_id: media_player.kids_room_speaker
 
 analyze_camera_image:
   alias: Analyze camera image
@@ -322,7 +326,7 @@ analyze_camera_stream:
         expose_images: false
         provider: 01JFSR6DB480BQ1J8WXBVWF8EG
         message: >-
-          Tell me how many people are leaveing and entering the video frame to
+          Tell me how many people are leaving and entering the video frame to
           left respective right
         image_entity:
           - camera.magic_mirror_camera

@@ -183,9 +183,9 @@
     - action: switch.turn_off
       entity_id: switch.kids_room_butterfly
     # Play Spotify goodnight playlist
-    - action: script.cast_goodnight_playlist
     - action: timer.start
       entity_id: timer.kids_room_sleep_timer
+    - action: script.cast_goodnight_playlist
     # Sing happy birthday? 
     # Send notification if daytime? 
     # Count button presses
