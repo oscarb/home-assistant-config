@@ -9,7 +9,7 @@
     entity_id: binary_sensor.macbook_pro_at_desk
     state: 'on'
   action:
-  - service: light.turn_on
+  - action: light.turn_on
     data:
       entity_id: group.office
 
@@ -28,7 +28,7 @@
       - condition: time
         after: '15:30:00'
   action:
-  - service: light.turn_off
+  - action: light.turn_off
     data:
       entity_id: 
        - office.office_spotlights
@@ -43,7 +43,7 @@
     to: 'on'
   condition: []
   action:
-  - service: homeassistant.turn_on
+  - action: homeassistant.turn_on
     target:
       entity_id: 
         - switch.magic_mirror
@@ -61,7 +61,7 @@
       minutes: 2
   condition: []
   action:
-  - service: homeassistant.turn_off
+  - action: homeassistant.turn_off
     entity_id: 
       - switch.magic_mirror
       - switch.hallway_sideboard_light
@@ -81,7 +81,7 @@
   - data:
       brightness: 1
       entity_id: light.bathroom_ceiling
-    service: light.turn_on
+    action: light.turn_on
 
 - id: 'Etd7vGR0'
   alias: Bathroom motion turns on bathroom ceiling lamp strong
@@ -98,7 +98,7 @@
   - data:
       brightness: 255
       entity_id: light.bathroom_ceiling
-    service: light.turn_on
+    action: light.turn_on
 
 - id: 'WRU2Iewy'
   alias: Bathroom motion sensor disabled turns off light
@@ -111,7 +111,7 @@
   action:
   - data:
       entity_id: light.bathroom_ceiling
-    service: light.turn_off
+    action: light.turn_off
 
 - id: 'w5g7FTpO'
   alias: Turn on office lights when PC turns on
@@ -125,7 +125,7 @@
   action:
   - data: {}
     entity_id: group.office
-    service: light.turn_on
+    action: light.turn_on
 
 - id: 'nzf1opOZ'
   alias: Turn off office lights when PC turns off
@@ -139,7 +139,7 @@
   action:
   - data: {}
     entity_id: group.office
-    service: light.turn_off
+    action: light.turn_off
 
 - id: 'fRLa11Es'
   alias: "TV volume control"
@@ -147,7 +147,7 @@
     platform: state
     entity_id: input_number.tv_volume
   action:
-    - service: media_player.volume_set
+    - action: media_player.volume_set
       target:
         entity_id: media_player.tv
       data:
@@ -161,7 +161,7 @@
     domain: philips_js
     type: turn_on
   action:
-    - service: script.turn_tv_on
+    - action: script.turn_tv_on
 
 - id: 'MMpEZi5k'
   alias: "Kids room button clicked"
@@ -173,18 +173,18 @@
       action: PUSH 
   action:
       # Turn off lights
-    - service: light.turn_off
+    - action: light.turn_off
       entity_id: light.kids_room_ceiling
-    - service: switch.turn_off
+    - action: switch.turn_off
       entity_id: switch.kids_room_star
-    - service: switch.turn_off
+    - action: switch.turn_off
       entity_id: switch.kids_room_reading_lamp
     - delay: 2
-    - service: switch.turn_off
+    - action: switch.turn_off
       entity_id: switch.kids_room_butterfly
     # Play Spotify goodnight playlist
-    - service: script.cast_goodnight_playlist
-    - service: timer.start
+    - action: script.cast_goodnight_playlist
+    - action: timer.start
       entity_id: timer.kids_room_sleep_timer
     # Sing happy birthday? 
     # Send notification if daytime? 
@@ -201,11 +201,11 @@
     - choose:
       - conditions: "{{ trigger.event.data.action == 'PUSH'}}"
         sequence:
-        - service: switch.toggle
+        - action: switch.toggle
           entity_id: switch.speakers
       - conditions: "{{ trigger.event.data.action == 'DOUBLE_PUSH'}}"
         sequence:
-          - service: persistent_notification.create
+          - action: persistent_notification.create
             data: 
               title: "DOUBLE PUSH"
               message: "TEST"
@@ -218,7 +218,7 @@
     event_data:
       entity_id: timer.kids_room_sleep_timer
   action:
-    - service: media_player.media_stop
+    - action: media_player.media_stop
       entity_id: media_player.kids_room_speaker
 
 - id: 'eJqn2aZN'
@@ -257,7 +257,7 @@
     for: 
       minutes: 1 
   action:
-    - service: >
+    - action: >
         {% if trigger.to_state.attributes.event_type == 'on' %}
           homeassistant.turn_on
         {% else %}
@@ -283,7 +283,7 @@
     condition: template
     value_template: '{{ now().month == 12 and now().day == 24 }}'
   action:
-    - service: script.initiate_christmas_feeling
+    - action: script.initiate_christmas_feeling
 
 - id: 'Gh8A5yyM'
   alias: Turn on/off speakers when audio available
@@ -297,7 +297,7 @@
       to: 'off'
       for: '00:05:00'
   action:
-    - service: > 
+    - action: > 
         {% if trigger.to_state.state == 'on' %}
           homeassistant.turn_on
         {% else %}
@@ -313,7 +313,7 @@
     event_data:
       name: "Music"
   action:
-    - service: >
+    - action: >
         {% if trigger.event.data.action == 'PUSH' %}
           media_player.media_next_track
         {% elif trigger.event.data.action == 'DOUBLE_PUSH' %}

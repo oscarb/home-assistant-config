@@ -4,7 +4,7 @@ script:
   start_selective_room_cleaning:
     alias: Start selective room cleaning
     sequence:
-    - service: python_script.vacuum_room
+    - action: python_script.vacuum_room
       entity_id: vacuum.robocop
       data_template:
         area: >
@@ -24,7 +24,7 @@ automation:
       entity_id: vacuum.robocop
       to: 'docked'
     action:
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       target:
         label_id: selective_room_cleaning
         

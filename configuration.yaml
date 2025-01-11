@@ -188,7 +188,7 @@ switch:
     mac: !secret computer_mac
     host: !secret computer_ip
     turn_off: 
-      service: script.turn_computer_off
+      action: script.turn_computer_off
 
   - platform: group
     name: Speakers
@@ -223,19 +223,19 @@ switch:
         friendly_name: TV sound
         value_template: "{{ is_state_attr('media_player.tv', 'is_volume_muted', 'true') }}"
         turn_on:
-          service: script.toggle_tv_mute
+          action: script.toggle_tv_mute
         turn_off:
-          service: script.toggle_tv_mute
+          action: script.toggle_tv_mute
 
       hallway_camera: 
         friendly_name: Show hallway camera on TV
         value_template: "{{ is_state_attr('media_player.google_tv', 'media_content_id', states('input_text.video_url')) }}"
         turn_on:
-          service: script.cast_magic_mirror_camera
+          action: script.cast_magic_mirror_camera
           data:
             media_player: media_player.google_tv
         turn_off:
-          service: media_player.turn_off
+          action: media_player.turn_off
           data:
             entity_id: media_player.google_tv
 
@@ -308,8 +308,8 @@ system_health:
 notify: 
   - name: mobile_app
     platform: group
-    services: 
-      - service: !secret mobile_device_name
+    actions: 
+      - action: !secret mobile_device_name
 
 # Light groups 
 light:
@@ -359,7 +359,7 @@ light:
         turn_off:
 
         set_level:
-          service: media_player.volume_set
+          action: media_player.volume_set
           target:
             entity_id: media_player.spotify_paq
           data:

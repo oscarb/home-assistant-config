@@ -30,31 +30,31 @@
     input:
       remote: 2629c586f4e4647f1ecdd1be567ca8ba
       power_short:
-      - service: light.toggle
+      - action: light.toggle
         metadata: {}
         data: {}
         target:
           entity_id: light.kids_room_ceiling
       dimup_short:
-      - service: switch.toggle
+      - action: switch.toggle
         metadata: {}
         data: {}
         target:
           entity_id: switch.kids_room_star
       colorup_short:
-      - service: switch.toggle
+      - action: switch.toggle
         metadata: {}
         data: {}
         target:
           entity_id: switch.kids_room_reading_lamp
       colordown_short:
-      - service: switch.toggle
+      - action: switch.toggle
         metadata: {}
         data: {}
         target:
           entity_id: switch.kids_room_butterfly
       dimdown_short:
-      - service: script.group_toggle
+      - action: script.group_toggle
         metadata: {}
         data:
           group: group.kids_room
@@ -66,13 +66,13 @@
     input:
       remote: de15c1b3e9b21af302b60512baa104a7
       turnwheel_left:
-      - service: media_player.volume_down
+      - action: media_player.volume_down
         metadata: {}
         data: {}
         target:
           entity_id: media_player.spotify_paq
       turnwheel_right:
-      - service: media_player.volume_up
+      - action: media_player.volume_up
         metadata: {}
         data: {}
         target:
@@ -88,7 +88,7 @@
     subtype: turn_on
   condition: []
   action:
-  - service: light.turn_on
+  - action: light.turn_on
     metadata: {}
     data:
       brightness_pct: 100
@@ -110,7 +110,7 @@
     attribute: brightness
     above: 1
   action:
-  - service: light.turn_on
+  - action: light.turn_on
     metadata: {}
     data:
       brightness: 1

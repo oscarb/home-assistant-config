@@ -5,7 +5,7 @@
       command:
         - "(clean|vacumm) (the|my) (home|apartment)"
   action:
-    - service: vacuum.start
+    - action: vacuum.start
       entity_id: vacuum.robocop
 
 - id: '6NYdgMcf'
@@ -16,7 +16,7 @@
      command:
       - "(clean|vacuum) (the) {rooms}"
   action:
-  - service: python_script.vacuum_room
+  - action: python_script.vacuum_room
     entity_id: vacuum.robocop
     data_template:
       area: '{{ trigger.slots.rooms }}'
@@ -38,7 +38,7 @@
            trigger.to_state.state | float(0) > trigger.from_state.state | float(0)
         }}
   action:
-  - service: "{{ notify_service }}"
+  - action: "{{ notify_service }}"
     data_template:
       title: >
         {% set clean_area = states('sensor.robocop_last_clean_area') | round(0, 0) ~ ' ' ~ state_attr('sensor.robocop_last_clean_area', 'unit_of_measurement') %}
@@ -77,4 +77,4 @@
   condition: []
   action:
   - data: {}
-    service: script.send_robocop_to_waste_bin
+    action: script.send_robocop_to_waste_bin

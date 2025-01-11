@@ -10,7 +10,7 @@
       entity_id: input_boolean.is_christmas_time
       state: 'on'
   action:
-  - service: homeassistant.turn_on
+  - action: homeassistant.turn_on
     data:
       entity_id: group.christmas_lights
 
@@ -24,7 +24,7 @@
       entity_id: input_boolean.is_christmas_time
       state: 'on'
   action:
-  - service: homeassistant.turn_off
+  - action: homeassistant.turn_off
     data:
       entity_id: group.christmas_lights
 
@@ -38,7 +38,7 @@
       entity_id: input_boolean.is_christmas_time
       state: 'on'
   action:
-  - service: homeassistant.turn_off
+  - action: homeassistant.turn_off
     data:
       entity_id: group.christmas_lights
 
