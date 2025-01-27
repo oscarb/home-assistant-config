@@ -11,7 +11,10 @@ jobs:
     - uses: actions/checkout@v1
     - name: Copy dummy secrets for workflow
       run: |
-        mv travis_secrets.yaml secrets.yaml
+        mv ci/dummy_secrets.yaml secrets.yaml
+    - name: Copy dummy service account for workflow
+      run: |
+        mv ci/dummy_service_account.json google_assistant/service_account.json        
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
