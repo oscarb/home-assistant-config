@@ -23,6 +23,44 @@
       data_template:
         area: '{{ trigger.slots.rooms }}'
 
+- id: '5zdAw089'
+  alias: Send notification when vacuum ecnounters an error
+  variables:
+    notify_service: "{{ states('input_text.notify_service_mobile_oscar') }}"  
+  triggers:
+    - trigger: state
+      entity_id: vacuum.robocop
+      to: error
+  actions:
+    - action: "{{ notify_service }}"
+      data_template:
+        title: >
+          {% set current_clean_area = states('sensor.robocop_current_clean_area') | round(0, 0) ~ ' ' ~ state_attr('sensor.robocop_current_clean_area', 'unit_of_measurement') %}
+          {% set current_clean_duration = int(states('sensor.robocop_current_clean_duration')) // 60 ~ ' min' %}
+          Robocop - {{ state_attr('vacuum.robocop', 'status') }} ({{ current_clean_area }}, {{ current_clean_duration }})
+        message: >
+          ❌ {{ state_attr('vacuum.robocop', 'error') }}
+        data:
+          channel: Vacuum
+          clickAction: "app://com.xiaomi.smarthome"
+          notification_icon: "mdi:robot-vacuum"
+          actions:
+            - action: resume_vacuum
+              title: Resume
+
+- id: 'dMSwlTgC'
+  alias: Resume cleaning on notification action
+  triggers:
+    - trigger: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: resume_vacuum
+  conditions: []
+  actions:
+    - action: vacuum.start
+      target:
+        entity_id: vacuum.robocop
+
 - id: 'TaAgXTBO'
   alias: Send notification when vacuum returns to base with action to go to waste bin
   variables:
