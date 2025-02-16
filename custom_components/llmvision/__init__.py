@@ -17,7 +17,17 @@ from .const import (
     CONF_OLLAMA_HTTPS,
     CONF_CUSTOM_OPENAI_ENDPOINT,
     CONF_CUSTOM_OPENAI_API_KEY,
+    CONF_CUSTOM_OPENAI_DEFAULT_MODEL,
     CONF_RETENTION_TIME,
+    CONF_AWS_ACCESS_KEY_ID,
+    CONF_AWS_SECRET_ACCESS_KEY,
+    CONF_AWS_REGION_NAME,
+    CONF_AWS_DEFAULT_MODEL,
+    CONF_OPENWEBUI_IP_ADDRESS,
+    CONF_OPENWEBUI_PORT,
+    CONF_OPENWEBUI_HTTPS,
+    CONF_OPENWEBUI_API_KEY,
+    CONF_OPENWEBUI_DEFAULT_MODEL,
     MESSAGE,
     REMEMBER,
     MODEL,
@@ -43,14 +53,12 @@ from .const import (
 from .calendar import SemanticIndex
 from .providers import Request
 from .media_handlers import MediaProcessor
-import os
 import re
 from datetime import timedelta
 from homeassistant.util import dt as dt_util
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import SupportsResponse
 from homeassistant.exceptions import ServiceValidationError
-from functools import partial
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -78,7 +86,18 @@ async def async_setup_entry(hass, entry):
     ollama_https = entry.data.get(CONF_OLLAMA_HTTPS)
     custom_openai_endpoint = entry.data.get(CONF_CUSTOM_OPENAI_ENDPOINT)
     custom_openai_api_key = entry.data.get(CONF_CUSTOM_OPENAI_API_KEY)
+    custom_openai_default_model = entry.data.get(
+        CONF_CUSTOM_OPENAI_DEFAULT_MODEL)
     retention_time = entry.data.get(CONF_RETENTION_TIME)
+    aws_access_key_id = entry.data.get(CONF_AWS_ACCESS_KEY_ID)
+    aws_secret_access_key = entry.data.get(CONF_AWS_SECRET_ACCESS_KEY)
+    aws_region_name = entry.data.get(CONF_AWS_REGION_NAME)
+    aws_default_model = entry.data.get(CONF_AWS_DEFAULT_MODEL)
+    openwebui_ip_address = entry.data.get(CONF_OPENWEBUI_IP_ADDRESS)
+    openwebui_port = entry.data.get(CONF_OPENWEBUI_PORT)
+    openwebui_https = entry.data.get(CONF_OPENWEBUI_HTTPS)
+    openwebui_api_key = entry.data.get(CONF_OPENWEBUI_API_KEY)
+    openwebui_default_model = entry.data.get(CONF_OPENWEBUI_DEFAULT_MODEL)
 
     # Ensure DOMAIN exists in hass.data
     if DOMAIN not in hass.data:
@@ -102,7 +121,17 @@ async def async_setup_entry(hass, entry):
         CONF_OLLAMA_HTTPS: ollama_https,
         CONF_CUSTOM_OPENAI_ENDPOINT: custom_openai_endpoint,
         CONF_CUSTOM_OPENAI_API_KEY: custom_openai_api_key,
-        CONF_RETENTION_TIME: retention_time
+        CONF_CUSTOM_OPENAI_DEFAULT_MODEL: custom_openai_default_model,
+        CONF_RETENTION_TIME: retention_time,
+        CONF_AWS_ACCESS_KEY_ID: aws_access_key_id,
+        CONF_AWS_SECRET_ACCESS_KEY: aws_secret_access_key,
+        CONF_AWS_REGION_NAME: aws_region_name,
+        CONF_AWS_DEFAULT_MODEL: aws_default_model,
+        CONF_OPENWEBUI_IP_ADDRESS: openwebui_ip_address,
+        CONF_OPENWEBUI_PORT: openwebui_port,
+        CONF_OPENWEBUI_HTTPS: openwebui_https,
+        CONF_OPENWEBUI_API_KEY: openwebui_api_key,
+        CONF_OPENWEBUI_DEFAULT_MODEL: openwebui_default_model
     }
 
     # Filter out None values
@@ -114,9 +143,7 @@ async def async_setup_entry(hass, entry):
 
     # check if the entry is the calendar entry (has entry rentention_time)
     if filtered_entry_data.get(CONF_RETENTION_TIME) is not None:
-        # make sure 'llmvision' directory exists
-        await hass.loop.run_in_executor(None, partial(os.makedirs, "/llmvision", exist_ok=True))
-        # forward the calendar entity to the platform
+        # forward the calendar entity to the platform for setup
         await hass.config_entries.async_forward_entry_setups(entry, ["calendar"])
 
     return True
@@ -140,7 +167,15 @@ async def async_remove_entry(hass, entry):
 
 
 async def async_unload_entry(hass, entry) -> bool:
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, "calendar")
+    _LOGGER.debug(f"Unloading {entry.title} from hass.data")
+
+    # check if the entry is the calendar entry (has entry rentention_time)
+    if entry.data.get(CONF_RETENTION_TIME) is not None:
+        # unload the calendar
+        unload_ok = await hass.config_entries.async_unload_platforms(entry, ["calendar"])
+    else:
+        unload_ok = True
+
     return unload_ok
 
 
@@ -151,7 +186,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
         return False
 
 
-async def _remember(hass, call, start, response) -> None:
+async def _remember(hass, call, start, response, key_frame) -> None:
     if call.remember:
         # Find semantic index config
         config_entry = None
@@ -167,37 +202,27 @@ async def _remember(hass, call, start, response) -> None:
 
         semantic_index = SemanticIndex(hass, config_entry)
 
+        if call.image_entities and len(call.image_entities) > 0:
+            camera_name = call.image_entities[0]
+            title = "Motion detected near " + camera_name
+        elif call.video_paths and len(call.video_paths) > 0:
+            camera_name = call.video_paths[0].split(
+                "/")[-1].replace(".mp4", "")
+            title = "Motion detected in " + camera_name
+        else:
+            camera_name = ""
+            title = "Motion detected"
+
         if "title" in response:
-            title = response.get("title", "Unknown object seen")
-            if call.image_entities and len(call.image_entities) > 0:
-                camera_name = call.image_entities[0]
-            elif call.video_paths and len(call.video_paths) > 0:
-                camera_name = call.video_paths[0].split(
-                    "/")[-1].replace(".mp4", "")
-            else:
-                camera_name = "File Input"
-
-        if "title" not in response:
-            if call.image_entities and len(call.image_entities) > 0:
-                camera_name = call.image_entities[0]
-                title = "Motion detected near " + camera_name
-            elif call.video_paths and len(call.video_paths) > 0:
-                camera_name = call.video_paths[0].split(
-                    "/")[-1].replace(".mp4", "")
-                title = "Motion detected in " + camera_name
-            else:
-                camera_name = "File Input"
-                title = "Motion detected"
-
-        if "response_text" not in response:
-            raise ValueError("response_text is missing in the response")
+            title = response.get("title")
 
         await semantic_index.remember(
             start=start,
             end=dt_util.now() + timedelta(minutes=1),
             label=title,
-            camera_name=camera_name,
-            summary=response["response_text"]
+            summary=response["response_text"],
+            key_frame=key_frame,
+            camera_name=camera_name
         )
 
 
@@ -318,12 +343,17 @@ def setup(hass, config):
                                              image_paths=call.image_paths,
                                              target_width=call.target_width,
                                              include_filename=call.include_filename,
-                                             expose_images=call.expose_images
+                                             expose_images=call.expose_images,
+                                             expose_images_persist=call.expose_images_persist
                                              )
 
         # Validate configuration, input data and make the call
         response = await request.call(call)
-        await _remember(hass, call, start, response)
+        await _remember(hass=hass,
+                        call=call,
+                        start=start,
+                        response=response,
+                        key_frame=processor.key_frame)
         return response
 
     async def video_analyzer(data_call):
@@ -349,7 +379,11 @@ def setup(hass, config):
                                              frigate_retry_seconds=call.frigate_retry_seconds
                                              )
         response = await request.call(call)
-        await _remember(hass, call, start, response)
+        await _remember(hass=hass,
+                        call=call,
+                        start=start,
+                        response=response,
+                        key_frame=processor.key_frame)
         return response
 
     async def stream_analyzer(data_call):
@@ -363,16 +397,22 @@ def setup(hass, config):
                           temperature=call.temperature,
                           )
         processor = MediaProcessor(hass, request)
+
         request = await processor.add_streams(image_entities=call.image_entities,
                                               duration=call.duration,
                                               max_frames=call.max_frames,
                                               target_width=call.target_width,
                                               include_filename=call.include_filename,
-                                              expose_images=call.expose_images
+                                              expose_images=call.expose_images,
+                                              expose_images_persist=call.expose_images_persist
                                               )
 
         response = await request.call(call)
-        await _remember(hass, call, start, response)
+        await _remember(hass=hass,
+                        call=call,
+                        start=start,
+                        response=response,
+                        key_frame=processor.key_frame)
         return response
 
     async def data_analyzer(data_call):

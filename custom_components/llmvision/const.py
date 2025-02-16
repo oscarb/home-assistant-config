@@ -20,7 +20,17 @@ CONF_OLLAMA_PORT = 'ollama_port'
 CONF_OLLAMA_HTTPS = 'ollama_https'
 CONF_CUSTOM_OPENAI_ENDPOINT = 'custom_openai_endpoint'
 CONF_CUSTOM_OPENAI_API_KEY = 'custom_openai_api_key'
+CONF_CUSTOM_OPENAI_DEFAULT_MODEL = 'custom_openai_default_model'
 CONF_RETENTION_TIME = 'retention_time'
+CONF_AWS_ACCESS_KEY_ID = 'aws_access_key_id'
+CONF_AWS_SECRET_ACCESS_KEY = 'aws_secret_access_key'
+CONF_AWS_REGION_NAME = 'aws_region_name'
+CONF_AWS_DEFAULT_MODEL = 'aws_default_model'
+CONF_OPENWEBUI_IP_ADDRESS = 'openwebui_ip'
+CONF_OPENWEBUI_PORT = 'openwebui_port'
+CONF_OPENWEBUI_HTTPS = 'openwebui_https'
+CONF_OPENWEBUI_API_KEY = 'openwebui_api_key'
+CONF_OPENWEBUI_DEFAULT_MODEL = 'openwebui_default_model'
 
 # service call constants
 MESSAGE = 'message'
@@ -62,4 +72,5 @@ ENDPOINT_GOOGLE = "https://generativelanguage.googleapis.com/v1beta/models/{mode
 ENDPOINT_GROQ = "https://api.groq.com/openai/v1/chat/completions"
 ENDPOINT_LOCALAI = "{protocol}://{ip_address}:{port}/v1/chat/completions"
 ENDPOINT_OLLAMA = "{protocol}://{ip_address}:{port}/api/chat"
+ENDPOINT_OPENWEBUI = "{protocol}://{ip_address}:{port}/api/chat/completions"
 ENDPOINT_AZURE = "{base_url}openai/deployments/{deployment}/chat/completions?api-version={api_version}"
