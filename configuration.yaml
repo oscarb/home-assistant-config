@@ -372,11 +372,6 @@ light:
 shell_command: 
   turn_off_computer: ssh {{ ssh_user }} net rpc shutdown -I {{ ip }} -U {{ user }} -t {{ timeout }}
 
-# Spotcast 
-spotcast: 
-  sp_dc: !secret spotify_sp_dc
-  sp_key: !secret spotify_sp_key
-
 ## HELPERS
 
 # Button
