@@ -277,14 +277,14 @@ initiate_christmas_feeling:
 cast_goodnight_playlist:
   alias: Play goodnight playlist on kids room speaker 
   sequence:
-    - action: spotcast.start
+    - action: spotifyplus.player_media_play_context
       data:
-        device_name: Kids room speaker
-        uri: !secret spotify_goodnight_playlist
-        repeat: context
-        shuffle: false
-        offset: > 
+        entity_id: media_player.spotifyplus_oscar
+        device_id: "Kids room speaker"
+        context_uri: !secret spotify_goodnight_playlist
+        offset_position: >
           {{ state_attr('sensor.goodnight_playlist_story_indexes', 'indexes') | random }}
+        shuffle: false
     - action: media_player.volume_set
       data: 
         volume_level: 0.4
