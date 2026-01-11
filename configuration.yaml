@@ -297,6 +297,10 @@ sensor:
     verify_ssl: false
     scan_interval: 14400
 
+  - platform: skolmat
+    name: !secret skolmat_name
+    url: !secret skolmat_url
+    unique_id: "sensor.skolmat_kids_school"
 
 # Cloud
 cloud:
