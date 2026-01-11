@@ -1,0 +1,15 @@
+primary-font-family: "Vollkorn"
+secondary-font-family: "Vollkorn"
+ha-font-family-body: "var(--primary-font-family)"
+paper-font-common-base_-_font-family: "var(--primary-font-family)"
+paper-font-common-code_-_font-family: "var(--secondary-font-family)"
+paper-font-body1_-_font-family: "var(--primary-font-family)"
+paper-font-subhead_-_font-family: "var(--secondary-font-family)"
+paper-font-headline_-_font-family: "var(--primary-font-family)"
+paper-font-caption_-_font-family: "var(--secondary-font-family)"
+paper-font-title_-_font-family: "var(--primary-font-family)"
+ha-card-header-font-family: "var(--primary-font-family)"
+primary-color: pink
+accent-color: orange
+primary-text-color: black
+ha-font-size-scale: 1.05
