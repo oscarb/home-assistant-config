@@ -1,3 +1,7 @@
+# Announcement test 
+input_boolean.announcement:
+  name: Announcement
+
 # Input buttons
 input_button.habit_sweets:
   name: Sweets habit
