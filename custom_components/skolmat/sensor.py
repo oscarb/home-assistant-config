@@ -4,7 +4,7 @@
 
 import voluptuous as vol
 from .menu import Menu
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging import getLogger
 
 import homeassistant.helpers.config_validation as cv
@@ -21,7 +21,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required("name"): cv.string,
         vol.Optional("url"): cv.string,
-        vol.Optional("rss"): cv.string
+        vol.Optional("unique_id"): cv.string
     }
 )
 
@@ -34,6 +34,8 @@ class SkolmatSensor(RestoreEntity):
         super().__init__()
         self.hass               = hass # will be set again by homeassistant after added to hass     
         self._name              = conf.get("name")
+        if conf.get("unique_id", None):
+            self._attr_unique_id = conf.get("unique_id")
         self._state             = None
         self._state_attributes  = {}
         self.entity_id          = generate_entity_id  (
@@ -46,7 +48,7 @@ class SkolmatSensor(RestoreEntity):
         if not url:
             raise KeyError("'url' config parameter missing")
 
-        self.menu = Menu.createMenu(hass, url)
+        self.menu = Menu.createMenu(hass.async_add_executor_job, url)
     
     @property
     def name(self):
@@ -61,19 +63,25 @@ class SkolmatSensor(RestoreEntity):
     def extra_state_attributes(self):
         return self._state_attributes
     
-    # @property
-    # def device_state_attributes (self):
-    #     # just in for bw compability in case needed, extra_state_attributes is used since 2012.12.x
-    #     return self._state_attributes
-    
     @property
     def force_update(self) -> bool:
         # Write each update to the state machine, even if the data is the same.
         return False
     @property
     def should_poll(self) -> bool:
+
         if isinstance(self.menu.last_menu_fetch, datetime):
-            return self.menu.last_menu_fetch.date() != datetime.now().date()
+            
+            now = datetime.now()
+
+            if now.date() != self.menu.last_menu_fetch.date():
+                return True
+        
+            if now - self.menu.last_menu_fetch >= timedelta(hours=4):
+                return True
+            
+            return False
+
         return True
 
     async def async_update(self):
@@ -83,7 +91,21 @@ class SkolmatSensor(RestoreEntity):
             if not self.menu.menuToday:
                 self._state = "Ingen mat"
             else:
-                self._state = "\n".join(self.menu.menuToday)
+
+                # state can only be 255 chars, if longer, truncate each item equally
+                state = ("\n".join(self.menu.menuToday))
+                if len(state) > 255:
+                    maxCourseLength = (255 // len(self.menu.menuToday)) - 5 # ...\n
+                    courses = []
+                    for i in range(len(self.menu.menuToday)):
+                        if len(self.menu.menuToday[i]) >= maxCourseLength:
+                            courses.append(self.menu.menuToday[i][:maxCourseLength] + "...")
+                        else: 
+                            courses.append(self.menu.menuToday[i])
+
+                    state = "\n".join(courses)
+                        
+                self._state = state
             
             self._state_attributes = {
                 "calendar": self.menu.menu,

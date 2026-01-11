@@ -1,39 +1,56 @@
 import feedparser, re
 from abc import ABC, abstractmethod
-from datetime import datetime, date, timezone
-from dateutil import tz
+from datetime import datetime, date, timezone, timedelta
+from dateutil import tz, parser
 from logging import getLogger
 from bs4 import BeautifulSoup
 import json
+from urllib.parse import urlparse, parse_qs
+
 
 log = getLogger(__name__)
 
 class Menu(ABC):
 
     @staticmethod
-    def createMenu (hass, url:str):
+    def createMenu (asyncExecutor, url:str):
         url = url.rstrip(" /")
 
         if SkolmatenMenu.provider in url:
-            return SkolmatenMenu(hass, url)
+            return SkolmatenMenu(asyncExecutor, url)
         elif FoodItMenu.provider in url:
-            return FoodItMenu(hass, url)
+            return FoodItMenu(asyncExecutor, url)
         elif MatildaMenu.provider in url:
-            return MatildaMenu(hass, url)
+            return MatildaMenu(asyncExecutor, url)
         elif MashieMenu.provider in url:
-            return MashieMenu(hass, url)
+            return MashieMenu(asyncExecutor, url)
+        elif MateoMenu.provider in url:
+            return MateoMenu(asyncExecutor, url)
         else:
-            raise Exception(f"URL not recognized as {SkolmatenMenu.provider}, {FoodItMenu.provider}, {MatildaMenu.provider} or {MashieMenu.provider}")
+            raise Exception(f"URL not recognized as {SkolmatenMenu.provider}, {FoodItMenu.provider}, {MatildaMenu.provider}, {MashieMenu.provider} or {MateoMenu.provider}")
 
 
-    def __init__(self, hass, url:str):
-        self.hass = hass
+    def __init__(self, asyncExecutor, url:str):
+        self.asyncExecutor = asyncExecutor
         self.menu = {}
         self.url = self._fixUrl(url)
         self.menuToday = []
         self.last_menu_fetch = None
         self._weeks = 2
         self._weekDays = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag']
+
+    def getWeek(self, nextWeek=False):
+        # if sunday, return next week
+        today = date.today()
+        if nextWeek:
+            today = today + timedelta(weeks=1)
+
+        if today.weekday() > 5:
+            today = today + timedelta(days=1)
+        
+        year, week, day = today.isocalendar()
+        return year, week
+
 
     @abstractmethod
     async def _fixUrl (self, url:str):
@@ -89,21 +106,20 @@ class Menu(ABC):
 
         def parse_helper(raw_feed):
             return feedparser.parse(raw_feed)
-    
-        return await self.hass.async_add_executor_job(parse_helper, raw_feed)
 
+        return await self.asyncExecutor(parse_helper, raw_feed)
 
 class FoodItMenu(Menu):
 
     provider = "foodit.se"
 
-    def __init__(self, hass, url:str):
+    def __init__(self, asyncExecutor, url:str):
 
-        super().__init__(hass, url)
+        super().__init__(asyncExecutor, url)
 
     def _fixUrl(self, url:str):
 
-        if not "foodit.se/rss" in url:
+        if "foodit.se/rss" not in url:
             url = url.replace("foodit.se", "foodit.se/rss")
         return url
 
@@ -140,13 +156,20 @@ class SkolmatenMenu(Menu):
 
     provider = "skolmaten.se"
 
-    def __init__(self, hass, url:str):
-        super().__init__(hass, url)
+    def __init__(self, asyncExecutor, url:str):
+        super().__init__(asyncExecutor, url)
 
     def _fixUrl(self, url:str):
-        if not "/rss/weeks" in url: # keep for bw comp, changed to not need rss/weeks in 1.2.0
-            url = f"{url}/rss/weeks"
-        return url
+        # https://skolmaten.se/skutehagens-skolan
+
+        parsed = urlparse(url)
+        schoolName = parsed.path.lstrip("/")
+
+        if schoolName is None:
+            raise ValueError("school name could not be extracted from url")
+
+        newUrl = "https://skolmaten.se/api/4/rss/week/" + schoolName + "?locale=en"
+        return newUrl
 
     async def _getFeed(self, aiohttp_session):
         
@@ -154,23 +177,92 @@ class SkolmatenMenu(Menu):
             raw_feed = await response.text()
             return await self.parse_feed(raw_feed)
         
-   
+
     async def _loadMenu(self, aiohttp_session):
 
         menuFeed = await self._getFeed(aiohttp_session)
+        
         for day in menuFeed["entries"]:
-            entryDate = datetime(day['published_parsed'][0], day['published_parsed'][1], day['published_parsed'][2]).date()
-            courses = day['summary'].split('<br />')
-            self.appendEntry(entryDate, courses)
+            entryDate = date(day['published_parsed'].tm_year, day['published_parsed'].tm_mon, day['published_parsed'].tm_mday)
+            courses = re.sub(r"\s*\([^)]*\)", "", day["summary"])
+            self.appendEntry(entryDate, courses.split("<br />"))
 
 
+# class SkolmatenMenu(Menu):
+
+#     provider = "skolmaten.se"
+
+#     def __init__(self, asyncExecutor, url:str):
+#         # https://skolmaten.se/skutehagens-skolan
+
+#         super().__init__(asyncExecutor, url)
+#         self.headers = {"Content-Type": "application/json", "Accept": "application/json", "Referer": f"https://{self.provider}/"}
+
+#     def _fixUrl(self, url: str):
+
+#         parsed = urlparse(url)
+#         schoolName = parsed.path.lstrip("/")
+
+#         if schoolName is None:
+#             raise ValueError("school name could not be extracted from url")
+
+
+#         newUrl = "https://skolmaten.se/api/4/menu/school/" + schoolName
+#         return newUrl
+
+#     async def _getWeek(self, aiohttp_session, url):
+
+#         def remove_images(obj):
+#             if isinstance(obj, dict):
+#                 return {k: remove_images(v) for k, v in obj.items() if k != "image"}
+#             elif isinstance(obj, list):
+#                 return [remove_images(i) for i in obj]
+#             return obj
+
+#         try:
+#             async with aiohttp_session.get(url, headers=self.headers, raise_for_status=True) as response:
+#                 html = await response.text()
+#                 return json.loads(html, object_hook=remove_images)
+#         except Exception as err:
+
+#             log.exception(f"Failed to retrieve {url}")
+#             raise
+
+#     async def _loadMenu(self, aiohttp_session):
+
+#         try:
+#             shoolName = "Skutehagens skolan F-3, 4-6"
+#             thisWeek  = self.getWeek()
+#             nextWeek  = self.getWeek(nextWeek=True)
+
+#             w1Url = f"{self.url}?year={thisWeek[0]}&week={thisWeek[1]}"
+#             w2Url = f"{self.url}?year={nextWeek[0]}&week={nextWeek[1]}"
+
+#             w1 = await self._getWeek(aiohttp_session, w1Url)
+#             w2 = await self._getWeek(aiohttp_session, w2Url)
+  
+#             dayEntries = [
+#                 *(w1["WeekState"]["Days"] if isinstance(w1.get("WeekState"), dict) else []),
+#                 *(w2["WeekState"]["Days"] if isinstance(w2.get("WeekState"), dict) else [])
+#             ]
+          
+#             for day in dayEntries:
+#                 entryDate = parser.isoparse(day["date"]).date()
+#                 courses = []
+#                 for course in day["Meals"]:
+#                     courses.append(course["name"])
+#                 self.appendEntry(entryDate, courses)
+
+#         except Exception as err:
+#             log.exception(f"Failed to process:\n{w1Url}\nor\n{w2Url} ", exc_info=err)
+#             raise
 
 class MatildaMenu (Menu):
     provider = "matildaplatform.com"
 
-    def __init__(self, hass, url:str):
+    def __init__(self, asyncExecutor, url:str):
         # https://menu.matildaplatform.com/meals/week/63fc93fcccb95f5ce5711276_indianberget
-        super().__init__(hass, url)
+        super().__init__(asyncExecutor, url)
         self.headers = {"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"}
 
     def _fixUrl(self, url: str):
@@ -207,9 +299,9 @@ class MashieMenu(Menu):
 
     provider = "mashie.com"
 
-    def __init__(self, hass, url:str):
+    def __init__(self, asyncExecutor, url:str):
 
-        super().__init__(hass, url)
+        super().__init__(asyncExecutor, url)
         self.headers = {"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36",
                         "cookie": "cookieLanguage=sv-SE"} # set page lang to Swe
 
@@ -234,7 +326,7 @@ class MashieMenu(Menu):
 
         #se = tz.gettz("Europe/Stockholm")
         # se = await run_in_executor(None, gettz, "Europe/Stockholm")
-        se = await self.hass.async_add_executor_job(tz.gettz, "Europe/Stockholm")
+        se = await self.asyncExecutor(tz.gettz, "Europe/Stockholm")
 
         try:
             async with aiohttp_session.get(self.url, headers=self.headers, raise_for_status=True) as response:
@@ -268,4 +360,120 @@ class MashieMenu(Menu):
             log.exception(f"Failed to retrieve {self.url}")
             raise
 
+class MateoMenu(Menu):
+    provider = "mateo.se"
 
+    def __init__(self, asyncExecutor, url:str):
+        # https://meny.mateo.se/kavlinge-utbildning/31
+        super().__init__(asyncExecutor, url)
+        self.headers = {"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36",
+                        "cookie": "cookieLanguage=sv-SE"} # set page lang to Swe
+        self.jsUrl = "https://meny.mateo.se/"
+        self.municipalities = "/mateo-menu/municipalities.json"
+        self.mateo_menu_shared_path = "/mateo.shared"
+
+    def _fixUrl(self, url):
+       return url
+
+    async def _constructJsUrl(self, url:str, aiohttp_session):
+        try:
+            async with aiohttp_session.get(self.url, headers=self.headers, raise_for_status=True) as response:
+                html = await response.text()
+                soup = BeautifulSoup(html, 'html.parser')
+
+                 # Find all <script> tags
+                scripts = soup.find_all('script')
+
+                # Extract the 'src' attribute from each <script> tag
+                jsUrl = ""
+                script_sources = []
+                for script in scripts:
+                    src = script.get('src')
+                    if src and '.js' in src:
+                        return f"{self.jsUrl}{src}" #https://meny.mateo.se/_expo/static/js/web/entry-61ca128073f368b722e0ab176fd2ee99.js similar to this
+                        break
+
+        except Exception as err:
+            log.exception(f"Failed to retrieve js url from {url}")
+            raise      
+
+    async def _getJsonBaseUrl(self, jsUrl, url, aiohttp_session):
+        try:
+            async with aiohttp_session.get(jsUrl, headers=self.headers, raise_for_status=True) as response:
+                jsContent = await response.text()
+
+                if self.municipalities not in jsContent:
+                    log.exception(f"Failed to find {self.municipalities} in js content on url {jsUrl}")
+                    raise ValueError(f"Failed to find {self.municipalities} in js content on url {jsUrl}")
+
+                base_url = self._find_base_url(jsContent, self.municipalities)
+                if not base_url:
+                    raise ValueError(f"Failed to base url in js content on url {jsUrl}")
+                return base_url
+        except Exception as err:
+            log.exception(f"Failed to retrieve js url from {jsUrl}")
+            raise      
+    
+    # Search for the target URL within the text and extract the base URL, similar to https://objects.dc-fbg1.glesys.net
+    def _find_base_url(self, text, target):
+        match = re.search(r'(https?://[^\s]+)?' + re.escape(target), text)
+        if match:
+            base_url = match.group(1)
+            base_url = base_url.replace(self.mateo_menu_shared_path, "")
+            return base_url
+        else:
+            log.exception(f"Target {target} not found in js content")
+            return None
+
+    def _construct_base_menu_file_url(self, url, base_url):
+        stripped_from_url = url.replace(self.jsUrl, "")
+        # Split by '/'
+        path, number = stripped_from_url.split('/')
+
+        # Replace hyphen with dot
+        modified_path = path.replace('-', '.')
+
+        # modified_path example: kavlinge.utbildning
+        # number example: 31
+        return  f"{base_url}/mateo.{modified_path}/menus/app/{number}" # Similar to https://objects.dc-fbg1.glesys.net/mateo.kavlinge.utbildning/menus/app/82
+
+    async def _loadMenu(self, aiohttp_session):
+
+        jsUrl = await self._constructJsUrl(self.url, aiohttp_session)
+        json_base_url = await self._getJsonBaseUrl(jsUrl, self.url, aiohttp_session)
+        base_menu_file_url = self._construct_base_menu_file_url(self.url, json_base_url)
+
+         # Get today's date
+        today = date.today()
+
+        # Get ISO calendar (year, week, weekday)
+        _, iso_week, _ = today.isocalendar()
+        next_week_date = today + timedelta(weeks=1)
+        _, iso_week_2, _ = next_week_date.isocalendar()
+
+        menus_url_w1 = f"{base_menu_file_url}_{iso_week}.json"
+        menus_url_w2 = f"{base_menu_file_url}_{iso_week_2}.json"
+
+        def append_meals(self, menus_response):
+            data = json.loads(menus_response)
+            for item in data:
+                if isinstance(item, dict) and isinstance(item.get("meals"), list):
+                    meals = []
+                    entry_date = datetime.strptime(item["date"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
+                    for meal in item["meals"]:
+                        meals.append(meal["name"] )
+                    
+                    self.appendEntry(entry_date, meals)
+
+        try:
+            async with aiohttp_session.get(menus_url_w1, headers=self.headers, raise_for_status=True) as response:
+                menus_response = await response.text()
+                append_meals(self, menus_response)               
+
+            async with aiohttp_session.get(menus_url_w2, headers=self.headers, raise_for_status=True) as response:
+                menus_response = await response.text()
+                append_meals(self, menus_response)
+
+        except Exception as err:
+            log.exception(f"Failed to retrieve {base_menu_file_url}")
+            raise
