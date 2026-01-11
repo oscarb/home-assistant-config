@@ -251,7 +251,7 @@ google_assistant:
 # Proxy stream
 stream: 
 
-# Channge UI config mode
+# Change UI config mode
 lovelace:
   mode: yaml
   resources:
@@ -271,6 +271,14 @@ lovelace:
       type: module
     - url: /local/plugins/auto-entities.js?v1.9.1
       type: module
+    - url: "https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap"
+      type: css
+      # Font: Vollkorn
+    - url: https://fonts.googleapis.com/css2?family=Vollkorn&display=swap
+      type: css
+    - url: /local/fonts.css
+      type: css
+
 
 
 # Text to speech
