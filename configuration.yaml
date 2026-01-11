@@ -28,6 +28,8 @@ homeassistant:
 frontend:
   extra_module_url:
     - /local/plugins/card-mod.js?v=3.1.1
+    - /local/community/kiosk-mode/kiosk-mode.js?v6.7.0
+  themes: !include_dir_named themes    
 
 # Handles redirects from the My Home Assistant service.
 my:
