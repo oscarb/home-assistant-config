@@ -257,8 +257,6 @@ stream:
 lovelace:
   resource_mode: yaml
   resources:
-    - url: /local/plugins/auto-entities.js?v1.9.1
-      type: module
     - url: "https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap"
       type: css
       # Font: Vollkorn
