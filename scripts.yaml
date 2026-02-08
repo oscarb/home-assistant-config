@@ -239,13 +239,12 @@ initiate_christmas_feeling:
       entity_id: switch.kitchen_advent_candlestick
     - delay: 4
     # Start playing christmas music
-    - action: spotcast.start
+    - action: spotifyplus.player_media_play_context
       data:
-        device_name: Chromecast Audio
-        uri: !secret spotify_christmas_playlist
-        repeat: off
+        entity_id: media_player.spotifyplus_oscar
+        device_id: "Chromecast Audio"
+        context_uri: !secret spotify_christmas_playlist
         shuffle: false
-        offset: 0            
     - delay: 4
     # Turn on christmas tree
     - action: homeassistant.turn_on
