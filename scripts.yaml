@@ -1,5 +1,5 @@
 group_toggle: 
-  alias: Toggle grpup on/off
+  alias: Toggle group on/off
   fields:
     group:
       description: Group to toggle on/off
