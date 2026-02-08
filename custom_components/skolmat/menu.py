@@ -1,12 +1,11 @@
-import feedparser, re
+import feedparser, re, asyncio
 from abc import ABC, abstractmethod
 from datetime import datetime, date, timezone, timedelta
-from dateutil import tz, parser
+from dateutil import tz
 from logging import getLogger
 from bs4 import BeautifulSoup
 import json
-from urllib.parse import urlparse, parse_qs
-
+from urllib.parse import urlparse
 
 log = getLogger(__name__)
 
@@ -30,7 +29,7 @@ class Menu(ABC):
             raise Exception(f"URL not recognized as {SkolmatenMenu.provider}, {FoodItMenu.provider}, {MatildaMenu.provider}, {MashieMenu.provider} or {MateoMenu.provider}")
 
 
-    def __init__(self, asyncExecutor, url:str):
+    def __init__(self, asyncExecutor, url:str, menuValidHours:int = 4):
         self.asyncExecutor = asyncExecutor
         self.menu = {}
         self.url = self._fixUrl(url)
@@ -38,6 +37,8 @@ class Menu(ABC):
         self.last_menu_fetch = None
         self._weeks = 2
         self._weekDays = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag']
+        self._menuValidHours = menuValidHours
+        self._lock = asyncio.Lock()
 
     def getWeek(self, nextWeek=False):
         # if sunday, return next week
@@ -60,23 +61,43 @@ class Menu(ABC):
     async def _loadMenu (self, aiohttp_session):
         return
 
-    async def loadMenu(self, aiohttp_session):
-        cur_menu = self.menu
-        cur_menuToday = self.menuToday
-        
-        self.menu = {}
-        self.menuToday = []
+    def isMenuValid (self) -> bool:
 
-        try:
-            await self._loadMenu(aiohttp_session)
-            self.last_menu_fetch = datetime.now()
-            return True
-
-        except Exception as err:
-            self.menu = cur_menu
-            self.menuToday = cur_menuToday
-            log.exception(f"Failed to load {self.provider} menu from {self.url}")
+        if not isinstance(self.last_menu_fetch, datetime):
             return False
+
+        now = datetime.now()
+        if now.date() != self.last_menu_fetch.date():
+            return False
+    
+        if now - self.last_menu_fetch >= timedelta(hours=self._menuValidHours):
+            return False
+        
+        return True
+
+    async def loadMenu(self, aiohttp_session, force:bool=False):
+
+        async with self._lock:
+
+            if not force and self.isMenuValid():
+                return True
+
+            cur_menu = self.menu
+            cur_menuToday = self.menuToday
+            
+            self.menu = {}
+            self.menuToday = []
+
+            try:
+                await self._loadMenu(aiohttp_session)
+                self.last_menu_fetch = datetime.now()
+                return True
+
+            except Exception as err:
+                self.menu = cur_menu
+                self.menuToday = cur_menuToday
+                log.error(f"Failed to load {self.provider} menu from {self.url} - {str(err)}")
+                return False
 
     def appendEntry(self, entryDate:date, courses:list):
 
@@ -100,6 +121,40 @@ class Menu(ABC):
 
 
         self.menu[week].append(dayEntry)
+
+    def updateEntry(self, entryDate: date, courses: list):
+        if type(entryDate) is not date:
+            raise TypeError("entryDate must be date type")
+
+        week = entryDate.isocalendar().week
+
+        if week not in self.menu:
+            raise KeyError(f"No entries found for week {week}")
+
+        entry_iso = entryDate.isoformat()
+
+        for dayEntry in self.menu[week]:
+            if dayEntry["date"] == entry_iso:
+                dayEntry["courses"] = courses
+
+                if entryDate == date.today():
+                    self.menuToday = courses
+
+                return
+
+        raise KeyError(f"No entry exists for date {entry_iso}")
+
+
+    def entryExists(self, entryDate: date) -> bool:
+
+        week = entryDate.isocalendar().week
+        # No entries at all for this week
+        if week not in self.menu:
+            return False
+
+        entry_iso = entryDate.isoformat()
+
+        return any(day["date"] == entry_iso for day in self.menu[week])
 
 
     async def parse_feed(self, raw_feed):
@@ -291,9 +346,17 @@ class MatildaMenu (Menu):
         for day in dayEntries:
             entryDate = datetime.strptime(day["date"], "%Y-%m-%dT%H:%M:%S").date() # 2023-06-02T00:00:00
             courses = []
+
             for course in day["courses"]:
                 courses.append(course["name"])
-            self.appendEntry(entryDate, courses)
+
+            # some schools have several entries for the same day, frukost, lunch, mellanmål, etc 
+            if self.entryExists (entryDate):
+                # owerwrite if name=Lunch, sketchy approach, "Lunch" as key may be set by the schools, we'll see
+                if day["name"] == "Lunch":
+                    self.updateEntry(entryDate, courses)
+            else:
+                self.appendEntry(entryDate, courses)
 
 class MashieMenu(Menu):
 
@@ -331,9 +394,14 @@ class MashieMenu(Menu):
         try:
             async with aiohttp_session.get(self.url, headers=self.headers, raise_for_status=True) as response:
                 html = await response.text()
-
+                
+                log.info(f"Parsing html from {self.url}")
                 soup = BeautifulSoup(html, 'html.parser')
-                jsonData = soup.select_one("script").string
+                scriptTag = soup.select_one("script")
+                if scriptTag is None:
+                    raise ValueError(f"Malformatted/unexpected data")
+                
+                jsonData = scriptTag.string
                 # discard javascript variable assignment, weekMenues = {...
                 jsonData = jsonData[jsonData.find("{") - 1:]
                 # replace javascipt dates (new Date(1234567...) with only the ts
@@ -356,8 +424,7 @@ class MashieMenu(Menu):
                     if w > 2:
                         break
 
-        except Exception as err:
-            log.exception(f"Failed to retrieve {self.url}")
+        except Exception:
             raise
 
 class MateoMenu(Menu):
