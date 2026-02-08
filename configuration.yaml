@@ -177,6 +177,18 @@ template:
         {{ is_state('sensor.macbook_pro_oscar_active_audio_output', 'Scarlett 6i6 USB')
             and is_state('binary_sensor.macbook_pro_oscar_audio_output_in_use', 'on') 
             or is_state('media_player.chromecast_audio', ['paused', 'buffering', 'playing']) }} 
+  - light:
+    - turn_on: []
+      turn_off: []
+      set_level:
+      - action: media_player.volume_set
+        target:
+          entity_id:
+          - media_player.spotify_paq
+        data:
+          volume_level: '{{ (brightness / 255 * 100)|int / 100 }}'
+      default_entity_id: light.flic_twist
+      name: Flic Twist
   - sensor:
       - name: "Flossing"
         icon: 'mdi:alert'
@@ -336,21 +348,7 @@ light:
     entities:
       - light.office_top_corner
       - light.office_spotlights
-      - light.office_desk_lamp
-  - platform: template
-    lights:
-      flic_twist:
-        friendly_name: Flic Twist
-        turn_on:
-
-        turn_off:
-
-        set_level:
-          action: media_player.volume_set
-          target:
-            entity_id: media_player.spotify_paq
-          data:
-            volume_level: "{{ (brightness / 255 * 100)|int / 100 }}"        
+      - light.office_desk_lamp       
 
 
 shell_command: 
