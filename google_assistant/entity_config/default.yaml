@@ -169,11 +169,14 @@ light.kids_room_ceiling:
   name: Taklampan i barnrummet
   room: Barnrummet
 
-switch.kids_room_butterfly:
-  name: Fjärilen
+switch.kids_room_flower:
+  name: Blomman
   room: Barnrummet
   aliases:
-    - Fjärilslampan
+    - Blomlampan
+switch.kids_room_desk_lamp:
+  name: Skrivbordslampan
+  room: Barnrummet    
 switch.kids_room_reading_lamp:
   name: Läslampan
   room: Barnrummet

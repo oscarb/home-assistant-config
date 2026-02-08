@@ -30,11 +30,10 @@
     input:
       remote: 2629c586f4e4647f1ecdd1be567ca8ba
       power_short:
-      - action: light.toggle
+      - action: script.group_toggle
         metadata: {}
-        data: {}
-        target:
-          entity_id: light.kids_room_ceiling
+        data:
+          group: group.kids_room
       dimup_short:
       - action: switch.toggle
         metadata: {}
@@ -46,19 +45,19 @@
         metadata: {}
         data: {}
         target:
-          entity_id: switch.kids_room_reading_lamp
+          entity_id: switch.kids_room_desk_lamp
       colordown_short:
       - action: switch.toggle
         metadata: {}
         data: {}
         target:
-          entity_id: switch.kids_room_butterfly
+          entity_id: switch.kids_room_flower
       dimdown_short:
       - action: switch.toggle
         metadata: {}
         data: {}
         target:
-          entity_id: switch.kids_room_flower
+          entity_id: switch.kids_room_reading_lamp
 - id: '1714317708649'
   alias: Philips Tap Dial - Spotify volume
   description: ''

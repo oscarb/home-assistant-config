@@ -21,7 +21,8 @@ kids_room:
   name: Kids room 
   entities:
     - light.kids_room_ceiling
-    - switch.kids_room_butterfly
+    - switch.kids_room_flower
+    - switch.kids_room_desk_lamp
     - switch.kids_room_reading_lamp
     - switch.kids_room_star
 
@@ -65,7 +66,8 @@ all_lamps:
     - light.kitchen_ceiling
     # Kids room
     - light.kids_room_ceiling
-    - switch.kids_room_butterfly
+    - switch.kids_room_flower
+    - switch.kids_room_desk_lamp
     - switch.kids_room_reading_lamp
     - switch.kids_room_star    
     # Living room

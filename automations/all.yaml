@@ -181,7 +181,7 @@
       entity_id: switch.kids_room_reading_lamp
     - delay: 2
     - action: switch.turn_off
-      entity_id: switch.kids_room_butterfly
+      entity_id: switch.kids_room_flower
     # Play Spotify goodnight playlist
     - action: timer.start
       entity_id: timer.kids_room_sleep_timer
@@ -230,7 +230,7 @@
     - trigger: state
       entity_id: event.kids_room_remote
       variables:
-        button1: switch.kids_room_butterfly
+        button1: switch.kids_room_flower
         button2: switch.kids_room_star
         button3: switch.kids_room_reading_lamp
     - trigger: state

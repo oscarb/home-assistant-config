@@ -81,7 +81,8 @@ views:
         type: entities      
         entities:
           - light.kids_room_ceiling
-          - switch.butterfly
+          - switch.flower
+          - switch.kids_room_desk_lamp
           - switch.star
         show_header_toggle: true   
 
