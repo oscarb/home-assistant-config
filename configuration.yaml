@@ -257,8 +257,6 @@ stream:
 lovelace:
   resource_mode: yaml
   resources:
-    - url: /local/plugins/button-card.js?v=3.4.2
-      type: module
     - url: /local/plugins/homekit-panel-card.js?v=0.6.2
       type: module
     - url: /local/plugins/slider-button-card.js?v=1.10.3
