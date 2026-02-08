@@ -194,6 +194,23 @@ template:
         icon: 'mdi:alert'
         state: >
           {{ (now().timetuple().tm_yday % 2 == 0) | iif('🦷', '😁') }}
+  - switch:
+    - name: Show hallway camera on TV
+      turn_on:
+      - action: script.cast_magic_mirror_camera
+        data:
+          media_player: media_player.google_tv
+      turn_off:
+      - action: media_player.turn_off
+        data:
+          entity_id: media_player.google_tv
+      state: '{{ is_state_attr(''media_player.google_tv'', ''media_content_id'', states(''input_text.video_url'')) }}'  
+    - name: TV sound
+      turn_on:
+      - action: script.toggle_tv_mute
+      turn_off:
+      - action: script.toggle_tv_mute
+      state: '{{ is_state_attr(''media_player.tv'', ''is_volume_muted'', ''true'') }}'
 
 # Switches
 switch:
@@ -229,30 +246,6 @@ switch:
     name: Magic mirror
     entities:
       - switch.galaxy_tab_s2_screen
-
-  - platform: template
-    switches:
-
-      tv_sound:
-        friendly_name: TV sound
-        value_template: "{{ is_state_attr('media_player.tv', 'is_volume_muted', 'true') }}"
-        turn_on:
-          action: script.toggle_tv_mute
-        turn_off:
-          action: script.toggle_tv_mute
-
-      hallway_camera: 
-        friendly_name: Show hallway camera on TV
-        value_template: "{{ is_state_attr('media_player.google_tv', 'media_content_id', states('input_text.video_url')) }}"
-        turn_on:
-          action: script.cast_magic_mirror_camera
-          data:
-            media_player: media_player.google_tv
-        turn_off:
-          action: media_player.turn_off
-          data:
-            entity_id: media_player.google_tv
-
 
 # Google Assistant - https://www.home-assistant.io/components/google_assistant
 google_assistant:
