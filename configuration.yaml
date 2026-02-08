@@ -257,8 +257,6 @@ stream:
 lovelace:
   resource_mode: yaml
   resources:
-    - url: /local/plugins/vacuum-card.js?v=2.2.5
-      type: module
     - url: /local/plugins/mini-media-player-bundle.js?v1.15.0
       type: module
     - url: /local/plugins/auto-entities.js?v1.9.1
