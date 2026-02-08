@@ -253,20 +253,6 @@ google_assistant:
 # Proxy stream
 stream: 
 
-# Change UI config mode
-lovelace:
-  resource_mode: yaml
-  resources:
-    - url: "https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap"
-      type: css
-      # Font: Vollkorn
-    - url: https://fonts.googleapis.com/css2?family=Vollkorn&display=swap
-      type: css
-    - url: /local/fonts.css
-      type: css
-
-
-
 # Text to speech
 tts:
   - platform: google_translate
