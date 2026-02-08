@@ -255,10 +255,8 @@ stream:
 
 # Change UI config mode
 lovelace:
-  mode: yaml
+  resource_mode: yaml
   resources:
-    - url: /local/plugins/slider-entity-row.js?v=17.2.1
-      type: module
     - url: /local/plugins/fold-entity-row.js?v=2.0.14
       type: module
     - url: /local/plugins/button-card.js?v=3.4.2
