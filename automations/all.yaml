@@ -324,3 +324,42 @@
         {% endif %}
       target:
         entity_id: media_player.spotify_paq
+
+- id: 'RTbV4rsc'
+  alias: Hallway big button clicked
+  triggers:
+    - trigger: event
+      event_type: flic
+      event_data:
+        name: "hallway"
+        action: BIG_BUTTON_PUSH
+  actions:
+    - action: homeassistant.turn_on
+      target:
+        entity_id:
+          # Bedroom
+          - light.bedroom_ceiling
+          # Kitchen 
+          - light.cabinet
+          - light.kitchen_ceiling
+          # Kids room
+          - light.kids_room_ceiling
+          - switch.kids_room_desk_lamp
+          - switch.kids_room_reading_lamp
+          # Living room
+          - light.living_room_window_sill
+          # Office
+          - light.office_top_corner
+
+- id: 'r20IWPVx'
+  alias: Hallway small button clicked
+  triggers:
+    - trigger: event
+      event_type: flic
+      event_data:
+        name: "hallway"
+        action: SMALL_BUTTON_PUSH
+  actions:
+    - action: homeassistant.turn_off
+      target:
+        entity_id: group.all_lamps
