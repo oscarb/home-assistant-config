@@ -8,6 +8,7 @@
 .cloud
 .google.token
 __pycache__
+.cache
 deps
 tts
 @eaDir
