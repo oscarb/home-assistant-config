@@ -1,0 +1,43 @@
+{% macro meteocons(state, style='filled') -%}
+  {%- set filled = {
+    'clear-night': '2',
+    'cloudy': '5',
+    'fog': '5',
+    'hail': '$',
+    'lightning': '6',
+    'lightning-rainy': '&',
+    'partlycloudy': '3',
+    'pouring': '8',
+    'rainy': '7',
+    'snowy': '#',
+    'snowy-rainy': '$',
+    'sunny': '1',
+    'windy': 'F',
+    'windy-variant': '9',
+    'exceptional': ')'
+  } -%}
+
+  {%- set outlined = {
+    'clear-night': 'C',
+    'cloudy': 'N',
+    'fog': 'L',
+    'hail': 'X',
+    'lightning': 'P',
+    'lightning-rainy': '0',
+    'partlycloudy': 'H',
+    'pouring': 'R',
+    'rainy': 'Q',
+    'snowy': 'W',
+    'snowy-rainy': 'X',
+    'sunny': 'B',
+    'windy': 'F',
+    'windy-variant': 'S',
+    'exceptional': ')'
+  } -%}
+
+  {%- if style == 'filled' -%}
+    {{- filled.get(state, '5') -}}
+  {%- else -%}
+    {{- outlined.get(state, 'N') -}}
+  {%- endif -%}
+{%- endmacro %}
