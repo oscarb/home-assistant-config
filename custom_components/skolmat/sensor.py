@@ -2,23 +2,22 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, date
 import logging
 from typing import Any
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.util import slugify
 
-from .const import DOMAIN, CONF_NAME, CONF_URL
+from .const import DOMAIN, CONF_NAME, CONF_URL, CONF_PROVIDER
 from .menu import Menu
 
 _LOGGER = logging.getLogger(__name__)
-
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, add_entities):
     data = hass.data[DOMAIN][entry.entry_id]
@@ -40,8 +39,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, add_entitie
 class SkolmatSensor(RestoreEntity, SensorEntity):
 
     _attr_icon = "mdi:food"
+    _attr_translation_key = "menu"
 
-    def __init__(self, hass, entry, menu, url_hash):
+    def __init__(self, hass, entry, menu:Menu, url_hash):
         self.hass = hass
         self._entry = entry
         self._menu = menu
@@ -49,7 +49,9 @@ class SkolmatSensor(RestoreEntity, SensorEntity):
         self._name = entry.data[CONF_NAME]
         self._url = entry.data[CONF_URL]
 
-        self._attr_unique_id = f"skolmat_sensor_{url_hash}"
+        name_slug = slugify(self._name) or "unnamed"
+        self._attr_unique_id = f"skolmat_sensor_{name_slug}_{entry.entry_id}"
+        self._attr_available = True
 
         self._state: str | None = None
         self._attrs: dict[str, Any] = {}
@@ -68,10 +70,12 @@ class SkolmatSensor(RestoreEntity, SensorEntity):
 
     @property
     def device_info(self):
+        model = self._entry.data.get(CONF_PROVIDER) or getattr(self._menu, "provider", None)
         return DeviceInfo(
             identifiers={(DOMAIN, self._entry.entry_id)},
             name=self._name,
             manufacturer="Skolmat",
+            model=model,
         )
 
     async def async_added_to_hass(self):
@@ -86,14 +90,17 @@ class SkolmatSensor(RestoreEntity, SensorEntity):
     async def async_update(self) -> None:
 
         session = async_get_clientsession(self.hass)
-        await self._menu.loadMenu(session)
+        menu_data = await self._menu.getMenu(session)
+        if menu_data is None:
+            self._attr_available = False
+            return
+        self._attr_available = True
 
-        today_courses = self._menu.menuToday or []
-
-        if not today_courses:
-            state = "Ingen meny idag"
+        today_key = date.today().isoformat()
+        if not menu_data.get(today_key):
+            state = "no_food_today"
         else:
-            state = ", ".join(today_courses)
+            state = self._menu.getReadableTodaySummary()
 
         if len(state) > 255:
             state = state[:252] + "..."
@@ -101,8 +108,9 @@ class SkolmatSensor(RestoreEntity, SensorEntity):
         self._state = state
 
         self._attrs = {
+            "provider": self._menu.provider,
             "url": self._url,
             "updated": datetime.now().isoformat(),
-            "calendar": self._menu.menu,
+            "calendar": menu_data,
             "name": self._name,
         }
