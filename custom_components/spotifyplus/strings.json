@@ -12,7 +12,7 @@
       },
       "reauth_confirm": {
         "title": "SpotifyPlus Re-Authentication Required",
-        "description": "The SpotifyPlus integration needs to re-authenticate with Spotify for user name \"{account_name}\", user-id \"{account_id}\"."
+        "description": "The SpotifyPlus integration needs to re-authenticate with Spotify for user name \"{account_name}\", user-id \"{account_id}\".  Note that this is a requirement from Spotify, in that refresh tokens are forced to expire every six months.  You will be prompted in the following screen(s) to login to Spotify and re-authorize the access for the Home Assistant SpotifyPlus Integration."
       }
     },
     "abort": {
@@ -83,6 +83,10 @@
     "removed_yaml": {
       "title": "The Spotify YAML configuration has been removed",
       "description": "Configuring Spotify using YAML has been removed.\n\nYour existing YAML configuration is not used by Home Assistant.\n\nRemove the YAML configuration from your configuration.yaml file and restart Home Assistant to fix this issue."
+    },
+    "reauth_required": {
+      "title": "SpotifyPlus Re-Authentication Required",
+      "description": "The SpotifyPlus authorization refresh token for user name \"{account_name}\" (OAuth client id \"{client_id}\") has expired due to Spotify regulations. Please re-authenticate to Spotify for this account via the \"Settings \\ Devices & Services\" UI, using the discovered \"SpotifyPlus Reconfigure\" option."
     }
   },
   "services": {
@@ -333,6 +337,10 @@
         "sort_result": {
           "name": "Sort Result?",
           "description": "True to sort result items by name prior to returning to the caller; otherwise, False to return results in the order that the Spotify Web API returned them."
+        },
+        "filter_criteria": {
+          "name": "Filter Criteria",
+          "description": "Filter returned entries by an album name.  Value can be the full name of the album (e.g. \"Carried Me\"), or a partial name (e.g. \"Carried\")."
         }
       }
     },
@@ -363,6 +371,10 @@
         "sort_result": {
           "name": "Sort Result?",
           "description": "True to sort result items by name prior to returning to the caller; otherwise, False to return results in the order that the Spotify Web API returned them."
+        },
+        "filter_criteria": {
+          "name": "Filter By Artist",
+          "description": "Filter returned entries by an album name.  Value can be the full name of the album (e.g. \"Carried Me\"), or a partial name (e.g. \"Carried\")."
         }
       }
     },
@@ -428,7 +440,7 @@
         },
         "limit": {
           "name": "Limit",
-          "description": "The maximum number of items to return in a page of items when manual paging is used.  Default is 20, Range is 1 to 50.  See the limit_total argument for automatic paging option."
+          "description": "The maximum number of items to return in a page of items when manual paging is used.  Default is 10, Range is 1 to 10.  See the limit_total argument for automatic paging option."
         },
         "offset": {
           "name": "Offset",
@@ -525,6 +537,10 @@
         "sort_result": {
           "name": "Sort Result?",
           "description": "True to sort result items by name prior to returning to the caller; otherwise, False to return results in the order that the Spotify Web API returned them."
+        },
+        "filter_criteria": {
+          "name": "Filter Criteria",
+          "description": "Filter returned entries by an artist name.  Value can be the full name of the artist (e.g. \"Jeremy Camp\"), or a partial name (e.g. \"Camp\")."
         }
       }
     },
@@ -599,6 +615,10 @@
         "sort_result": {
           "name": "Sort Result?",
           "description": "True to sort result items by name prior to returning to the caller; otherwise, False to return results in the order that the Spotify Web API returned them."
+        },
+        "filter_criteria": {
+          "name": "Filter Criteria",
+          "description": "Filter returned entries by an audiobook.  Value can be the full name of the ausiobook (e.g. \"Elfstones of Shannara\"), or a partial name (e.g. \"Elfstones\")."
         }
       }
     },
@@ -749,6 +769,10 @@
         "sort_result": {
           "name": "Sort Result?",
           "description": "True to sort result items by name prior to returning to the caller; otherwise, False to return results in the order that the Spotify Web API returned them."
+        },
+        "filter_criteria": {
+          "name": "Filter Criteria",
+          "description": "Filter returned entries by an episode name.  Value can be the full name of the episode (e.g. \"My Podcast Episode\"), or a partial name (e.g. \"Episode\")."
         }
       }
     },
@@ -943,6 +967,10 @@
         "limit_total": {
           "name": "Limit Total",
           "description": "The maximum number of items to return for the request.  If specified, this argument overrides the limit and offset argument values and paging is automatically used to retrieve all available items up to the specified limit total."
+        },
+        "filter_criteria": {
+          "name": "Filter By Artist",
+          "description": "Filter returned entries by a track name.  Value can be the full name of the track (e.g. \"Beautiful One\"), or a partial name (e.g. \"Beautiful\")."
         }
       }
     },
@@ -969,6 +997,10 @@
         "additional_types": {
           "name": "Additional Types",
           "description": "A comma-separated list of item types that your client supports besides the default track type. Valid types are 'track' and 'episode'."
+        },
+        "exclude_items": {
+          "name": "Exclude Items?",
+          "description": "True to return only the basic fields of the playlist - the items collection will NOT be included in the returned object. otherwise, False (or omitted, default) to include the items collection in the returned object.  If True, the `fields` argument will be overridden to specify the fields to return."
         }
       }
     },
@@ -1009,6 +1041,10 @@
         "sort_result": {
           "name": "Sort Result?",
           "description": "True to sort result items by name prior to returning to the caller; otherwise, False to return results in the order that the Spotify Web API returned them."
+        },
+        "filter_criteria": {
+          "name": "Filter Criteria",
+          "description": "Filter returned entries by a playlist name.  Value can be the full name of the playlist (e.g. \"My Playlist\"), or a partial name (e.g. \"My\")."
         }
       }
     },
@@ -1155,6 +1191,10 @@
         "exclude_audiobooks": {
           "name": "Exclude Audiobooks?",
           "description": "True (default) to exclude audiobook shows from the returned list, leaving only podcast shows; otherwise, False to include all results returned by the Spotify Web API."
+        },
+        "filter_criteria": {
+          "name": "Filter Criteria",
+          "description": "Filter returned entries by a show name.  Value can be the full name of the show (e.g. \"My Podcast Name\"), or a partial name (e.g. \"Podcast\")."
         }
       }
     },
@@ -1277,6 +1317,10 @@
         "filter_album": {
           "name": "Filter By Album",
           "description": "Filter returned entries by an album name.  Value can be the full name of the album (e.g. \"Carried Me\"), or a partial name (e.g. \"Carried\")."
+        },
+        "filter_criteria": {
+          "name": "Filter By Track",
+          "description": "Filter returned entries by a track name.  Value can be the full name of the track (e.g. \"Beautiful One\"), or a partial name (e.g. \"Beautiful\")."
         }
       }
     },
@@ -1533,6 +1577,10 @@
         "sort_result": {
           "name": "Sort Result?",
           "description": "True to sort result items by name prior to returning to the caller; otherwise, False to return results in the order that the Spotify Web API returned them."
+        },
+        "filter_criteria": {
+          "name": "Filter By Artist",
+          "description": "Filter returned entries by an artist name.  Value can be the full name of the artist (e.g. \"Jeremy Camp\"), or a partial name (e.g. \"Camp\")."
         }
       }
     },
@@ -1563,6 +1611,18 @@
         "sort_result": {
           "name": "Sort Result?",
           "description": "True to sort result items by name prior to returning to the caller; otherwise, False to return results in the order that the Spotify Web API returned them."
+        },
+        "filter_artist": {
+          "name": "Filter By Artist",
+          "description": "Filter returned entries by an artist name.  Value can be the full name of the artist (e.g. \"Jeremy Camp\"), or a partial name (e.g. \"Camp\")."
+        },
+        "filter_album": {
+          "name": "Filter By Album",
+          "description": "Filter returned entries by an album name.  Value can be the full name of the album (e.g. \"Carried Me\"), or a partial name (e.g. \"Carried\")."
+        },
+        "filter_criteria": {
+          "name": "Filter By Track",
+          "description": "Filter returned entries by an track name.  Value can be the full name of the track (e.g. \"Beautiful One\"), or a partial name (e.g. \"Beautiful\")."
         }
       }
     },
@@ -2711,6 +2771,10 @@
         "entity_id": {
           "name": "Entity ID",
           "description": "Entity ID of the SpotifyPlus service account that will make the request to the Spotify Web API."
+        },
+        "reason": {
+          "name": "Reason",
+          "description": "Reason code of why the token is being expired. 0 = simple expiration test where expire_at = current time minus 10 seconds. 1 = spotify invalid_grant test - will force an `invalid_grant` exception scenario when token is refreshed."
         }
       }
     },

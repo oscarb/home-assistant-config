@@ -125,6 +125,7 @@ from .const import (
     DOMAIN, 
     DOMAIN_SCRIPT,
     LOGGER,
+    TOKEN_EXPIRE_REASON,
 )
 from .utils import (
     passwordMaskString, 
@@ -600,8 +601,6 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
     def media_position_updated_at(self) -> dt.datetime | None:
         """ 
         When was the position of the current playing media valid.
-        
-        Returns value from homeassistant.util.dt.utcnow().
         """
         return self._attr_media_position_updated_at
 
@@ -790,8 +789,8 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
         _logsi.LogVerbose(STAppMessages.MSG_MEDIAPLAYER_SERVICE_WITH_PARMS, self.name, "media_seek", "position='%s'" % (position))
 
         # update ha state.
-        self._attr_media_position = position
-        self._attr_media_position_updated_at = utcnow()
+        self._attr_media_position = int(position)
+        self._attr_media_position_updated_at = utcnow().replace(microsecond=0)
         self.schedule_update_ha_state(force_refresh=False)
         
         # call Spotify Web API to process the request.
@@ -1243,7 +1242,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                         if (isinstance(self._attr_media_position_updated_at, datetime)):
                             # calculate play time remaining by subtracting current UTC time from 
                             # the last UTC time when the media_position was provided by Spotify player state.
-                            dtUtc:datetime = utcnow()
+                            dtUtc:datetime = utcnow().replace(microsecond=0)
                             timeDifference:timedelta = (dtUtc - self._attr_media_position_updated_at)
                             self._playTimeRemainingEst = int(self._attr_media_duration - self._attr_media_position - int(timeDifference.total_seconds()))
                             #_logsi.LogVerbose("'%s': Estimated time remaining (timeDifference) - media Duration=%d, Position=%s, Remaining=%d, TimeDiffSecs=%d, state=%s" % (self.name, int(self._attr_media_duration), int(self._attr_media_position), self._playTimeRemainingEst, timeDifference.total_seconds(), str(self._attr_state)))
@@ -1292,14 +1291,14 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                     # is a Spotify-owned "algorithmic" playlist (e.g. various "Made For You" content, etc).
                     try:
                         
-                        _logsi.LogVerbose("'%s': Retrieving playlist for context uri '%s'" % (self.name, context.Uri))
+                        _logsi.LogVerbose("'%s': Retrieving basic playlist details for context uri '%s'" % (self.name, context.Uri))
                         spotifyId:str = SpotifyClient.GetIdFromUri(context.Uri)
-                        self._playlist = self.data.spotifyClient.GetPlaylist(spotifyId)
+                        self._playlist = self.data.spotifyClient.GetPlaylist(spotifyId, excludeItems=True)
                         
                     except Exception as ex:
                         
                         #_logsi.LogException("Unable to get playlist data for context '%s'. Continuing without playlist data" % context.Uri, ex, logToSystemLogger=False)
-                        _logsi.LogWarning("'%s': Unable to get playlist data for context '%s'. Continuing without playlist data. GetPlaylist response: %s" % (self.name, context.Uri, str(ex)), logToSystemLogger=False)
+                        _logsi.LogWarning("'%s': Unable to get basic playlist data for context '%s'. Continuing without playlist data. GetPlaylist response: %s" % (self.name, context.Uri, str(ex)), logToSystemLogger=False)
 
                         # if we could not get the current playlist info, then build a "dummy" playlist so that
                         # information is still conveyed in the extended attributes.
@@ -1421,7 +1420,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                     
                 self._attr_media_content_id = item.Uri
                 self._attr_media_content_type = item.Type
-                self._attr_media_duration = item.DurationMS / 1000
+                self._attr_media_duration = int(item.DurationMS / 1000)
                 self._attr_media_title = item.Name
 
                 # update media album name attribute.
@@ -1487,8 +1486,8 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             # update seek-related attributes.
             # also save currently playing track position in case we need to restore it later.
             if playerPlayState.ProgressMS is not None:
-                self._attr_media_position = playerPlayState.ProgressMS / 1000
-                self._attr_media_position_updated_at = utcnow()
+                self._attr_media_position = int(playerPlayState.ProgressMS / 1000)
+                self._attr_media_position_updated_at = utcnow().replace(microsecond=0)
                 self._lastMediaPlayedPosition = self._attr_media_position
         
             # calculate the time (in seconds) remaining on the playing track.
@@ -2383,6 +2382,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             market:str=None,
             limitTotal:int=None,
             sortResult:bool=True,
+            filterCriteria:str|None=None,
             ) -> dict:
         """
         Get a list of the albums saved in the current Spotify user's 'Your Library'.
@@ -2411,6 +2411,9 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 True to sort the items by name; otherwise, False to leave the items in the same order they 
                 were returned in by the Spotify Web API.  
                 Default: True
+            filterCriteria (str):
+                Filter returned entries by a album name or uri value.  
+                Value can be a full name (e.g. "My Album Name"), or a partial name (e.g. "My").
                 
         Returns:
             A dictionary that contains the following keys:
@@ -2429,11 +2432,12 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("market", market)
             apiMethodParms.AppendKeyValue("limitTotal", limitTotal)
             apiMethodParms.AppendKeyValue("sortResult", sortResult)
+            apiMethodParms.AppendKeyValue("filterCriteria", filterCriteria)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Album Favorites Service", apiMethodParms)
                 
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result:AlbumPageSaved = self.data.spotifyClient.GetAlbumFavorites(limit, offset, market, limitTotal, sortResult)
+            result:AlbumPageSaved = self.data.spotifyClient.GetAlbumFavorites(limit, offset, market, limitTotal, sortResult, filterCriteria)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -2461,6 +2465,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             country:str=None,
             limitTotal:int=None,
             sortResult:bool=True,
+            filterCriteria:str|None=None,
             ) -> dict:
         """
         Get a list of new album releases featured in Spotify.
@@ -2489,6 +2494,9 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 True to sort the items by name; otherwise, False to leave the items in the same order they 
                 were returned in by the Spotify Web API.  
                 Default: True
+            filterCriteria (str):
+                Filter returned entries by a album name or uri value.  
+                Value can be a full name (e.g. "My Album Name"), or a partial name (e.g. "My").
                 
         Returns:
             A dictionary that contains the following keys:
@@ -2507,11 +2515,12 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("country", country)
             apiMethodParms.AppendKeyValue("limitTotal", limitTotal)
             apiMethodParms.AppendKeyValue("sortResult", sortResult)
+            apiMethodParms.AppendKeyValue("filterCriteria", filterCriteria)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Album New Releases Service", apiMethodParms)
                 
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result:AlbumPageSimplified = self.data.spotifyClient.GetAlbumNewReleases(limit, offset, country, limitTotal, sortResult)
+            result:AlbumPageSimplified = self.data.spotifyClient.GetAlbumNewReleases(limit, offset, country, limitTotal, sortResult, filterCriteria)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -2669,7 +2678,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             self, 
             artistId:str, 
             include_groups:str='album', 
-            limit:int=20, 
+            limit:int=10, 
             offset:int=0,
             market:str=None,
             limitTotal:int=None,
@@ -2690,7 +2699,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 Example: `single,appears_on`
             limit (int):  
                 The maximum number of items to return in a page of items.  
-                Default: 20, Range: 1 to 50.  
+                Default: 10, Range: 1 to 10.  
             offset (int):  
                 The index of the first item to return; use with limit to get the next set of items.  
                 Default: 0 (the first item).  
@@ -2958,6 +2967,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             limit:int=20,
             limitTotal:int=None,
             sortResult:bool=True,
+            filterCriteria:str|None=None,
             ) -> dict:
         """
         Get the current user's followed artists.
@@ -2980,6 +2990,9 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 True to sort the items by name; otherwise, False to leave the items in the same order they 
                 were returned in by the Spotify Web API.  
                 Default: True
+            filterCriteria (str):
+                Filter returned entries by an artist name or uri value.  
+                Value can be a full name (e.g. "My Artist Name"), or a partial name (e.g. "My").
                 
         Returns:
             A dictionary that contains the following keys:
@@ -2997,11 +3010,12 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("limit", limit)
             apiMethodParms.AppendKeyValue("limitTotal", limitTotal)
             apiMethodParms.AppendKeyValue("sortResult", sortResult)
+            apiMethodParms.AppendKeyValue("filterCriteria", filterCriteria)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Artists Followed Service", apiMethodParms)
                 
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result:ArtistPage = self.data.spotifyClient.GetArtistsFollowed(after, limit, limitTotal, sortResult)
+            result:ArtistPage = self.data.spotifyClient.GetArtistsFollowed(after, limit, limitTotal, sortResult, filterCriteria)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -3174,6 +3188,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             offset:int=0,
             limitTotal:int=None,
             sortResult:bool=True,
+            filterCriteria:str|None=None,
             ) -> dict:
         """
         Get a list of the audiobooks saved in the current Spotify user's 'Your Library'.
@@ -3196,6 +3211,9 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 True to sort the items by name; otherwise, False to leave the items in the same order they 
                 were returned in by the Spotify Web API.  
                 Default: True
+            filterCriteria (str):
+                Filter returned entries by a audiobook name or uri value.  
+                Value can be a full name (e.g. "My AudioBook Name"), or a partial name (e.g. "My").
                 
         Returns:
             A dictionary that contains the following keys:
@@ -3213,11 +3231,12 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("offset", offset)
             apiMethodParms.AppendKeyValue("limitTotal", limitTotal)
             apiMethodParms.AppendKeyValue("sortResult", sortResult)
+            apiMethodParms.AppendKeyValue("filterCriteria", filterCriteria)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Audiobook Favorites Service", apiMethodParms)
                 
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result:AudiobookPageSimplified = self.data.spotifyClient.GetAudiobookFavorites(limit, offset, limitTotal, sortResult)
+            result:AudiobookPageSimplified = self.data.spotifyClient.GetAudiobookFavorites(limit, offset, limitTotal, sortResult, filterCriteria)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -3648,6 +3667,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             offset:int=0,
             limitTotal:int=None,
             sortResult:bool=True,
+            filterCriteria:str|None=None,
             ) -> dict:
         """
         Get a list of the episodes saved in the current Spotify user's 'Your Library'.
@@ -3670,6 +3690,9 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 True to sort the items by name; otherwise, False to leave the items in the same order they 
                 were returned in by the Spotify Web API.  
                 Default: True
+            filterCriteria (str):
+                Filter returned entries by a episode name or uri value.  
+                Value can be a full name (e.g. "My Episode Name"), or a partial name (e.g. "My").
                 
         Returns:
             A dictionary that contains the following keys:
@@ -3687,11 +3710,12 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("offset", offset)
             apiMethodParms.AppendKeyValue("limitTotal", limitTotal)
             apiMethodParms.AppendKeyValue("sortResult", sortResult)
+            apiMethodParms.AppendKeyValue("filterCriteria", filterCriteria)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Episode Favorites Service", apiMethodParms)
                 
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result:EpisodePageSaved = self.data.spotifyClient.GetEpisodeFavorites(limit, offset, limitTotal, sortResult)
+            result:EpisodePageSaved = self.data.spotifyClient.GetEpisodeFavorites(limit, offset, limitTotal, sortResult, filterCriteria)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -4323,7 +4347,8 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             limit:int=20, 
             after:int=0, 
             before:int=0,
-            limitTotal:int=None
+            limitTotal:int=None,
+            filterCriteria:str|None=None,
             ) -> dict:
         """
         Get tracks from the current user's recently played tracks.  
@@ -4353,6 +4378,9 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 and paging is automatically used to retrieve all available items up to the
                 maximum number specified.  
                 Default: None (disabled)
+            filterCriteria (str):
+                Filter returned entries by a track name or uri value.  
+                Value can be a full name (e.g. "My Track Name"), or a partial name (e.g. "My").
                 
         The `after` and `before` arguments are based upon local time (not UTC time).  Recently
         played item history uses a local timestamp, and NOT a UTC timestamp.
@@ -4374,11 +4402,12 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("after", after)
             apiMethodParms.AppendKeyValue("before", before)
             apiMethodParms.AppendKeyValue("limitTotal", limitTotal)
+            apiMethodParms.AppendKeyValue("filterCriteria", filterCriteria)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Player Recent Tracks Service", apiMethodParms)
                 
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result = self.data.spotifyClient.GetPlayerRecentTracks(limit, after, before, limitTotal)
+            result = self.data.spotifyClient.GetPlayerRecentTracks(limit, after, before, limitTotal, filterCriteria)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -4404,7 +4433,8 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             playlistId:str=None, 
             market:str=None,
             fields:str=None,
-            additionalTypes:str=None
+            additionalTypes:str=None,
+            excludeItems:str=None,
             ) -> dict:
         """
         Get a playlist owned by a Spotify user.
@@ -4426,6 +4456,11 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             additionalTypes (str):
                 A comma-separated list of item types that your client supports besides the default track type.  
                 Valid types are: track and episode.  
+            excludeItems (bool):
+                True to return only the basic fields of the playlist; the items collection will not be included in the returned object.  
+                The `fields` argument will be overridden to specify the fields to return.  
+                If False (or omitted, default), then playlist items will be included in the returned object.  
+                This argument is not part of the Spotify Web API specification.  
                 
         Returns:
             A dictionary that contains the following keys:
@@ -4444,11 +4479,12 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("market", market)
             apiMethodParms.AppendKeyValue("fields", fields)
             apiMethodParms.AppendKeyValue("additionalTypes", additionalTypes)
+            apiMethodParms.AppendKeyValue("excludeItems", excludeItems)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Playlist Service", apiMethodParms)
                 
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result = self.data.spotifyClient.GetPlaylist(playlistId, market, fields, additionalTypes)
+            result = self.data.spotifyClient.GetPlaylist(playlistId, market, fields, additionalTypes, excludeItems)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -4527,6 +4563,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             offset:int=0,
             limitTotal:int=None,
             sortResult:bool=True,
+            filterCriteria:str|None=None,
             ) -> dict:
         """
         Get a list of the playlists owned or followed by the current Spotify user.
@@ -4549,6 +4586,9 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 True to sort the items by name; otherwise, False to leave the items in the same order they 
                 were returned in by the Spotify Web API.  
                 Default: True
+            filterCriteria (str):
+                Filter returned entries by a playlist name or uri value.  
+                Value can be a full name (e.g. "My Playlist Name"), or a partial name (e.g. "My").
 
         Returns:
             A dictionary that contains the following keys:
@@ -4566,11 +4606,12 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("offset", offset)
             apiMethodParms.AppendKeyValue("limitTotal", limitTotal)
             apiMethodParms.AppendKeyValue("sortResult", sortResult)
+            apiMethodParms.AppendKeyValue("filterCriteria", filterCriteria)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Playlist Favorites Service", apiMethodParms)
                 
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result:PlaylistPageSimplified = self.data.spotifyClient.GetPlaylistFavorites(limit, offset, limitTotal, sortResult)
+            result:PlaylistPageSimplified = self.data.spotifyClient.GetPlaylistFavorites(limit, offset, limitTotal, sortResult, filterCriteria)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -4918,6 +4959,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             limitTotal:int=None,
             sortResult:bool=True,
             excludeAudiobooks:bool=True,
+            filterCriteria:str|None=None,
             ) -> dict:
         """
         Get a list of the shows saved in the current Spotify user's 'Your Library'.
@@ -4944,6 +4986,9 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 True to exclude audiobook shows from the returned list, leaving only podcast shows;
                 otherwise, False to include all results returned by the Spotify Web API.  
                 Default: True  
+            filterCriteria (str):
+                Filter returned entries by a show name or uri value.  
+                Value can be a full name (e.g. "My Show Name"), or a partial name (e.g. "My").
                 
         For some reason, Spotify Web API returns audiobooks AND podcasts with the `/me/shows` service.
         Spotify Web API returns only audiobooks with the `/me/audiobooks` service.
@@ -4967,11 +5012,12 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("limitTotal", limitTotal)
             apiMethodParms.AppendKeyValue("sortResult", sortResult)
             apiMethodParms.AppendKeyValue("excludeAudiobooks", excludeAudiobooks)
+            apiMethodParms.AppendKeyValue("filterCriteria", filterCriteria)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Show Favorites Service", apiMethodParms)
                 
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result:ShowPageSaved = self.data.spotifyClient.GetShowFavorites(limit, offset, limitTotal, sortResult, excludeAudiobooks)
+            result:ShowPageSaved = self.data.spotifyClient.GetShowFavorites(limit, offset, limitTotal, sortResult, excludeAudiobooks, filterCriteria)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -5267,6 +5313,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
         sortResult:bool=True,
         filterArtist:str=None,
         filterAlbum:str=None,
+        filterCriteria:str|None=None,
         ) -> dict:
         """
         Get a list of the tracks saved in the current Spotify user's 'Your Library'.
@@ -5301,6 +5348,9 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             filterAlbum (str):
                 Filter returned entries by an album name.
                 Value can be the full name of the album (e.g. "Carried Me"), or a partial name (e.g. "Carried").
+            filterCriteria (str):
+                Filter returned entries by a track name or uri value.  
+                Value can be a full name (e.g. "My Track Name"), or a partial name (e.g. "My").
                 
         Returns:
             A dictionary that contains the following keys:
@@ -5322,11 +5372,12 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("sortResult", sortResult)
             apiMethodParms.AppendKeyValue("filterArtist", filterArtist)
             apiMethodParms.AppendKeyValue("filterAlbum", filterAlbum)
+            apiMethodParms.AppendKeyValue("filterCriteria", filterCriteria)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Track Favorites Service", apiMethodParms)
                 
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result:TrackPageSaved = self.data.spotifyClient.GetTrackFavorites(limit, offset, market, limitTotal, sortResult, filterArtist, filterAlbum)
+            result:TrackPageSaved = self.data.spotifyClient.GetTrackFavorites(limit, offset, market, limitTotal, sortResult, filterArtist, filterAlbum, filterCriteria)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -5780,6 +5831,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             offset:int=0,
             limitTotal:int=None,
             sortResult:bool=True,
+            filterCriteria:str|None=None,
             ) -> dict:
         """
         Get the current user's top artists based on calculated affinity.
@@ -5810,6 +5862,9 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 True to sort the items by name; otherwise, False to leave the items in the same order they 
                 were returned in by the Spotify Web API.  
                 Default: True
+            filterCriteria (str):
+                Filter returned entries by an artist name or uri value.  
+                Value can be the full name of the artist (e.g. "Jeremy Camp"), or a partial name (e.g. "Camp").
                 
         Returns:
             A dictionary that contains the following keys:
@@ -5828,11 +5883,12 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("offset", offset)
             apiMethodParms.AppendKeyValue("limitTotal", limitTotal)
             apiMethodParms.AppendKeyValue("sortResult", sortResult)
+            apiMethodParms.AppendKeyValue("filterCriteria", filterCriteria)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Users Top Artists Service", apiMethodParms)
                 
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result:ArtistPage = self.data.spotifyClient.GetUsersTopArtists(timeRange, limit, offset, limitTotal, sortResult)
+            result:ArtistPage = self.data.spotifyClient.GetUsersTopArtists(timeRange, limit, offset, limitTotal, sortResult, filterCriteria)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -5860,6 +5916,9 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             offset:int=0,
             limitTotal:int=None,
             sortResult:bool=True,
+            filterArtist:str=None,
+            filterAlbum:str=None,
+            filterCriteria:str|None=None,
             ) -> dict:
         """
         Get the current user's top tracks based on calculated affinity.
@@ -5890,6 +5949,15 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 True to sort the items by name; otherwise, False to leave the items in the same order they 
                 were returned in by the Spotify Web API.  
                 Default: True
+            filterArtist (str):
+                Filter returned entries by an artist name or uri value.  
+                Value can be the full name of the artist (e.g. "Jeremy Camp"), or a partial name (e.g. "Camp").
+            filterAlbum (str):
+                Filter returned entries by an album name or uri value.
+                Value can be the full name of the album (e.g. "Carried Me"), or a partial name (e.g. "Carried").
+            filterCriteria (str):
+                Filter returned entries by a track name or uri value.  
+                Value can be a full name (e.g. "My Track Name"), or a partial name (e.g. "My").
                 
         Returns:
             A dictionary that contains the following keys:
@@ -5908,11 +5976,14 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             apiMethodParms.AppendKeyValue("offset", offset)
             apiMethodParms.AppendKeyValue("limitTotal", limitTotal)
             apiMethodParms.AppendKeyValue("sortResult", sortResult)
+            apiMethodParms.AppendKeyValue("filterArtist", filterArtist)
+            apiMethodParms.AppendKeyValue("filterAlbum", filterAlbum)
+            apiMethodParms.AppendKeyValue("filterCriteria", filterCriteria)
             _logsi.LogMethodParmList(SILevel.Verbose, "Spotify Get Users Top Tracks Service", apiMethodParms)
             
             # request information from Spotify Web API.
             _logsi.LogVerbose(STAppMessages.MSG_SERVICE_QUERY_WEB_API)
-            result:TrackPage = self.data.spotifyClient.GetUsersTopTracks(timeRange, limit, offset, limitTotal, sortResult)
+            result:TrackPage = self.data.spotifyClient.GetUsersTopTracks(timeRange, limit, offset, limitTotal, sortResult, filterArtist, filterAlbum, filterCriteria)
 
             # return the (partial) user profile that retrieved the result, as well as the result itself.
             return {
@@ -9283,9 +9354,17 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
 
     def service_test_token_expire(
             self, 
+            reason:int=0, 
             ) -> None:
         """
         Forces Spotify authorization token to expire.
+
+        Args:
+            reason (int):
+                Reason code of why the token is being expired.  
+                0 = simple expiration test - expire_at set to current time minus 10 seconds.  
+                1 = spotify invalid_grant test - will force an `invalid_grant` exception scenario when token is refreshed.  
+                Default is 0.
 
         Note that this will only expire the `SpotifyClient.AuthToken` token;
         It will NOT expire the `session.token` token!
@@ -9297,8 +9376,16 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
 
             # trace.
             apiMethodParms = _logsi.EnterMethodParmList(SILevel.Debug, apiMethodName)
+            apiMethodParms.AppendKeyValue("reason", reason)
             _logsi.LogMethodParmList(SILevel.Verbose, "TEST-SERVICE - Token Expire Service", apiMethodParms)
+
+            # validation.
+            if (not isinstance(reason, int)):
+                reason = 0
             
+            # update runtime data with reason code, for processing later.
+            self.data.runtime_data[TOKEN_EXPIRE_REASON] = reason
+
             # force Spotify authentication token expiration.
             _logsi.LogWarning("'%s': Forcing token expiration for the next Spotify Web API call for testing purposes" % self.name, colorValue=SIColors.Red)
             unix_epoch = datetime(1970, 1, 1)
@@ -9310,7 +9397,8 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
             # force OAuth2Session token expiration.
             self.data.spotifyClient._AuthClient.Session.token['expires_at'] = int((dtUtcNow - unix_epoch).total_seconds() - 10)  # -10 seconds from epoch, current date
             _logsi.LogDictionary(SILevel.Verbose, "'%s': OAuth2Session token dictionary (post-update)" % self.name, self.data.spotifyClient._AuthClient.Session.token, prettyPrint=True, colorValue=SIColors.Red)
-            _logsi.LogWarning("'%s': Token Expire Service complete; token should be refreshed on the next Spotify Web API call" % self.name, colorValue=SIColors.Red)
+            _logsi.LogDictionary(SILevel.Verbose, "'%s': OAuth2Session runtime_data (dictionary) (post-update)" % self.name, self.data.runtime_data, prettyPrint=True, colorValue=SIColors.Red)
+            _logsi.LogVerbose("'%s': Token Expire Service complete; token should be refreshed on the next Spotify Web API call" % self.name, colorValue=SIColors.Red)
 
         # the following exceptions have already been logged, so we just need to
         # pass them back to HA for display in the log (or service UI).
@@ -9497,6 +9585,7 @@ class SpotifyMediaPlayer(MediaPlayerEntity):
                 browseMedia:BrowseMedia = BrowseMedia(
                     can_expand=False,
                     can_play=False,
+                    can_search=True,
                     children=[],
                     children_media_class=None,
                     media_class=None,
