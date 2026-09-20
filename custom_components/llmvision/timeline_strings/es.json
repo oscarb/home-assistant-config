@@ -1,0 +1,74 @@
+{
+    "categories": {
+        "person": {
+            "labels": {
+                "persona": "person",
+                "gente": "person",
+                "niño": "person",
+                "mujer": "person",
+                "hombre": "person",
+                "humano": "person"
+            }
+        },
+        "vehicle": {
+            "labels": {
+                "cartero": "truck",
+                "mensajero": "truck",
+                "bicicleta": "bicycle",
+                "moto": "motorcycle",
+                "autobús": "bus",
+                "coche": "car",
+                "furgoneta": "car",
+                "suv": "car",
+                "vehículo": "car",
+                "camión": "truck"
+            }
+        },
+        "animal": {
+            "labels": {
+                "perro": "dog",
+                "gato": "cat",
+                "pájaro": "bird",
+                "mascota": "dog",
+                "animal": "animal",
+                "ardilla": "animal",
+                "vida silvestre": "animal",
+                "ciervo": "animal",
+                "conejo": "animal",
+                "zorro": "animal",
+                "coyote": "animal",
+                "mapache": "animal",
+                "mofeta": "animal",
+                "zarigüeya": "animal",
+                "erizo": "animal",
+                "oso": "animal",
+                "alce": "animal"
+            }
+        },
+        "delivery": {
+            "labels": {
+                "caja": "delivery",
+                "paquete": "delivery"
+            }
+        },
+        "entity": {
+            "labels": {
+                "cámara": "camera",
+                "sensor": "sensor",
+                "luz": "light",
+                "llave": "key",
+                "cerradura": "lock",
+                "alarma": "alarm"
+            }
+        },
+        "nature": {
+            "labels": {
+                "jardín": "plant",
+                "planta": "plant",
+                "flor": "plant",
+                "árbol": "tree"
+            }
+        }
+    },
+    "regex": "`\\b${key}(?:es|s)?\\b`, 'iu'"
+}

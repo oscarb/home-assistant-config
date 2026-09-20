@@ -59,12 +59,14 @@
                         "data": {
                             "default_model": "默认模型",
                             "temperature": "温度",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "think": "思考"
                         },
                         "data_description": {
                             "default_model": "当未指定其他模型时使用的默认模型。",
                             "temperature": "控制输出的随机性。较低的值使输出更确定。",
-                            "top_p": "控制输出的多样性。较低的值使输出更集中。"
+                            "top_p": "控制输出的多样性。较低的值使输出更集中。",
+                            "think": "为支持它的模型启用思维模式。"
                         }
                     },
                     "advanced_section": {
@@ -101,19 +103,21 @@
                         "data": {
                             "default_model": "默认模型",
                             "temperature": "温度",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "推理努力"
                         },
                         "data_description": {
                             "default_model": "当未指定其他模型时使用的默认模型。",
                             "temperature": "控制输出的随机性。较低的值使输出更确定。",
-                            "top_p": "控制输出的多样性。较低的值使输出更集中。"
+                            "top_p": "控制输出的多样性。较低的值使输出更集中。",
+                            "reasoning_effort": "控制支持它的模型的推理工作。"
                         }
                     }
                 }
             },
             "azure": {
                 "title": "配置Azure",
-                "description": "请输入有效的Azure API密钥、基础URL、部署和API版本。\n基础URL格式必须为 `https://domain.openai.azure.com/`，包括结尾的斜杠。",
+                "description": "请输入有效的Azure API密钥、基础URL、部署和API版本。",
                 "sections": {
                     "connection_section": {
                         "name": "连接",
@@ -161,12 +165,14 @@
                         "data": {
                             "default_model": "默认模型",
                             "temperature": "温度",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "思考预算"
                         },
                         "data_description": {
                             "default_model": "当未指定其他模型时使用的默认模型。",
                             "temperature": "控制输出的随机性。较低的值使输出更确定。",
-                            "top_p": "控制输出的多样性。较低的值使输出更集中。"
+                            "top_p": "控制输出的多样性。较低的值使输出更集中。",
+                            "thinking_budget": "控制支持它的模型的思维预算。较高的值允许更复杂的推理，但可能会增加响应时间和成本。"
                         }
                     }
                 }
@@ -188,12 +194,14 @@
                         "data": {
                             "default_model": "默认模型",
                             "temperature": "温度",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "思考预算"
                         },
                         "data_description": {
                             "default_model": "当未指定其他模型时使用的默认模型。",
                             "temperature": "控制输出的随机性。较低的值使输出更确定。",
-                            "top_p": "控制输出的多样性。较低的值使输出更集中。"
+                            "top_p": "控制输出的多样性。较低的值使输出更集中。",
+                            "thinking_budget": "控制支持它的模型的思维预算。较高的值允许更复杂的推理，但可能会增加响应时间和成本。"
                         }
                     }
                 }
@@ -339,12 +347,14 @@
                         "data": {
                             "default_model": "默认模型",
                             "temperature": "温度",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "推理努力"
                         },
                         "data_description": {
                             "default_model": "当未指定其他模型时使用的默认模型。",
                             "temperature": "控制输出的随机性。较低的值使输出更确定。",
-                            "top_p": "控制输出的多样性。较低的值使输出更集中。"
+                            "top_p": "控制输出的多样性。较低的值使输出更集中。",
+                            "reasoning_effort": "控制支持它的模型的推理工作。"
                         }
                     }
                 }
@@ -357,10 +367,12 @@
                         "name": "通用",
                         "description": "设置首选提供商，当所选提供商不可用时使用。",
                         "data": {
-                            "fallback_provider": "备用提供商"
+                            "fallback_provider": "备用提供商",
+                            "request_timeout": "请求超时（秒）"
                         },
                         "data_description": {
-                            "fallback_provider": "如果当前提供商失败，LLM视觉将使用所选提供商重试请求。"
+                            "fallback_provider": "如果当前提供商失败，LLM视觉将使用所选提供商重试请求。",
+                            "request_timeout": "等待提供商响应的最长时间（以秒为单位）。"
                         }
                     },
                     "prompt_section": {
@@ -379,11 +391,13 @@
                         "name": "时间线",
                         "description": "时间线存储今天的事件，可通过LLM视觉卡片在仪表板上显示。",
                         "data": {
+                            "timeline_language": "时间线语言",
                             "retention_time": "保留时间",
                             "timeline_today_summary": "时间线摘要",
                             "timeline_summary_prompt": "今日摘要提示词"
                         },
                         "data_description": {
+                            "timeline_language": "选择用于从事件生成图标的语言。",
                             "retention_time": "事件自动删除天数。设为0则不自动删除。",
                             "timeline_today_summary": "启用时间线摘要，自动生成今天事件的摘要。",
                             "timeline_summary_prompt": "用于生成今天事件摘要的指令。"

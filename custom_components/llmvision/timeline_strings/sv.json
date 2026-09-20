@@ -1,0 +1,87 @@
+{
+    "categories": {
+        "person": {
+            "name": "Personer",
+            "labels": {
+                "person": "person",
+                "individ": "person",
+                "figur": "person",
+                "personer": "person",
+                "barn": "person",
+                "kvinna": "person",
+                "man": "person",
+                "människa": "person",
+                "folk": "person",
+                "människor": "person"
+            }
+        },
+        "vehicle": {
+            "name": "Fordon",
+            "labels": {
+                "kurir": "truck",
+                "brevbärare": "truck",
+                "cykel": "bicycle",
+                "motorcykel": "motorcycle",
+                "moped": "motorcycle",
+                "buss": "bus",
+                "bil": "car",
+                "skåpbil": "car",
+                "jeep": "car",
+                "fordon": "car",
+                "lastbil": "truck"
+            }
+        },
+        "animal": {
+            "name": "Djur",
+            "labels": {
+                "hund": "dog",
+                "katt": "cat",
+                "fågel": "bird",
+                "husdjur": "dog",
+                "djur": "animal",
+                "ekorre": "animal",
+                "viltlevande djur": "animal",
+                "hjort": "animal",
+                "kanin": "animal",
+                "räv": "animal",
+                "prärievarg": "animal",
+                "tvättbjörn": "animal",
+                "skunk": "animal",
+                "opossum": "animal",
+                "igelkott": "animal",
+                "björn": "animal",
+                "älg": "animal"
+            }
+        },
+        "delivery": {
+            "name": "Paket",
+            "labels": {
+                "låda": "delivery",
+                "paket": "delivery",
+                "försändelse": "delivery"
+            }
+        },
+        "entity": {
+            "name": "Enheter",
+            "labels": {
+                "kamera": "camera",
+                "sensor": "sensor",
+                "ljus": "light",
+                "lampa": "light",
+                "nyckel": "key",
+                "lås": "lock",
+                "alarm": "alarm"
+            }
+        },
+        "nature": {
+            "name": "Natur",
+            "labels": {
+                "trädgård": "plant",
+                "växt": "plant",
+                "blomma": "plant",
+                "träd": "tree"
+            }
+        }
+    },
+    "regex": "`\\b${key}(?:ar(?:na)?|er(?:na)?|or(?:na)?|r|s|na|en)?\\b`, 'iu'"
+}

@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
+from aiohttp import ClientTimeout
 import boto3
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.core import HomeAssistant
 from functools import partial
+from typing import Any, cast
 import logging
 import inspect
 import re
@@ -33,6 +36,7 @@ from .const import (
     ENDPOINT_OPENWEBUI,
     ENDPOINT_GROQ,
     ENDPOINT_OPENROUTER,
+    ENDPOINT_MISTRAL,
     ERROR_NOT_CONFIGURED,
     ERROR_GROQ_MULTIPLE_IMAGES,
     ERROR_NO_IMAGE_INPUT,
@@ -47,17 +51,28 @@ from .const import (
     DEFAULT_AWS_MODEL,
     DEFAULT_OPENWEBUI_MODEL,
     DEFAULT_OPENROUTER_MODEL,
+    DEFAULT_MISTRAL_MODEL,
     CONF_KEEP_ALIVE,
     CONF_CONTEXT_WINDOW,
     CONF_TEMPERATURE,
     CONF_TOP_P,
+    CONF_THINKING_BUDGET,
+    CONF_THINK,
+    CONF_REASONING_EFFORT,
+    CONF_REQUEST_TIMEOUT,
+    CONF_SYSTEM_PROMPT,
+    CONF_TITLE_PROMPT,
+    DEFAULT_SYSTEM_PROMPT,
+    DEFAULT_TITLE_PROMPT,
+    GLIMPSE_V1_INSTRUCTIONS,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class Request:
-    def __init__(self, hass, message, max_tokens, temperature):
+
+    def __init__(self, hass: HomeAssistant, message, max_tokens, temperature):
         self.session = async_get_clientsession(hass)
         self.hass = hass
         self.message = message
@@ -94,8 +109,11 @@ class Request:
 
     def get_default_model(self, provider):
         """Get default model from config entry"""
-        config_entry = self.hass.data.get(DOMAIN).get(provider)
-        provider_name = self.get_provider(self.hass, provider)
+        domain_data = self.hass.data.get(DOMAIN) or {}
+        config_entry = domain_data.get(provider)
+        provider_name: str | None = self.get_provider(self.hass, provider)
+        if provider_name is None:
+            return None
         if config_entry:
             default_model = config_entry.get(CONF_DEFAULT_MODEL)
             if default_model:
@@ -110,17 +128,19 @@ class Request:
             "LocalAI": DEFAULT_LOCALAI_MODEL,
             "Ollama": DEFAULT_OLLAMA_MODEL,
             "Custom OpenAI": DEFAULT_CUSTOM_OPENAI_MODEL,
-            "AWS": DEFAULT_AWS_MODEL,
+            "AWS Bedrock": DEFAULT_AWS_MODEL,
+            "AWS": DEFAULT_AWS_MODEL,  # For backwards compatibility
             "Open WebUI": DEFAULT_OPENWEBUI_MODEL,
             "OpenRouter": DEFAULT_OPENROUTER_MODEL,
+            "Mistral": DEFAULT_MISTRAL_MODEL,
         }.get(provider_name)
 
-    def validate(self, call) -> None | ServiceValidationError:
+    def validate(self, call: Any) -> None | ServiceValidationError:
         """Validate call data"""
 
         # if not call.model set default model for provider
         if not call.model:
-            call.model = self._get_default_model(call.provider)
+            call.model = self.get_default_model(call.provider)
         # Check image input
         if not call.base64_images:
             raise ServiceValidationError(ERROR_NO_IMAGE_INPUT)
@@ -134,34 +154,23 @@ class Request:
         if not call.provider:
             raise ServiceValidationError(ERROR_NOT_CONFIGURED)
 
-    async def call(self, call, _is_fallback_retry=False):
+    async def call(self, call: Any, _is_fallback_retry: bool = False):
         """
         Forwards a request to the specified provider and optionally generates a title.
-
-        Args:
-            call (object): The call object containing request details.
-
-        Raises:
-            ServiceValidationError: If the provider is invalid.
-
-        Returns:
-            dict: A dictionary containing the generated title (if any) and the response text.
         """
         entry_id = call.provider
-        config = self.hass.data.get(DOMAIN).get(entry_id)
-
-        # Check config exists
-        entry_id = call.provider
-        config = self.hass.data.get(DOMAIN).get(entry_id)
+        domain_data = self.hass.data.get(DOMAIN) or {}
+        config = domain_data.get(entry_id)
         if config is None:
             raise ServiceValidationError(
                 f"Provider config not found for entry_id: {entry_id}"
             )
 
-        provider = Request.get_provider(self.hass, entry_id)
-        api_key = config.get(CONF_API_KEY)
-        model = getattr(call, "model", None)
-        setattr(call, "model", model if model else self.get_default_model(entry_id))
+        provider_name = Request.get_provider(self.hass, entry_id)
+        if provider_name is None:
+            raise ServiceValidationError("invalid_provider")
+        # Ensure model defaults are respected
+        call.model = getattr(call, "model", None) or self.get_default_model(entry_id)
         call.temperature = config.get(CONF_TEMPERATURE, 0.5)
         call.top_p = config.get(CONF_TOP_P, 0.9)
         call.base64_images = self.base64_images
@@ -175,140 +184,31 @@ class Request:
             if entry.data.get("provider") == "Settings":
                 settings_entry = entry.data
                 break
-        _LOGGER.debug("Settings entry: %s", settings_entry)
         fallback_provider = (
             settings_entry.get("fallback_provider", None) if settings_entry else None
         )
         _LOGGER.debug("Fallback provider: %s", fallback_provider)
 
-        if provider == "OpenAI":
-            api_key = config.get(CONF_API_KEY)
-            provider_instance = OpenAI(
-                hass=self.hass, api_key=api_key, model=call.model
-            )
-
-        elif provider == "Azure":
-            api_key = config.get(CONF_API_KEY)
-            endpoint = config.get(CONF_AZURE_BASE_URL)
-            deployment = config.get(CONF_AZURE_DEPLOYMENT)
-            version = config.get(CONF_AZURE_VERSION)
-
-            provider_instance = AzureOpenAI(
-                self.hass,
-                api_key=api_key,
-                model=call.model,
-                endpoint={
-                    "base_url": ENDPOINT_AZURE,
-                    "endpoint": endpoint,
-                    "deployment": deployment,
-                    "api_version": version,
-                },
-            )
-
-        elif provider == "Anthropic":
-            api_key = config.get(CONF_API_KEY)
-            provider_instance = Anthropic(self.hass, api_key=api_key, model=call.model)
-
-        elif provider == "Google":
-            api_key = config.get(CONF_API_KEY)
-            provider_instance = Google(
-                self.hass,
-                api_key=api_key,
-                model=call.model,
-                endpoint={"base_url": ENDPOINT_GOOGLE},
-            )
-
-        elif provider == "Groq":
-            api_key = config.get(CONF_API_KEY)
-            provider_instance = Groq(self.hass, api_key=api_key, model=call.model)
-
-        elif provider == "LocalAI":
-            ip_address = config.get(CONF_IP_ADDRESS)
-            port = config.get(CONF_PORT)
-            https = config.get(CONF_HTTPS, False)
-
-            provider_instance = LocalAI(
-                self.hass,
-                api_key="",
-                model=call.model,
-                endpoint={"ip_address": ip_address, "port": port, "https": https},
-            )
-
-        elif provider == "Ollama":
-            ip_address = config.get(CONF_IP_ADDRESS)
-            port = config.get(CONF_PORT)
-            https = config.get(CONF_HTTPS, False)
-
-            provider_instance = Ollama(
-                self.hass,
-                api_key="",
-                model=call.model,
-                endpoint={
-                    "ip_address": ip_address,
-                    "port": port,
-                    "https": https,
-                    "keep_alive": config.get(CONF_KEEP_ALIVE, 5),
-                    "context_window": config.get(CONF_CONTEXT_WINDOW, 2048),
-                },
-            )
-
-        elif provider == "Custom OpenAI":
-            api_key = config.get(CONF_API_KEY)
-            endpoint = config.get(CONF_CUSTOM_OPENAI_ENDPOINT)
-            provider_instance = OpenAI(
-                self.hass,
-                api_key=api_key,
-                model=call.model,
-                endpoint={"base_url": endpoint},
-            )
-
-        elif provider == "AWS Bedrock":
-            provider_instance = AWSBedrock(
-                self.hass,
-                aws_access_key_id=config.get(CONF_AWS_ACCESS_KEY_ID),
-                aws_secret_access_key=config.get(CONF_AWS_SECRET_ACCESS_KEY),
-                aws_region_name=config.get(CONF_AWS_REGION_NAME),
+        # Instantiate via factory
+        if not isinstance(call.model, str):
+            raise ServiceValidationError("invalid_model")
+        try:
+            provider_instance = ProviderFactory.create(
+                hass=self.hass,
+                provider_name=provider_name,
+                config=config,
                 model=call.model,
             )
-
-        elif provider == "OpenWebUI":
-            ip_address = config.get(CONF_IP_ADDRESS)
-            port = config.get(CONF_PORT)
-            https = config.get(CONF_HTTPS, False)
-            api_key = config.get(CONF_API_KEY)
-
-            endpoint = ENDPOINT_OPENWEBUI.format(
-                ip_address=ip_address,
-                port=port,
-                protocol="https" if https else "http",
-            )
-
-            provider_instance = OpenAI(
-                self.hass,
-                api_key=api_key,
-                model=call.model,
-                endpoint={"base_url": endpoint},
-            )
-
-        elif provider == "OpenRouter":
-            api_key = config.get(CONF_API_KEY)
-            provider_instance = OpenAI(
-                self.hass,
-                api_key=api_key,
-                model=call.model,
-                endpoint={"base_url": ENDPOINT_OPENROUTER},
-            )
-
-        else:
+        except Exception as e:
+            _LOGGER.error(f"Provider factory failed for {provider_name}: {e}")
             raise ServiceValidationError("invalid_provider")
 
         try:
             # Make call to provider
             response_text = await provider_instance.vision_request(call)
         except Exception as e:
-            _LOGGER.error(f"Provider {provider} failed: {e}")
-            # Only try fallback if not already tried and fallback is set and different from current
-            print(f"Fallback provider: {fallback_provider}")
+            _LOGGER.error(f"Provider {provider_name} failed: {e}")
+            # Try fallback if configured and not already tried
             if (
                 fallback_provider
                 and fallback_provider != "no_fallback"
@@ -320,10 +220,45 @@ class Request:
                 call.model = None
                 return await self.call(call, _is_fallback_retry=True)
             else:
-                response_text = "Couldn't generate content. Check logs for details."
+                error_message = str(e).strip() or e.__class__.__name__
+                raise ServiceValidationError(error_message) from e
+        # Handle Glimpse-v1 responses
+        try:
+            _LOGGER.debug(
+                f"Provider: {provider_name}, Model: {call.model}, Response: {response_text}"
+            )
+            _LOGGER.debug(f"Is Glimpse Model: {call.model_is_glimpse()}")
+            if hasattr(call, "model_is_glimpse") and call.model_is_glimpse():
+                try:
+                    parsed = json.loads(self.heal_json(response_text))
+                    result = {}
+                    if isinstance(parsed, dict):
+                        title_val = parsed.get("title")
+                        desc_val = parsed.get("description")
+                        if title_val is not None:
+                            result["title"] = re.sub(
+                                r"[^a-zA-Z0-9À-ÖØ-öø-ɏ\s]", "", str(title_val)
+                            )
+                        if desc_val is not None:
+                            result["response_text"] = str(desc_val)
+                        return result
+                except Exception as e:
+                    _LOGGER.debug(f"Ollama Glimpse JSON parse failed: {e}")
+        except Exception:
+            pass
+
         gen_title = None
         try:
-            if call.generate_title:
+            # For structured output, extract title from JSON response if title_field is specified
+            if call.response_format == "json" and call.title_field:
+                try:
+                    response_json = json.loads(response_text)
+                    gen_title = response_json.get(call.title_field)
+                except (json.JSONDecodeError, AttributeError):
+                    # If JSON parsing fails or title_field not found, gen_title remains None
+                    pass
+            # For non-structured output, use traditional title generation
+            elif call.generate_title and call.response_format != "json":
                 call.message = (
                     call.memory.title_prompt
                     + "Create a title for this text: "
@@ -331,49 +266,147 @@ class Request:
                 )
                 gen_title = await provider_instance.title_request(call)
         except Exception as e:
-            _LOGGER.error(f"Provider {provider} failed: {e}")
-            # Only try fallback if not already tried and fallback is set and different from current
+            _LOGGER.error(f"Provider {provider_name} failed to generate title: {e}")
+            # Try fallback if configured and not already tried
             if (
                 fallback_provider
                 and fallback_provider != "no_fallback"
                 and not _is_fallback_retry
                 and fallback_provider != call.provider
             ):
-                _LOGGER.info(f"Trying fallback provider: {fallback_provider}")
+                _LOGGER.info(f"Trying fallback provider for title: {fallback_provider}")
                 call.provider = fallback_provider
                 call.model = None
                 return await self.call(call, _is_fallback_retry=True)
             else:
                 gen_title = "Event Detected"
+
         result = {}
         if gen_title is not None:
-            result["title"] = re.sub(r"[^a-zA-Z0-9ŽžÀ-ÿ\s]", "", gen_title)
+            result["title"] = re.sub(r"[^a-zA-Z0-9À-ÖØ-öø-ɏ\s]", "", gen_title)
         result["response_text"] = response_text
+
+        # Handle structured response if requested
+        if (
+            call.response_format == "json"
+            and provider_instance.supports_structured_output()
+        ):
+            try:
+                result["structured_response"] = json.loads(response_text)
+            except json.JSONDecodeError:
+                # If parsing fails, return as text
+                result["response_text"] = response_text
+            else:
+                # drop response_text if structured_response is present
+                if "structured_response" in result:
+                    del result["response_text"]
+        else:
+            result["response_text"] = response_text
+
         return result
 
     def add_frame(self, base64_image, filename):
         self.base64_images.append(base64_image)
         self.filenames.append(filename)
 
-    async def _resolve_error(self, response, provider):
-        """Translate response status to error message"""
-        full_response_text = await response.text()
-        _LOGGER.debug(f"[INFO] Full Response: {full_response_text}")
-
+    def heal_json(self, text):
+        """Attempt to heal malformed JSON for common LLM output issues."""
+        if not isinstance(text, str):
+            return text
         try:
-            response_json = json.loads(full_response_text)
-            if provider == "anthropic":
-                error_info = response_json.get("error", {})
-                error_message = f"{error_info.get('type', 'Unknown error')}: {error_info.get('message', 'Unknown error')}"
-            elif provider == "ollama":
-                error_message = response_json.get("error", "Unknown error")
-            else:
-                error_info = response_json.get("error", {})
-                error_message = error_info.get("message", "Unknown error")
+            json.loads(text)
+            return text
         except json.JSONDecodeError:
-            error_message = "Unknown error"
+            pass
+        healed_chars = []
+        stack = []
+        in_string = False
+        escaped = False
 
-        return error_message
+        def _is_value_boundary(ch: str) -> bool:
+            return ch in {",", ":", "}", "]"}
+
+        for idx, ch in enumerate(text):
+            next_char = text[idx + 1] if idx + 1 < len(text) else ""
+
+            if in_string:
+                if escaped:
+                    healed_chars.append(ch)
+                    escaped = False
+                    continue
+                if ch == "\\":
+                    healed_chars.append(ch)
+                    escaped = True
+                    continue
+                if ch == '"':
+                    # If quote is likely part of the string content (e.g. 5"), escape it.
+                    # Keep quote unescaped only when it looks like a real string terminator.
+                    if not (
+                        next_char == ""
+                        or _is_value_boundary(next_char)
+                        or next_char.isspace()
+                    ):
+                        healed_chars.append('\\"')
+                        continue
+
+                    healed_chars.append(ch)
+                    in_string = False
+                    continue
+                healed_chars.append(ch)
+                continue
+            # Outside string
+            if ch == '"':
+                healed_chars.append(ch)
+                in_string = True
+                continue
+            if ch == "{":
+                stack.append("}")
+            elif ch == "[":
+                stack.append("]")
+            elif ch in {"}", "]"}:
+                if stack and stack[-1] == ch:
+                    stack.pop()
+
+            healed_chars.append(ch)
+        # If the payload ends while still in a string, trailing delimiters are often
+        # intended as structure (e.g. ..."description":"text}). Move those outside.
+        trailing_closers = []
+        if in_string:
+            while stack and healed_chars and healed_chars[-1] == stack[-1]:
+                trailing_closers.append(healed_chars.pop())
+                stack.pop()
+        # Close unterminated string first, then close open containers.
+        if in_string:
+            healed_chars.append('"')
+        while trailing_closers:
+            healed_chars.append(trailing_closers.pop())
+        while stack:
+            healed_chars.append(stack.pop())
+        healed = "".join(healed_chars)
+        try:
+            json.loads(healed)
+            return healed
+        except json.JSONDecodeError:
+            pass
+
+        decoder = json.JSONDecoder()
+        idx = 0
+        while idx < len(healed):
+            while idx < len(healed) and healed[idx].isspace():
+                idx += 1
+            if idx >= len(healed):
+                break
+            if healed[idx] not in "{[":
+                idx += 1
+                continue
+            try:
+                _, end_idx = decoder.raw_decode(healed, idx)
+            except json.JSONDecodeError:
+                idx += 1
+                continue
+            return healed[idx:end_idx]
+
+        return text
 
 
 class Provider(ABC):
@@ -388,7 +421,7 @@ class Provider(ABC):
 
     def __init__(
         self,
-        hass: object,
+        hass: HomeAssistant,
         api_key: str,
         model: str,
         endpoint={
@@ -405,6 +438,7 @@ class Provider(ABC):
         self.api_key = api_key
         self.model = model
         self.endpoint = endpoint
+        self.request_timeout = self._resolve_request_timeout()
         _LOGGER.debug(
             f"Provider initialized: {self.__class__.__name__.title()}(model={self.model}, endpoint={self.endpoint})"
         )
@@ -414,35 +448,79 @@ class Provider(ABC):
         pass
 
     @abstractmethod
-    def _prepare_vision_data(self, call: dict) -> dict:
+    def _prepare_vision_data(self, call: Any) -> dict:
         pass
 
     @abstractmethod
-    def _prepare_text_data(self, call: dict) -> dict:
+    def _prepare_text_data(self, call: Any) -> dict:
         pass
 
     @abstractmethod
     async def validate(self) -> None | ServiceValidationError:
         pass
 
-    def _get_default_parameters(self, call: dict) -> dict:
+    def supports_structured_output(self) -> bool:
+        """Return True if provider supports structured output."""
+        return False
+
+    def _get_default_parameters(self, call: Any) -> dict:
         """Get default parameters from config entry"""
         entry_id = call.provider
-        config = self.hass.data.get(DOMAIN).get(entry_id)
+        domain_data = self.hass.data.get(DOMAIN) or {}
+
+        config = domain_data.get(entry_id) or {}
         default_parameters = {
             "temperature": config.get(CONF_TEMPERATURE, 0.5),
-            "top_p": config.get(CONF_TOP_P, 0.9),
+            "top_p": config.get(CONF_TOP_P, 0.95),
             "keep_alive": config.get(CONF_KEEP_ALIVE, 5),
-            "context_window": config.get(CONF_CONTEXT_WINDOW, 2048),
+            "context_window": config.get(CONF_CONTEXT_WINDOW, 4096),
+            "thinking_budget": config.get(CONF_THINKING_BUDGET, 0),
+            "think": config.get(CONF_THINK, False),
+            "reasoning_effort": config.get(CONF_REASONING_EFFORT, "none"),
         }
+        if call.model_is_glimpse():
+            default_parameters["temperature"] = 0.2
+            default_parameters["top_p"] = 0.95
         return default_parameters
+
+    def _get_system_prompt(self) -> str:
+        """Fetch system prompt from the Settings config entry stored in hass.data."""
+        domain_data = self.hass.data.get(DOMAIN) or {}
+        for _, data in domain_data.items():
+            if data.get(CONF_PROVIDER) == "Settings":
+                return data.get(CONF_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT)
+        return DEFAULT_SYSTEM_PROMPT
+
+    def _get_title_prompt(self) -> str:
+        """Fetch title prompt from the Settings config entry stored in hass.data."""
+        domain_data = self.hass.data.get(DOMAIN) or {}
+        for _, data in domain_data.items():
+            if data.get(CONF_PROVIDER) == "Settings":
+                return data.get(CONF_TITLE_PROMPT, DEFAULT_TITLE_PROMPT)
+        return DEFAULT_TITLE_PROMPT
+
+    def _resolve_request_timeout(self) -> int:
+        """Resolve request timeout (seconds) from the Settings config entry stored in hass.data."""
+        domain_data = self.hass.data.get(DOMAIN) or {}
+        for _, data in domain_data.items():
+            if data.get(CONF_PROVIDER) == "Settings":
+                timeout = data.get(CONF_REQUEST_TIMEOUT, 60)
+                try:
+                    timeout_int = int(timeout)
+                    return timeout_int if timeout_int > 0 else 60
+                except (TypeError, ValueError):
+                    return 60
+        return 60
 
     async def vision_request(self, call: dict) -> str:
         data = self._prepare_vision_data(call)
         return await self._make_request(data)
 
-    async def title_request(self, call: dict) -> str:
-        call.max_tokens = 4096
+    async def title_request(self, call: Any) -> str:
+        if isinstance(call, dict):
+            call["max_tokens"] = 4096
+        else:
+            call.max_tokens = 4096
         data = self._prepare_text_data(call)
         return await self._make_request(data)
 
@@ -453,7 +531,12 @@ class Provider(ABC):
         san_url = re.sub(r"\?key=[^&]*", "", url)
         try:
             _LOGGER.debug(f"Posting to {san_url}")
-            response = await self.session.post(url, headers=headers, json=data)
+            response = await self.session.post(
+                url,
+                headers=headers,
+                json=data,
+                timeout=ClientTimeout(total=self.request_timeout),
+            )
         except Exception as e:
             raise ServiceValidationError(f"Request failed: {e}")
 
@@ -467,36 +550,94 @@ class Provider(ABC):
             _LOGGER.debug(f"Response data: {response_data}")
             return response_data
 
-    async def _resolve_error(self, response: dict, provider: str) -> str:
-        """Translate response status to error message"""
-        full_response_text = await response.text()
+    async def _resolve_error(self, response, provider: str) -> str:
+        """Translate response status to error message for both HTTP and SDK responses"""
+        # Try to get text body if response is aiohttp
+        try:
+            if hasattr(response, "text"):
+                full_response_text = await response.text()
+            else:
+                # Fallback for dict responses from SDKs (boto3 from AWS)
+                full_response_text = json.dumps(response)
+        except Exception:
+            full_response_text = str(response)
+
         _LOGGER.debug(f"[INFO] Full Response: {full_response_text}")
 
+        # Try to parse JSON
         try:
             response_json = json.loads(full_response_text)
+        except Exception:
+            response_json = {} if not isinstance(response, dict) else response
+
+        try:
             if provider == "anthropic":
                 error_info = response_json.get("error", {})
-                error_message = f"{error_info.get('type', 'Unknown error')}: {error_info.get('message', 'Unknown error')}"
+                return f"{error_info.get('type', 'Unknown error')}: {error_info.get('message', 'Unknown error')}"
             elif provider == "ollama":
-                error_message = response_json.get("error", "Unknown error")
+                return response_json.get("error", "Unknown error")
             else:
-                error_info = response_json.get("error", {})
-                error_message = error_info.get("message", "Unknown error")
-        except json.JSONDecodeError:
-            error_message = "Unknown error"
-
-        return error_message
+                error_info = response_json.get("error", response_json)
+                if isinstance(error_info, dict):
+                    return (
+                        error_info.get("message")
+                        or error_info.get("Message")
+                        or error_info.get("errorMessage")
+                        or "Unknown error"
+                    )
+                return str(error_info) if error_info else "Unknown error"
+        except Exception:
+            return "Unknown error"
 
 
 class OpenAI(Provider):
+
     def __init__(
         self,
-        hass: object,
+        hass: HomeAssistant,
         api_key: str,
         model: str,
         endpoint={"base_url": ENDPOINT_OPENAI},
     ):
         super().__init__(hass, api_key, model, endpoint=endpoint)
+
+    def supports_structured_output(self) -> bool:
+        """OpenAI supports structured output via JSON Schema."""
+        return True
+
+    def _normalize_reasoning_effort(self, value: Any) -> str:
+        """Normalize reasoning effort to a known value."""
+        effort = str(value).strip().lower() if value is not None else "none"
+        allowed = {"none", "minimal", "low", "medium", "high", "xhigh"}
+        return effort if effort in allowed else "none"
+
+    def _model_supports_thinking(self, max_effort: str) -> str | bool:
+        """Returns the highest supported reasoning effort for the model that is <= the reasoning effort from config"""
+        models = {
+            "gpt-5.5": ["none", "low", "medium", "high", "xhigh"],
+            "gpt-5.4-pro": ["medium", "high", "xhigh"],
+            "gpt-5.4-mini": ["none", "low", "medium", "high", "xhigh"],
+            "gpt-5.4-nano": ["none", "low", "medium", "high", "xhigh"],
+            "gpt-5.4": ["none", "low", "medium", "high", "xhigh"],
+            "gpt-5.2": ["none", "low", "medium", "high", "xhigh"],
+            "gpt-5.1": ["none", "low", "medium", "high"],
+            "gpt-5-pro": ["high"],
+            "gpt-5-mini": ["medium"],
+            "gpt-5-nano": ["medium"],
+        }
+        effort_order = ["none", "minimal", "low", "medium", "high", "xhigh"]
+        normalized_effort = self._normalize_reasoning_effort(max_effort)
+        # Match the most specific model prefix first to avoid broad prefix collisions
+        for model_prefix in sorted(models, key=len, reverse=True):
+            efforts = models[model_prefix]
+            if self.model.startswith(model_prefix):
+                # return the highest reasoning effort supported by the model that is less than or equal to the requested max_effort
+                for effort in reversed(effort_order):
+                    if effort in efforts and effort_order.index(
+                        effort
+                    ) <= effort_order.index(normalized_effort):
+                        return effort
+        return False
 
     def _generate_headers(self) -> dict:
         return {
@@ -504,17 +645,47 @@ class OpenAI(Provider):
             "Authorization": "Bearer " + self.api_key,
         }
 
-    async def _make_request(self, data: dict) -> str:
-        headers = self._generate_headers()
+    def _get_request_url(self) -> str:
         if isinstance(self.endpoint, dict):
             url = self.endpoint.get("base_url")
         else:
             url = self.endpoint
+
+        if not isinstance(url, str):
+            raise ServiceValidationError("invalid_endpoint")
+
+        normalized_url = url.rstrip("/")
+        if normalized_url.endswith("/v1"):
+            return f"{normalized_url}/chat/completions"
+
+        return url
+
+    async def _make_request(self, data: dict) -> str:
+        headers = self._generate_headers()
+        url = self._get_request_url()
+
+        # Debug logging for OpenRouter
+        if "openrouter.ai" in url:
+            print(f"[OpenRouter DEBUG] URL: {url}")
+            print(f"[OpenRouter DEBUG] Headers: {headers}")
+            print(f"[OpenRouter DEBUG] Data: {Request.sanitize_data(data)}")
+
         response = await self._post(url=url, headers=headers, data=data)
-        response_text = response.get("choices")[0].get("message").get("content")
+        choices = response.get("choices") if isinstance(response, dict) else None
+        if not isinstance(choices, list) or not choices:
+            raise ServiceValidationError("empty_response")
+        first_choice = choices[0] if isinstance(choices[0], dict) else None
+        if not isinstance(first_choice, dict):
+            raise ServiceValidationError("invalid_response")
+        message = first_choice.get("message")
+        if not isinstance(message, dict):
+            raise ServiceValidationError("invalid_response")
+        response_text = message.get("content")
+        if response_text is None:
+            raise ServiceValidationError("invalid_response")
         return response_text
 
-    def _prepare_vision_data(self, call: dict) -> list:
+    def _prepare_vision_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
         payload = {
             "model": self.model,
@@ -524,11 +695,44 @@ class OpenAI(Provider):
             "top_p": default_parameters.get("top_p"),
         }
 
+        # Add reasoning effort if enabled and supported by model
+        max_effort = self._normalize_reasoning_effort(
+            default_parameters.get("reasoning_effort", "none")
+        )
+        supported_effort = self._model_supports_thinking(max_effort)
+        if max_effort != "none" and supported_effort != False:
+            payload["reasoning_effort"] = supported_effort
+
         # Remove temperature and top_p if model is gpt-5
         if self.model in ["gpt-5", "gpt-5-mini", "gpt-5-nano"]:
             payload = {
                 k: v for k, v in payload.items() if k not in ("temperature", "top_p")
             }
+
+        # Add structured output format if requested
+        if call.response_format == "json" and call.structure:
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+
+                # Add additionalProperties: false to schema for OpenAI strict mode
+                if "additionalProperties" not in schema:
+                    schema["additionalProperties"] = False
+
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "response",
+                        "schema": schema,
+                        "strict": True,
+                    },
+                }
+            except json.JSONDecodeError:
+                # If schema is invalid, don't add structured output
+                pass
 
         for image, filename in zip(call.base64_images, call.filenames):
             tag = (
@@ -546,33 +750,44 @@ class OpenAI(Provider):
                 }
             )
 
+        # User message
         payload["messages"][0]["content"].append({"type": "text", "text": call.message})
+        # System prompt
+        system_prompt = self._get_system_prompt()
+        payload["messages"].insert(0, {"role": "system", "content": system_prompt})
 
-        if call.use_memory:
+        # Memory if use_memory is set
+        if getattr(call, "use_memory", False):
             memory_content = call.memory._get_memory_images(memory_type="OpenAI")
-            system_prompt = call.memory.system_prompt
             if memory_content:
                 payload["messages"].insert(
-                    0, {"role": "user", "content": memory_content}
-                )
-            if system_prompt:
-                payload["messages"].insert(
-                    0, {"role": "developer", "content": system_prompt}
+                    1, {"role": "user", "content": memory_content}
                 )
 
         return payload
 
-    def _prepare_text_data(self, call: dict) -> list:
+    def _prepare_text_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
+        title_prompt = self._get_title_prompt()
         payload = {
             "model": self.model,
             "messages": [
-                {"role": "user", "content": [{"type": "text", "text": call.message}]}
+                {"role": "user", "content": [{"type": "text", "text": title_prompt}]},
+                {"role": "user", "content": [{"type": "text", "text": call.message}]},
             ],
             "max_completion_tokens": call.max_tokens,
             "temperature": default_parameters.get("temperature"),
             "top_p": default_parameters.get("top_p"),
         }
+
+        # Add reasoning effort if enabled and supported by model
+        max_effort = self._normalize_reasoning_effort(
+            default_parameters.get("reasoning_effort", "none")
+        )
+        supported_effort = self._model_supports_thinking(max_effort)
+        if max_effort != "none" and supported_effort != False:
+            payload["reasoning_effort"] = supported_effort
+
         # Remove temperature and top_p if model is gpt-5
         if self.model in ["gpt-5", "gpt-5-mini", "gpt-5-nano"]:
             payload = {
@@ -587,19 +802,38 @@ class OpenAI(Provider):
                 "model": self.model,
                 "messages": [
                     {"role": "user", "content": [{"type": "text", "text": "Hi"}]}
-                ]
+                ],
             }
-            await self._post(
-                url=self.endpoint.get("base_url"), headers=headers, data=data
-            )
+            await self._post(url=self._get_request_url(), headers=headers, data=data)
         else:
             raise ServiceValidationError("empty_api_key")
 
 
+class Mistral(OpenAI):
+    """Mistral (https://docs.mistral.ai/api/). OpenAI-compatible but rejects
+    unknown fields, so rename max_completion_tokens to max_tokens."""
+
+    def __init__(self, hass: HomeAssistant, api_key: str, model: str):
+        super().__init__(hass, api_key, model, endpoint={"base_url": ENDPOINT_MISTRAL})
+
+    @staticmethod
+    def _rename_token_field(payload: dict) -> dict:
+        if "max_completion_tokens" in payload:
+            payload["max_tokens"] = payload.pop("max_completion_tokens")
+        return payload
+
+    def _prepare_vision_data(self, call: Any) -> dict:
+        return self._rename_token_field(super()._prepare_vision_data(call))
+
+    def _prepare_text_data(self, call: Any) -> dict:
+        return self._rename_token_field(super()._prepare_text_data(call))
+
+
 class AzureOpenAI(Provider):
+
     def __init__(
         self,
-        hass: object,
+        hass: HomeAssistant,
         api_key: str,
         model: str,
         endpoint={
@@ -614,6 +848,10 @@ class AzureOpenAI(Provider):
     def _generate_headers(self) -> dict:
         return {"Content-type": "application/json", "api-key": self.api_key}
 
+    def _uses_completion_tokens(self) -> bool:
+        """Return True when Azure expects max_completion_tokens (gpt-5 family)."""
+        return "gpt-5" in (self.model or "").lower()
+
     async def _make_request(self, data: dict) -> str:
         headers = self._generate_headers()
         endpoint = self.endpoint.get("base_url").format(
@@ -623,18 +861,35 @@ class AzureOpenAI(Provider):
         )
 
         response = await self._post(url=endpoint, headers=headers, data=data)
-        response_text = response.get("choices")[0].get("message").get("content")
+        choices = response.get("choices") if isinstance(response, dict) else None
+        if not isinstance(choices, list) or not choices:
+            raise ServiceValidationError("empty_response")
+        first_choice = choices[0] if isinstance(choices[0], dict) else None
+        if not isinstance(first_choice, dict):
+            raise ServiceValidationError("invalid_response")
+        message = first_choice.get("message")
+        if not isinstance(message, dict):
+            raise ServiceValidationError("invalid_response")
+        response_text = message.get("content")
+        if response_text is None:
+            raise ServiceValidationError("invalid_response")
         return response_text
 
-    def _prepare_vision_data(self, call: dict) -> list:
+    def _prepare_vision_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
         payload = {
             "messages": [{"role": "user", "content": []}],
-            "max_tokens": call.max_tokens,
             "temperature": default_parameters.get("temperature"),
             "top_p": default_parameters.get("top_p"),
             "stream": False,
         }
+
+        if self._uses_completion_tokens():
+            payload.pop("temperature", None)
+            payload.pop("top_p", None)
+            payload["max_completion_tokens"] = call.max_tokens
+        else:
+            payload["max_tokens"] = call.max_tokens
         for image, filename in zip(call.base64_images, call.filenames):
             tag = (
                 ("Image " + str(call.base64_images.index(image) + 1))
@@ -650,32 +905,95 @@ class AzureOpenAI(Provider):
                     "image_url": {"url": f"data:image/jpeg;base64,{image}"},
                 }
             )
+        # User message
         payload["messages"][0]["content"].append({"type": "text", "text": call.message})
+        # System prompt
+        system_prompt = self._get_system_prompt()
+        payload["messages"].insert(0, {"role": "system", "content": system_prompt})
 
-        if call.use_memory:
+        # Memory if use_memory is set
+        if getattr(call, "use_memory", False):
             memory_content = call.memory._get_memory_images(memory_type="OpenAI")
-            system_prompt = call.memory.system_prompt
             if memory_content:
                 payload["messages"].insert(
-                    0, {"role": "user", "content": memory_content}
+                    1, {"role": "user", "content": memory_content}
                 )
-            if system_prompt:
-                payload["messages"].insert(
-                    0, {"role": "developer", "content": system_prompt}
+
+        # Add structured output format if requested
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
                 )
+
+                # Add additionalProperties: false to schema for OpenAI strict mode
+                if "additionalProperties" not in schema:
+                    schema["additionalProperties"] = False
+
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "response",
+                        "schema": schema,
+                        "strict": True,
+                    },
+                }
+            except json.JSONDecodeError:
+                # If schema is invalid, don't add structured output
+                pass
         return payload
 
-    def _prepare_text_data(self, call: dict) -> list:
+    def _prepare_text_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
-        return {
+        title_prompt = self._get_title_prompt()
+        payload = {
             "messages": [
-                {"role": "user", "content": [{"type": "text", "text": call.message}]}
+                {"role": "user", "content": [{"type": "text", "text": title_prompt}]},
+                {"role": "user", "content": [{"type": "text", "text": call.message}]},
             ],
-            "max_tokens": call.max_tokens,
             "temperature": default_parameters.get("temperature"),
             "top_p": default_parameters.get("top_p"),
             "stream": False,
         }
+
+        if self._uses_completion_tokens():
+            payload.pop("temperature", None)
+            payload.pop("top_p", None)
+            payload["max_completion_tokens"] = call.max_tokens
+        else:
+            payload["max_tokens"] = call.max_tokens
+
+        # Add structured output format if requested
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+
+                # Add additionalProperties: false to schema for OpenAI strict mode
+                if "additionalProperties" not in schema:
+                    schema["additionalProperties"] = False
+
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "response",
+                        "schema": schema,
+                        "strict": True,
+                    },
+                }
+            except json.JSONDecodeError:
+                # If schema is invalid, don't add structured output
+                pass
+        return payload
 
     async def validate(self) -> None | ServiceValidationError:
         if not self.api_key:
@@ -689,16 +1007,23 @@ class AzureOpenAI(Provider):
         headers = self._generate_headers()
         data = {
             "messages": [{"role": "user", "content": [{"type": "text", "text": "Hi"}]}],
-            "max_tokens": 1,
-            "temperature": 0.5,
             "stream": False,
         }
         await self._post(url=endpoint, headers=headers, data=data)
 
+    def supports_structured_output(self) -> bool:
+        """AzureOpenAI supports structured output via JSON Schema (OpenAI-compatible)."""
+        return True
+
 
 class Anthropic(Provider):
-    def __init__(self, hass: object, api_key: str, model: str):
+
+    def __init__(self, hass: HomeAssistant, api_key: str, model: str):
         super().__init__(hass, api_key, model)
+
+    def supports_structured_output(self) -> bool:
+        """Return True if provider supports structured output."""
+        return True
 
     def _generate_headers(self) -> dict:
         return {
@@ -709,19 +1034,153 @@ class Anthropic(Provider):
 
     async def _make_request(self, data: dict) -> str:
         headers = self._generate_headers()
-        response = await self._post(url=ENDPOINT_ANTHROPIC, headers=headers, data=data)
-        response_text = response.get("content")[0].get("text")
-        return response_text
+        response = await self._post(
+            url=ENDPOINT_ANTHROPIC,
+            headers=headers,
+            data=data,
+        )
 
-    def _prepare_vision_data(self, call: dict) -> dict:
+        content = response.get("content")
+        if not isinstance(content, list):
+            raise ServiceValidationError("invalid_response")
+
+        # Anthropic returns two blocks if thinking is enabled, so loop over all of them
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "tool_use":
+                return json.dumps(block.get("input", {}))
+
+        text = "".join(
+            block.get("text", "")
+            for block in content
+            if isinstance(block, dict) and block.get("type") == "text"
+        )
+        if not text:
+            raise ServiceValidationError("empty_response")
+
+        return text
+
+    def _apply_parameters(self, payload: dict, call: Any) -> dict:
+        parameters = self._get_default_parameters(call)
+        raw_budget = parameters.get("thinking_budget", 0)
+
+        try:
+            numeric_budget = float(raw_budget)
+        except (TypeError, ValueError):
+            raise ServiceValidationError("Anthropic thinking budget must be an integer")
+
+        if not numeric_budget.is_integer() or numeric_budget < 0:
+            raise ServiceValidationError(
+                "Anthropic thinking budget must be a non-negative integer"
+            )
+
+        budget = int(numeric_budget)
+        model = self.model.lower()
+        version_match = re.search(
+            r"claude-(?:opus|sonnet|haiku)-(\d+)(?:-(\d+))?",
+            model,
+        )
+        major = int(version_match.group(1)) if version_match else 0
+        minor = int(version_match.group(2) or 0) if version_match else 0
+        manual_thinking = (
+            "claude-3-7-sonnet" in model
+            or (major == 4 and minor <= 6)
+            or "mythos-preview" in model
+        )
+        adaptive_thinking = (
+            "fable" in model
+            or ("mythos" in model and "mythos-preview" not in model)
+            or major >= 5
+            or (major == 4 and minor >= 7)
+        )
+        tool_choice = payload.get("tool_choice") or {}
+        forced_tool = tool_choice.get("type") in {"any", "tool"}
+
+        if budget == 0:
+            if adaptive_thinking:
+                payload["thinking"] = {"type": "disabled"}
+                for parameter in ("temperature", "top_p", "top_k"):
+                    payload.pop(parameter, None)
+            elif manual_thinking:
+                payload["thinking"] = {"type": "disabled"}
+            else:
+                payload.pop("thinking", None)
+            return payload
+
+        if adaptive_thinking:
+            payload["thinking"] = {"type": "adaptive"}
+            for parameter in ("temperature", "top_p", "top_k"):
+                payload.pop(parameter, None)
+            return payload
+
+        if not manual_thinking:
+            raise ServiceValidationError(
+                f"Extended thinking is not supported by {self.model}"
+            )
+
+        if forced_tool:
+            payload["thinking"] = {"type": "disabled"}
+            return payload
+
+        if budget < 1024:
+            raise ServiceValidationError(
+                "Anthropic thinking budget must be 0 or at least 1024"
+            )
+
+        try:
+            max_tokens = int(payload["max_tokens"])
+        except (KeyError, TypeError, ValueError):
+            raise ServiceValidationError("Anthropic max_tokens must be an integer")
+
+        if budget >= max_tokens:
+            raise ServiceValidationError(
+                "Anthropic thinking budget must be less than max_tokens"
+            )
+
+        payload["thinking"] = {
+            "type": "enabled",
+            "budget_tokens": budget,
+        }
+        for parameter in ("temperature", "top_p", "top_k"):
+            payload.pop(parameter, None)
+
+        return payload
+
+    def _prepare_vision_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
         payload = {
             "model": self.model,
             "messages": [{"role": "user", "content": []}],
             "max_tokens": call.max_tokens,
             "temperature": default_parameters.get("temperature"),
-            "top_p": default_parameters.get("top_p"),
         }
+
+        # Add structured output support using tools
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+
+                # Create a tool that returns the structured data
+                payload["tools"] = [
+                    {
+                        "name": "return_structured_data",
+                        "description": "Return the analysis results in the specified JSON format",
+                        "input_schema": schema,
+                    }
+                ]
+                payload["tool_choice"] = {
+                    "type": "tool",
+                    "name": "return_structured_data",
+                }
+            except json.JSONDecodeError as e:
+                raise ServiceValidationError(
+                    f"Invalid JSON in structure parameter: {str(e)}"
+                )
         for image, filename in zip(call.base64_images, call.filenames):
             tag = (
                 ("Image " + str(call.base64_images.index(image) + 1))
@@ -741,31 +1200,62 @@ class Anthropic(Provider):
                     },
                 }
             )
+        # User message
         payload["messages"][0]["content"].append({"type": "text", "text": call.message})
+        # System prompt
+        payload["system"] = self._get_system_prompt()
 
-        if call.use_memory:
+        # Memory images if use_memory is set
+        if getattr(call, "use_memory", False):
             memory_content = call.memory._get_memory_images(memory_type="Anthropic")
-            system_prompt = call.memory.system_prompt
             if memory_content:
                 payload["messages"].insert(
                     0, {"role": "user", "content": memory_content}
                 )
-            if system_prompt:
-                payload["system"] = system_prompt
+        return self._apply_parameters(payload, call)
 
-        return payload
-
-    def _prepare_text_data(self, call: dict) -> dict:
+    def _prepare_text_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
-        return {
+        title_prompt = self._get_title_prompt()
+        payload = {
             "model": self.model,
             "messages": [
-                {"role": "user", "content": [{"type": "text", "text": call.message}]}
+                {"role": "user", "content": [{"type": "text", "text": title_prompt}]},
+                {"role": "user", "content": [{"type": "text", "text": call.message}]},
             ],
             "max_tokens": call.max_tokens,
             "temperature": default_parameters.get("temperature"),
-            "top_p": default_parameters.get("top_p"),
         }
+
+        # Add structured output support using tools
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+
+                # Create a tool that returns the structured data
+                payload["tools"] = [
+                    {
+                        "name": "return_structured_data",
+                        "description": "Return the analysis results in the specified JSON format",
+                        "input_schema": schema,
+                    }
+                ]
+                payload["tool_choice"] = {
+                    "type": "tool",
+                    "name": "return_structured_data",
+                }
+            except json.JSONDecodeError as e:
+                raise ServiceValidationError(
+                    f"Invalid JSON in structure parameter: {str(e)}"
+                )
+
+        return self._apply_parameters(payload, call)
 
     async def validate(self) -> None | ServiceValidationError:
         if not self.api_key:
@@ -773,7 +1263,7 @@ class Anthropic(Provider):
 
         header = self._generate_headers()
         payload = {
-            "model": DEFAULT_ANTHROPIC_MODEL,
+            "model": self.model,
             "messages": [{"role": "user", "content": "Hi"}],
             "max_tokens": 1,
             "temperature": 0.5,
@@ -786,12 +1276,19 @@ class Anthropic(Provider):
 class Google(Provider):
     def __init__(
         self,
-        hass: object,
+        hass: HomeAssistant,
         api_key: str,
         model: str,
         endpoint={"base_url": ENDPOINT_GOOGLE},
     ):
         super().__init__(hass, api_key, model, endpoint)
+
+    def supports_structured_output(self) -> bool:
+        """Return True if provider supports structured output."""
+        return True
+
+    def _model_supports_thinking(self) -> bool:
+        return any(m in self.model for m in ["gemini-2.5", "gemini-3"])
 
     def _generate_headers(self) -> dict:
         return {"content-type": "application/json"}
@@ -819,7 +1316,7 @@ class Google(Provider):
             raise e
         return response_text
 
-    def _prepare_vision_data(self, call: dict) -> dict:
+    def _prepare_vision_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
         payload = {
             "contents": [{"role": "user", "parts": []}],
@@ -829,6 +1326,33 @@ class Google(Provider):
                 "topP": default_parameters.get("top_p"),
             },
         }
+
+        # Add thinking budget based on current model and config
+        if (
+            self._model_supports_thinking()
+            and default_parameters.get("thinking_budget", 0) > 0
+        ):
+            payload["generationConfig"]["thinkingConfig"] = {
+                "thinkingBudget": default_parameters.get("thinking_budget", 0)
+            }
+
+        # Add structured output support
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+
+                payload["generationConfig"]["response_mime_type"] = "application/json"
+                payload["generationConfig"]["response_json_schema"] = schema
+            except json.JSONDecodeError as e:
+                raise ServiceValidationError(
+                    f"Invalid JSON in structure parameter: {str(e)}"
+                )
         for image, filename in zip(call.base64_images, call.filenames):
             tag = (
                 ("Image " + str(call.base64_images.index(image) + 1))
@@ -839,28 +1363,64 @@ class Google(Provider):
             payload["contents"][0]["parts"].append(
                 {"inline_data": {"mime_type": "image/jpeg", "data": image}}
             )
+        # User message
         payload["contents"][0]["parts"].append({"text": call.message})
-
-        if call.use_memory:
+        # System prompt
+        system_prompt = self._get_system_prompt()
+        payload["contents"].insert(
+            0, {"role": "user", "parts": [{"text": system_prompt}]}
+        )
+        # Memory if use_memory is set
+        if getattr(call, "use_memory", False):
             memory_content = call.memory._get_memory_images(memory_type="Google")
-            system_prompt = call.memory.system_prompt
             if memory_content:
                 payload["contents"].insert(0, {"role": "user", "parts": memory_content})
-            if system_prompt:
-                payload["system_instruction"] = {"parts": {"text": system_prompt}}
 
         return payload
 
-    def _prepare_text_data(self, call: dict) -> dict:
+    def _prepare_text_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
-        return {
-            "contents": [{"role": "user", "parts": [{"text": call.message + ":"}]}],
+        title_prompt = self._get_title_prompt()
+        payload = {
+            "contents": [
+                {"role": "user", "parts": [{"text": title_prompt}]},
+                {"role": "user", "parts": [{"text": call.message}]},
+            ],
             "generationConfig": {
                 "maxOutputTokens": call.max_tokens,
                 "temperature": default_parameters.get("temperature"),
                 "topP": default_parameters.get("top_p"),
             },
         }
+
+        # Add thinking budget based on current model and config
+        if (
+            self._model_supports_thinking()
+            and default_parameters.get("thinking_budget", 0) > 0
+        ):
+            payload["generationConfig"]["thinkingConfig"] = {
+                "thinkingBudget": default_parameters.get("thinking_budget", 0)
+            }
+
+        # Add structured output support
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+
+                payload["generationConfig"]["response_mime_type"] = "application/json"
+                payload["generationConfig"]["response_json_schema"] = schema
+            except json.JSONDecodeError as e:
+                raise ServiceValidationError(
+                    f"Invalid JSON in structure parameter: {str(e)}"
+                )
+
+        return payload
 
     async def validate(self) -> None | ServiceValidationError:
         if not self.api_key:
@@ -873,7 +1433,7 @@ class Google(Provider):
         }
         await self._post(
             url=self.endpoint.get("base_url").format(
-                model=DEFAULT_GOOGLE_MODEL, api_key=self.api_key
+                model=self.model, api_key=self.api_key
             ),
             headers=headers,
             data=data,
@@ -881,7 +1441,8 @@ class Google(Provider):
 
 
 class Groq(Provider):
-    def __init__(self, hass: object, api_key: str, model: str):
+
+    def __init__(self, hass: HomeAssistant, api_key: str, model: str):
         super().__init__(hass, api_key, model)
 
     def _generate_headers(self) -> dict:
@@ -893,10 +1454,26 @@ class Groq(Provider):
     async def _make_request(self, data: dict) -> str:
         headers = self._generate_headers()
         response = await self._post(url=ENDPOINT_GROQ, headers=headers, data=data)
-        response_text = response.get("choices")[0].get("message").get("content")
+
+        choices = response.get("choices") if isinstance(response, dict) else None
+        if not isinstance(choices, list) or not choices:
+            raise ServiceValidationError("empty_response")
+
+        first_choice = choices[0] if isinstance(choices[0], dict) else None
+        if not isinstance(first_choice, dict):
+            raise ServiceValidationError("invalid_response")
+
+        message = first_choice.get("message")
+        if not isinstance(message, dict):
+            raise ServiceValidationError("invalid_response")
+
+        response_text = message.get("content")
+        if response_text is None:
+            raise ServiceValidationError("invalid_response")
+
         return response_text
 
-    def _prepare_vision_data(self, call: dict) -> dict:
+    def _prepare_vision_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
         first_image = call.base64_images[0]
         payload = {
@@ -920,18 +1497,42 @@ class Groq(Provider):
             "top_p": default_parameters.get("top_p"),
         }
 
-        system_prompt = call.memory.system_prompt
         payload["messages"].insert(
-            0, {"role": "user", "content": "System Prompt:" + system_prompt}
+            0, {"role": "system", "content": self._get_system_prompt()}
         )
+        # Groq does not support multiple images, so no memory
 
+        # Add structured output format if requested
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "response",
+                        "schema": schema,
+                        "strict": False,  # Groq doesn't support strict mode like OpenAI
+                    },
+                }
+            except json.JSONDecodeError:
+                # If schema is invalid, don't add structured output
+                pass
         return payload
 
-    def _prepare_text_data(self, call: dict) -> dict:
+    def _prepare_text_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
-        return {
+        title_prompt = self._get_title_prompt()
+        payload = {
             "messages": [
-                {"role": "user", "content": [{"type": "text", "text": call.message}]}
+                {"role": "system", "content": title_prompt},
+                {"role": "user", "content": [{"type": "text", "text": call.message}]},
             ],
             "model": self.model,
             "max_completion_tokens": call.max_tokens,
@@ -939,21 +1540,51 @@ class Groq(Provider):
             "top_p": default_parameters.get("top_p"),
         }
 
+        # Add structured output format if requested
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "response",
+                        "schema": schema,
+                        "strict": False,  # Groq doesn't support strict mode like OpenAI
+                    },
+                }
+            except json.JSONDecodeError:
+                # If schema is invalid, don't add structured output
+                pass
+
+        return payload
+
     async def validate(self) -> None | ServiceValidationError:
         if not self.api_key:
             raise ServiceValidationError("empty_api_key")
         headers = self._generate_headers()
         data = {
-            "model": DEFAULT_GROQ_MODEL,
+            "model": self.model,
             "messages": [{"role": "user", "content": "Hi"}],
         }
         await self._post(url=ENDPOINT_GROQ, headers=headers, data=data)
 
+    def supports_structured_output(self) -> bool:
+        """Groq supports structured output via OpenAI-compatible JSON schema."""
+        return True
+
 
 class LocalAI(Provider):
+
     def __init__(
         self,
-        hass: object,
+        hass: HomeAssistant,
         api_key: str,
         model: str,
         endpoint={"ip_address": "", "port": "", "https": False},
@@ -969,10 +1600,28 @@ class LocalAI(Provider):
 
         headers = {}
         response = await self._post(url=endpoint, headers=headers, data=data)
-        response_text = response.get("choices")[0].get("message").get("content")
+        if not isinstance(response, dict):
+            raise ServiceValidationError("invalid_response")
+
+        choices = response.get("choices")
+        if not isinstance(choices, list) or not choices:
+            raise ServiceValidationError("empty_response")
+
+        first_choice = choices[0]
+        if not isinstance(first_choice, dict):
+            raise ServiceValidationError("invalid_response")
+
+        message = first_choice.get("message")
+        if not isinstance(message, dict):
+            raise ServiceValidationError("invalid_response")
+
+        response_text = message.get("content")
+        if response_text is None:
+            raise ServiceValidationError("invalid_response")
+
         return response_text
 
-    def _prepare_vision_data(self, call: dict) -> dict:
+    def _prepare_vision_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
         payload = {
             "model": self.model,
@@ -996,33 +1645,83 @@ class LocalAI(Provider):
                     "image_url": {"url": f"data:image/jpeg;base64,{image}"},
                 }
             )
+        # User message
         payload["messages"][0]["content"].append({"type": "text", "text": call.message})
+        # System prompt
+        payload["messages"].insert(
+            0, {"role": "system", "content": self._get_system_prompt()}
+        )
 
-        if call.use_memory:
+        # Memory if use_memory is set
+        if getattr(call, "use_memory", False):
             memory_content = call.memory._get_memory_images(memory_type="OpenAI")
-            system_prompt = call.memory.system_prompt
             if memory_content:
                 payload["messages"].insert(
-                    0, {"role": "user", "content": memory_content}
-                )
-            if system_prompt:
-                payload["messages"].insert(
-                    0, {"role": "system", "content": system_prompt}
+                    1, {"role": "user", "content": memory_content}
                 )
 
+        # Add structured output support (OpenAI-compatible)
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "response",
+                        "schema": schema,
+                        "strict": False,  # LocalAI may not support strict mode
+                    },
+                }
+            except json.JSONDecodeError as e:
+                raise ServiceValidationError(
+                    f"Invalid JSON in structure parameter: {str(e)}"
+                )
         return payload
 
-    def _prepare_text_data(self, call: dict) -> dict:
+    def _prepare_text_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
-        return {
+        title_prompt = self._get_title_prompt()
+        payload = {
             "model": self.model,
             "messages": [
-                {"role": "user", "content": [{"type": "text", "text": call.message}]}
+                {"role": "user", "content": [{"type": "text", "text": title_prompt}]},
+                {"role": "user", "content": [{"type": "text", "text": call.message}]},
             ],
             "max_tokens": call.max_tokens,
             "temperature": default_parameters.get("temperature"),
             "top_p": default_parameters.get("top_p"),
         }
+
+        # Add structured output support (OpenAI-compatible)
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "response",
+                        "schema": schema,
+                        "strict": False,  # LocalAI may not support strict mode
+                    },
+                }
+            except json.JSONDecodeError as e:
+                raise ServiceValidationError(
+                    f"Invalid JSON in structure parameter: {str(e)}"
+                )
+
+        return payload
 
     async def validate(self) -> None | ServiceValidationError:
         if not self.endpoint.get("ip_address") or not self.endpoint.get("port"):
@@ -1039,16 +1738,31 @@ class LocalAI(Provider):
         except Exception:
             raise ServiceValidationError("handshake_failed")
 
+    def supports_structured_output(self) -> bool:
+        """LocalAI supports structured output via OpenAI-compatible JSON schema format."""
+        return True
+
 
 class Ollama(Provider):
+
     def __init__(
         self,
-        hass: object,
+        hass: HomeAssistant,
         api_key: str,
         model: str,
         endpoint={"ip_address": "0.0.0.0", "port": "11434", "https": False},
     ):
         super().__init__(hass, api_key, model, endpoint)
+
+    def supports_structured_output(self) -> bool:
+        """Return True if provider supports structured output."""
+        return True
+
+    def _model_supports_thinking(self) -> bool:
+        thinking_models = ["qwen3.5", "qwen3-vl"]
+        return any(
+            thinking_model in self.model.lower() for thinking_model in thinking_models
+        )
 
     async def _make_request(self, data: dict) -> str:
         https = self.endpoint.get("https")
@@ -1060,57 +1774,105 @@ class Ollama(Provider):
         )
 
         response = await self._post(url=endpoint, headers={}, data=data)
-        response_text = response.get("message").get("content")
+        if not isinstance(response, dict):
+            raise ServiceValidationError("invalid_response")
+        response_text = response.get("message", {}).get("content")
+        if response_text is None:
+            raise ServiceValidationError("invalid_response")
         return response_text
 
-    def _prepare_vision_data(self, call: dict) -> dict:
+    def _prepare_vision_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
         payload = {
             "model": self.model,
-            "messages": [],
+            "system": self._get_system_prompt() if not call.model_is_glimpse() else "",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": (
+                        call.message
+                        if not call.model_is_glimpse()
+                        else GLIMPSE_V1_INSTRUCTIONS
+                    ),
+                    "images": call.base64_images,
+                },
+            ],
+            "prompt": (),
+            "images": call.base64_images,
             "stream": False,
             "keep_alive": default_parameters.get("keep_alive"),
+            "think": default_parameters.get("think", False)
+            and self._model_supports_thinking(),
             "options": {
                 "num_predict": call.max_tokens,
                 "temperature": default_parameters.get("temperature"),
+                "top_p": default_parameters.get("top_p"),
                 "num_ctx": default_parameters.get("context_window"),
             },
         }
 
-        if call.use_memory:
+        # Add structured output support
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+                payload["format"] = schema
+            except json.JSONDecodeError as e:
+                raise ServiceValidationError(
+                    f"Invalid JSON in structure parameter: {str(e)}"
+                )
+
+        # Memory if use_memory is set
+        if getattr(call, "use_memory", False):
             memory_content = call.memory._get_memory_images(memory_type="Ollama")
-            system_prompt = call.memory.system_prompt
             if memory_content:
                 payload["messages"].extend(memory_content)
-            if system_prompt:
-                payload["system"] = system_prompt
-
-        for image, filename in zip(call.base64_images, call.filenames):
-            tag = (
-                ("Image " + str(call.base64_images.index(image) + 1))
-                if filename == ""
-                else filename
-            )
-            image_message = {"role": "user", "content": tag + ":", "images": [image]}
-            payload["messages"].append(image_message)
-        prompt_message = {"role": "user", "content": call.message}
-        payload["messages"].append(prompt_message)
 
         return payload
 
-    def _prepare_text_data(self, call: dict) -> dict:
+    def _prepare_text_data(self, call: Any) -> dict:
         default_parameters = self._get_default_parameters(call)
-        return {
+        title_prompt = self._get_title_prompt()
+        payload = {
             "model": self.model,
-            "messages": [{"role": "user", "content": call.message}],
+            "messages": [
+                {"role": "user", "content": title_prompt},
+                {"role": "user", "content": call.message},
+            ],
             "stream": False,
-            "keep_alive": default_parameters.get("keep_alive"),
+            "keep_alive": default_parameters.get("keep_alive", "5m"),
+            "think": default_parameters.get("think", False)
+            and self._model_supports_thinking(),
             "options": {
                 "num_predict": call.max_tokens,
                 "temperature": default_parameters.get("temperature"),
+                "top_p": default_parameters.get("top_p"),
                 "num_ctx": default_parameters.get("context_window"),
             },
         }
+
+        # Add structured output support
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+                payload["format"] = schema
+            except json.JSONDecodeError as e:
+                raise ServiceValidationError(
+                    f"Invalid JSON in structure parameter: {str(e)}"
+                )
+
+        return payload
 
     async def validate(self) -> None | ServiceValidationError:
         if not self.endpoint.get("ip_address") or not self.endpoint.get("port"):
@@ -1134,18 +1896,28 @@ class Ollama(Provider):
 
 
 class AWSBedrock(Provider):
+
     def __init__(
         self,
-        hass: object,
+        hass: HomeAssistant,
         aws_access_key_id: str,
         aws_secret_access_key: str,
         aws_region_name: str,
         model: str,
+        api_key: str | None = None,
     ):
-        super().__init__(hass=hass, api_key="", model=model)
-        self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_key = aws_secret_access_key
-        self.aws_region = aws_region_name
+        # If api_key is provided, use Bearer token authentication
+        # Otherwise, use traditional IAM credentials
+        if api_key:
+            super().__init__(hass=hass, api_key=api_key, model=model)
+            self.aws_region = aws_region_name
+            self.use_bearer_token = True
+        else:
+            super().__init__(hass=hass, api_key="", model=model)
+            self.aws_access_key_id = aws_access_key_id
+            self.aws_secret_access_key = aws_secret_access_key
+            self.aws_region = aws_region_name
+            self.use_bearer_token = False
 
     def _generate_headers(self) -> dict:
         return {
@@ -1154,9 +1926,63 @@ class AWSBedrock(Provider):
         }
 
     async def _make_request(self, data: dict) -> str:
-        response = await self.invoke_bedrock(model=self.model, data=data)
-        response_text = response.get("message").get("content")[0].get("text")
-        return response_text
+
+        if self.use_bearer_token:
+            # Use Bearer token with direct HTTP API
+            headers = self._generate_headers()
+            endpoint = f"https://bedrock-runtime.{self.aws_region}.amazonaws.com/model/{self.model}/converse"
+            response = await self._post(url=endpoint, headers=headers, data=data)
+
+            if not isinstance(response, dict):
+                raise ServiceValidationError("invalid_response")
+
+            output = response.get("output")
+            if not isinstance(output, dict):
+                raise ServiceValidationError("invalid_response")
+
+            message = output.get("message")
+            if not isinstance(message, dict):
+                raise ServiceValidationError("invalid_response")
+
+            # Handle tool use response for structured output
+            message_content = message.get("content") or []
+            if not isinstance(message_content, list) or len(message_content) == 0:
+                return ""
+
+            content = message_content[0]
+            if not isinstance(content, dict):
+                raise ServiceValidationError("invalid_response")
+            tool_use = content.get("toolUse")
+            if isinstance(tool_use, dict):
+                # Extract the structured data from tool use
+                return json.dumps(tool_use.get("input", {}))
+            # Regular text response
+            return content.get("text", "")
+        else:
+            # Use traditional IAM credentials with boto3
+            response = await self.invoke_bedrock(model=self.model, data=data)
+
+            if not isinstance(response, dict):
+                raise ServiceValidationError("invalid_response")
+
+            message = response.get("message")
+            if not isinstance(message, dict):
+                raise ServiceValidationError("invalid_response")
+
+            # Handle tool use response for structured output
+            message_content = message.get("content") or []
+            if not isinstance(message_content, list) or len(message_content) == 0:
+                return ""
+
+            content = message_content[0]
+            if not isinstance(content, dict):
+                raise ServiceValidationError("invalid_response")
+            tool_use = content.get("toolUse")
+            if isinstance(tool_use, dict):
+                # Extract the structured data from tool use
+                return json.dumps(tool_use.get("input", {}))
+            # Regular text response
+            return content.get("text", "")
 
     async def invoke_bedrock(self, model: str, data: dict) -> dict:
         """Post data to url and return response data"""
@@ -1175,13 +2001,22 @@ class AWSBedrock(Provider):
             )
 
             # Invoke the model with the response stream
+            converse_kwargs = {
+                "modelId": model,
+                "messages": data.get("messages"),
+                "inferenceConfig": data.get("inferenceConfig"),
+            }
+
+            # Add toolConfig if present (for structured output)
+            if "toolConfig" in data:
+                converse_kwargs["toolConfig"] = data.get("toolConfig")
+
+            # Add system prompt if present (for structured output)
+            if "system" in data:
+                converse_kwargs["system"] = data.get("system")
+
             response = await self.hass.async_add_executor_job(
-                partial(
-                    client.converse,
-                    modelId=model,
-                    messages=data.get("messages"),
-                    inferenceConfig=data.get("inferenceConfig"),
-                )
+                partial(client.converse, **converse_kwargs)
             )
             _LOGGER.debug(f"AWS Bedrock call Response: {response}")
 
@@ -1206,9 +2041,9 @@ class AWSBedrock(Provider):
             )
             response_data = response.get("output")
             _LOGGER.debug(f"AWS Bedrock call response data: {response_data}")
-            return response_data
+        return response_data
 
-    def _prepare_vision_data(self, call: dict) -> list:
+    def _prepare_vision_data(self, call: Any) -> dict:
         _LOGGER.debug(f"Found model type `{self.model}` for AWS Bedrock call.")
         default_parameters = self._get_default_parameters(call)
         # We need to generate the correct format for the respective models
@@ -1236,34 +2071,228 @@ class AWSBedrock(Provider):
                     }
                 }
             )
+        # User message
         payload["messages"][0]["content"].append({"text": call.message})
+        # System prompt
+        payload["messages"].insert(
+            0, {"role": "user", "content": [{"text": self._get_system_prompt()}]}
+        )
 
-        if call.use_memory:
+        # Memory images only when enabled
+        if getattr(call, "use_memory", False):
             memory_content = call.memory._get_memory_images(memory_type="AWS")
-            system_prompt = call.memory.system_prompt
             if memory_content:
                 payload["messages"].insert(
-                    0, {"role": "user", "content": memory_content}
+                    1, {"role": "user", "content": memory_content}
                 )
-            if system_prompt:
-                payload["messages"].insert(
-                    0, {"role": "user", "content": [{"text": system_prompt}]}
+
+        # Add structured output support using tool definitions
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+
+                # Create a tool that returns the structured data
+                payload["toolConfig"] = {
+                    "tools": [
+                        {
+                            "toolSpec": {
+                                "name": "return_structured_data",
+                                "description": "Return the analysis results in the specified JSON format",
+                                "inputSchema": {"json": schema},
+                            }
+                        }
+                    ],
+                    "toolChoice": {"tool": {"name": "return_structured_data"}},
+                }
+            except json.JSONDecodeError as e:
+                raise ServiceValidationError(
+                    f"Invalid JSON in structure parameter: {str(e)}"
                 )
 
         return payload
 
-    def _prepare_text_data(self, call: dict) -> list:
-        return {
-            "messages": [{"role": "user", "content": [{"text": call.message}]}],
+    def _prepare_text_data(self, call: Any) -> dict:
+        title_prompt = self._get_title_prompt()
+        payload = {
+            "messages": [
+                {"role": "user", "content": [{"text": title_prompt}]},
+                {"role": "user", "content": [{"text": call.message}]},
+            ],
             "inferenceConfig": {
                 "maxTokens": call.max_tokens,
                 "temperature": call.temperature,
             },
         }
 
+        # Add structured output support using tool definitions
+        if call.response_format == "json" and call.structure:
+            import json
+
+            try:
+                schema = (
+                    json.loads(call.structure)
+                    if isinstance(call.structure, str)
+                    else call.structure
+                )
+
+                # Create a tool that returns the structured data
+                payload["toolConfig"] = {
+                    "tools": [
+                        {
+                            "toolSpec": {
+                                "name": "return_structured_data",
+                                "description": "Return the analysis results in the specified JSON format",
+                                "inputSchema": {"json": schema},
+                            }
+                        }
+                    ],
+                    "toolChoice": {"tool": {"name": "return_structured_data"}},
+                }
+            except json.JSONDecodeError as e:
+                raise ServiceValidationError(
+                    f"Invalid JSON in structure parameter: {str(e)}"
+                )
+
+        return payload
+
     async def validate(self) -> None | ServiceValidationError:
         data = {
             "messages": [{"role": "user", "content": [{"text": "Hi"}]}],
             "inferenceConfig": {"maxTokens": 10, "temperature": 0.5},
         }
-        await self.invoke_bedrock(model=DEFAULT_AWS_MODEL, data=data)
+        await self.invoke_bedrock(model=self.model, data=data)
+
+    def supports_structured_output(self) -> bool:
+        """AWS Bedrock supports structured output via tool definitions in Converse API."""
+        return True
+
+
+class ProviderFactory:
+    """
+    Factory to create provider instances from a provider name and config
+    """
+
+    @staticmethod
+    def create(
+        hass: HomeAssistant, provider_name: str, config: dict, model: str
+    ) -> Provider:
+        if provider_name == "OpenAI":
+            return OpenAI(
+                hass=hass,
+                api_key=cast(str, config.get(CONF_API_KEY) or ""),
+                model=model,
+            )
+
+        if provider_name == "Azure":
+            return AzureOpenAI(
+                hass,
+                api_key=cast(str, config.get(CONF_API_KEY) or ""),
+                model=model,
+                endpoint={
+                    "base_url": ENDPOINT_AZURE,
+                    "endpoint": config.get(CONF_AZURE_BASE_URL),
+                    "deployment": config.get(CONF_AZURE_DEPLOYMENT),
+                    "api_version": config.get(CONF_AZURE_VERSION),
+                },
+            )
+
+        if provider_name == "Anthropic":
+            return Anthropic(
+                hass, api_key=cast(str, config.get(CONF_API_KEY) or ""), model=model
+            )
+
+        if provider_name == "Google":
+            return Google(
+                hass,
+                api_key=cast(str, config.get(CONF_API_KEY) or ""),
+                model=model,
+                endpoint={"base_url": ENDPOINT_GOOGLE},
+            )
+
+        if provider_name == "Groq":
+            return Groq(
+                hass, api_key=cast(str, config.get(CONF_API_KEY) or ""), model=model
+            )
+
+        if provider_name == "LocalAI":
+            return LocalAI(
+                hass,
+                api_key="",
+                model=model,
+                endpoint={
+                    "ip_address": config.get(CONF_IP_ADDRESS),
+                    "port": config.get(CONF_PORT),
+                    "https": config.get(CONF_HTTPS, False),
+                },
+            )
+
+        if provider_name == "Ollama":
+            return Ollama(
+                hass,
+                api_key="",
+                model=model,
+                endpoint={
+                    "ip_address": config.get(CONF_IP_ADDRESS),
+                    "port": config.get(CONF_PORT),
+                    "https": config.get(CONF_HTTPS, False),
+                    "keep_alive": config.get(CONF_KEEP_ALIVE, 5),
+                    "context_window": config.get(CONF_CONTEXT_WINDOW, 2048),
+                },
+            )
+
+        if provider_name == "Custom OpenAI":
+            return OpenAI(
+                hass,
+                api_key=cast(str, config.get(CONF_API_KEY) or ""),
+                model=model,
+                endpoint={"base_url": config.get(CONF_CUSTOM_OPENAI_ENDPOINT)},
+            )
+
+        if provider_name == "AWS Bedrock":
+            return AWSBedrock(
+                hass,
+                aws_access_key_id=cast(str, config.get(CONF_AWS_ACCESS_KEY_ID) or ""),
+                aws_secret_access_key=cast(
+                    str, config.get(CONF_AWS_SECRET_ACCESS_KEY) or ""
+                ),
+                aws_region_name=cast(str, config.get(CONF_AWS_REGION_NAME) or ""),
+                model=model,
+            )
+
+        if provider_name in ("OpenWebUI", "Open WebUI"):
+            endpoint = config.get(
+                CONF_CUSTOM_OPENAI_ENDPOINT
+            ) or ENDPOINT_OPENWEBUI.format(
+                ip_address=config.get(CONF_IP_ADDRESS),
+                port=config.get(CONF_PORT),
+                protocol="https" if config.get(CONF_HTTPS, False) else "http",
+            )
+            return OpenAI(
+                hass,
+                api_key=cast(str, config.get(CONF_API_KEY) or ""),
+                model=model,
+                endpoint={"base_url": endpoint},
+            )
+
+        if provider_name == "OpenRouter":
+            return OpenAI(
+                hass,
+                api_key=cast(str, config.get(CONF_API_KEY) or ""),
+                model=model,
+                endpoint={"base_url": ENDPOINT_OPENROUTER},
+            )
+
+        if provider_name == "Mistral":
+            return Mistral(
+                hass,
+                api_key=cast(str, config.get(CONF_API_KEY) or ""),
+                model=model,
+            )
+
+        raise ServiceValidationError("invalid_provider")

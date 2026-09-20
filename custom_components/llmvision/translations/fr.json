@@ -59,12 +59,14 @@
                         "data": {
                             "default_model": "Modèle par défaut",
                             "temperature": "Température",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "think": "Pense"
                         },
                         "data_description": {
                             "default_model": "Le modèle par défaut à utiliser si aucun autre modèle n'est spécifié.",
                             "temperature": "Contrôle l'aléatoire de la sortie. Des valeurs plus basses rendent la sortie plus déterministe.",
-                            "top_p": "Contrôle la diversité de la sortie. Des valeurs plus basses rendent la sortie plus ciblée."
+                            "top_p": "Contrôle la diversité de la sortie. Des valeurs plus basses rendent la sortie plus ciblée.",
+                            "think": "Activez le mode réflexion pour les modèles qui le prennent en charge."
                         }
                     },
                     "advanced_section": {
@@ -101,19 +103,21 @@
                         "data": {
                             "default_model": "Modèle par défaut",
                             "temperature": "Température",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "Effort de raisonnement"
                         },
                         "data_description": {
                             "default_model": "Le modèle par défaut à utiliser si aucun autre modèle n'est spécifié.",
                             "temperature": "Contrôle l'aléatoire de la sortie. Des valeurs plus basses rendent la sortie plus déterministe.",
-                            "top_p": "Contrôle la diversité de la sortie. Des valeurs plus basses rendent la sortie plus ciblée."
+                            "top_p": "Contrôle la diversité de la sortie. Des valeurs plus basses rendent la sortie plus ciblée.",
+                            "reasoning_effort": "Contrôle l'effort de raisonnement pour les modèles qui le prennent en charge."
                         }
                     }
                 }
             },
             "azure": {
                 "title": "Configurer Azure",
-                "description": "Fournissez une clé API Azure valide, l'URL de base, le déploiement et la version de l'API.\nL'URL de base doit être au format `https://domain.openai.azure.com/` avec le slash final.",
+                "description": "Fournissez une clé API Azure valide, l'URL de base, le déploiement et la version de l'API.",
                 "sections": {
                     "connection_section": {
                         "name": "Connexion",
@@ -161,12 +165,14 @@
                         "data": {
                             "default_model": "Modèle par défaut",
                             "temperature": "Température",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "Penser le budget"
                         },
                         "data_description": {
                             "default_model": "Le modèle par défaut à utiliser si aucun autre modèle n'est spécifié.",
                             "temperature": "Contrôle l'aléatoire de la sortie. Des valeurs plus basses rendent la sortie plus déterministe.",
-                            "top_p": "Contrôle la diversité de la sortie. Des valeurs plus basses rendent la sortie plus ciblée."
+                            "top_p": "Contrôle la diversité de la sortie. Des valeurs plus basses rendent la sortie plus ciblée.",
+                            "thinking_budget": "Contrôle le budget de réflexion pour les modèles qui le prennent en charge. Des valeurs plus élevées permettent un raisonnement plus complexe mais peuvent augmenter le temps de réponse et les coûts."
                         }
                     }
                 }
@@ -188,12 +194,14 @@
                         "data": {
                             "default_model": "Modèle par défaut",
                             "temperature": "Température",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "Penser le budget"
                         },
                         "data_description": {
                             "default_model": "Le modèle par défaut à utiliser si aucun autre modèle n'est spécifié.",
                             "temperature": "Contrôle l'aléatoire de la sortie. Des valeurs plus basses rendent la sortie plus déterministe.",
-                            "top_p": "Contrôle la diversité de la sortie. Des valeurs plus basses rendent la sortie plus ciblée."
+                            "top_p": "Contrôle la diversité de la sortie. Des valeurs plus basses rendent la sortie plus ciblée.",
+                            "thinking_budget": "Contrôle le budget de réflexion pour les modèles qui le prennent en charge. Des valeurs plus élevées permettent un raisonnement plus complexe mais peuvent augmenter le temps de réponse et les coûts."
                         }
                     }
                 }
@@ -339,12 +347,14 @@
                         "data": {
                             "default_model": "Modèle par défaut",
                             "temperature": "Température",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "Effort de raisonnement"
                         },
                         "data_description": {
                             "default_model": "Le modèle par défaut à utiliser si aucun autre modèle n'est spécifié.",
                             "temperature": "Contrôle l'aléatoire de la sortie. Des valeurs plus basses rendent la sortie plus déterministe.",
-                            "top_p": "Contrôle la diversité de la sortie. Des valeurs plus basses rendent la sortie plus ciblée."
+                            "top_p": "Contrôle la diversité de la sortie. Des valeurs plus basses rendent la sortie plus ciblée.",
+                            "reasoning_effort": "Contrôle l'effort de raisonnement pour les modèles qui le prennent en charge."
                         }
                     }
                 }
@@ -357,10 +367,12 @@
                         "name": "Général",
                         "description": "Définir le fournisseur préféré à utiliser lorsque le fournisseur sélectionné n'est pas disponible.",
                         "data": {
-                            "fallback_provider": "Fournisseur de secours"
+                            "fallback_provider": "Fournisseur de secours",
+                            "request_timeout": "Délai d'attente de la requête (secondes)"
                         },
                         "data_description": {
-                            "fallback_provider": "LLM Vision réessaiera la requête avec le fournisseur sélectionné si le fournisseur actuel échoue."
+                            "fallback_provider": "LLM Vision réessaiera la requête avec le fournisseur sélectionné si le fournisseur actuel échoue.",
+                            "request_timeout": "Durée maximale d'attente de la réponse du fournisseur (secondes)."
                         }
                     },
                     "prompt_section": {
@@ -379,11 +391,13 @@
                         "name": "Chronologie",
                         "description": "La chronologie stocke les événements du jour à afficher via la carte LLM Vision sur votre tableau de bord.",
                         "data": {
+                            "timeline_language": "Langue de la chronologie",
                             "retention_time": "Durée de conservation",
                             "timeline_today_summary": "Résumé de la chronologie",
                             "timeline_summary_prompt": "Prompt de résumé du jour"
                         },
                         "data_description": {
+                            "timeline_language": "Sélectionnez la langue utilisée pour les chaînes et catégories de la chronologie.",
                             "retention_time": "Suppression automatique des événements après (jours). Mettre à 0 pour désactiver la suppression automatique.",
                             "timeline_today_summary": "Activer le résumé de la chronologie pour générer automatiquement un résumé des événements du jour.",
                             "timeline_summary_prompt": "L'instruction donnée au modèle pour générer un résumé des événements du jour."

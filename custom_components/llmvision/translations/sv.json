@@ -59,12 +59,14 @@
                         "data": {
                             "default_model": "Standardmodell",
                             "temperature": "Temperatur",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "think": "Tänka"
                         },
                         "data_description": {
                             "default_model": "Standardmodellen som används om ingen annan anges.",
                             "temperature": "Styr slumpmässigheten i svaret. Lägre värden ger mer deterministiska svar.",
-                            "top_p": "Styr mångfalden i svaret. Lägre värden ger mer fokuserade svar."
+                            "top_p": "Styr mångfalden i svaret. Lägre värden ger mer fokuserade svar.",
+                            "think": "Aktivera tankeläge för modeller som stöder det."
                         }
                     },
                     "advanced_section": {
@@ -101,19 +103,21 @@
                         "data": {
                             "default_model": "Standardmodell",
                             "temperature": "Temperatur",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "Resonerande ansträngning"
                         },
                         "data_description": {
                             "default_model": "Standardmodellen som används om ingen annan anges.",
                             "temperature": "Styr slumpmässigheten i svaret. Lägre värden ger mer deterministiska svar.",
-                            "top_p": "Styr mångfalden i svaret. Lägre värden ger mer fokuserade svar."
+                            "top_p": "Styr mångfalden i svaret. Lägre värden ger mer fokuserade svar.",
+                            "reasoning_effort": "Styr resonemanget för modeller som stödjer det."
                         }
                     }
                 }
             },
             "azure": {
                 "title": "Konfigurera Azure",
-                "description": "Ange en giltig Azure API-nyckel, bas-URL, deployment och API-version.\nBas-URL måste ha formatet `https://domain.openai.azure.com/` inklusive snedstreck på slutet.",
+                "description": "Ange en giltig Azure API-nyckel, bas-URL, deployment och API-version.",
                 "sections": {
                     "connection_section": {
                         "name": "Anslutning",
@@ -161,12 +165,14 @@
                         "data": {
                             "default_model": "Standardmodell",
                             "temperature": "Temperatur",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "Tänkande budget"
                         },
                         "data_description": {
                             "default_model": "Standardmodellen som används om ingen annan anges.",
                             "temperature": "Styr slumpmässigheten i svaret. Lägre värden ger mer deterministiska svar.",
-                            "top_p": "Styr mångfalden i svaret. Lägre värden ger mer fokuserade svar."
+                            "top_p": "Styr mångfalden i svaret. Lägre värden ger mer fokuserade svar.",
+                            "thinking_budget": "Styr tankebudgeten för modeller som stöder den. Högre värden möjliggör mer komplexa resonemang men kan öka svarstiden och kostnaden."
                         }
                     }
                 }
@@ -188,12 +194,14 @@
                         "data": {
                             "default_model": "Standardmodell",
                             "temperature": "Temperatur",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "Tänkande budget"
                         },
                         "data_description": {
                             "default_model": "Standardmodellen som används om ingen annan anges.",
                             "temperature": "Styr slumpmässigheten i svaret. Lägre värden ger mer deterministiska svar.",
-                            "top_p": "Styr mångfalden i svaret. Lägre värden ger mer fokuserade svar."
+                            "top_p": "Styr mångfalden i svaret. Lägre värden ger mer fokuserade svar.",
+                            "thinking_budget": "Styr tankebudgeten för modeller som stöder den. Högre värden möjliggör mer komplexa resonemang men kan öka svarstiden och kostnaden."
                         }
                     }
                 }
@@ -339,12 +347,14 @@
                         "data": {
                             "default_model": "Standardmodell",
                             "temperature": "Temperatur",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "Resonerande ansträngning"
                         },
                         "data_description": {
                             "default_model": "Standardmodellen som används om ingen annan anges.",
                             "temperature": "Styr slumpmässigheten i svaret. Lägre värden ger mer deterministiska svar.",
-                            "top_p": "Styr mångfalden i svaret. Lägre värden ger mer fokuserade svar."
+                            "top_p": "Styr mångfalden i svaret. Lägre värden ger mer fokuserade svar.",
+                            "reasoning_effort": "Styr resonemanget för modeller som stödjer det."
                         }
                     }
                 }
@@ -357,10 +367,12 @@
                         "name": "Allmänt",
                         "description": "Ställ in föredragen leverantör att använda när vald leverantör inte är tillgänglig.",
                         "data": {
-                            "fallback_provider": "Reservleverantör"
+                            "fallback_provider": "Reservleverantör",
+                            "request_timeout": "Request timeout (sekunder)"
                         },
                         "data_description": {
-                            "fallback_provider": "LLM Vision försöker igen med vald leverantör om nuvarande leverantör misslyckas."
+                            "fallback_provider": "LLM Vision försöker igen med vald leverantör om nuvarande leverantör misslyckas.",
+                            "request_timeout": "Maximal väntetid för svar från leverantören (sekunder)."
                         }
                     },
                     "prompt_section": {
@@ -379,11 +391,13 @@
                         "name": "Tidslinje",
                         "description": "Tidslinjen lagrar dagens händelser för att visas med LLM Vision-kortet på din dashboard.",
                         "data": {
+                            "timeline_language": "Tidslinje språk",
                             "retention_time": "Behållningstid",
                             "timeline_today_summary": "Tidslinjesammanfattning",
                             "timeline_summary_prompt": "Dagens sammanfattningsprompt"
                         },
                         "data_description": {
+                            "timeline_language": "Välj språket som används för tidslinjesträngar och kategorier.",
                             "retention_time": "Radera händelser automatiskt efter (dagar). Sätt till 0 för att inaktivera automatisk radering.",
                             "timeline_today_summary": "Aktivera tidslinjesammanfattning för att automatiskt generera en sammanfattning av dagens händelser.",
                             "timeline_summary_prompt": "Instruktionen som ges till modellen för att generera en sammanfattning av dagens händelser."

@@ -59,12 +59,14 @@
                         "data": {
                             "default_model": "Predvolený model",
                             "temperature": "Teplota",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "think": "Premýšľajte"
                         },
                         "data_description": {
                             "default_model": "Predvolený model, ktorý sa použije, ak nie je špecifikovaný iný.",
                             "temperature": "Ovláda náhodnosť výstupu. Nižšie hodnoty znamenajú deterministickejší výstup.",
-                            "top_p": "Ovláda rozmanitosť výstupu. Nižšie hodnoty znamenajú zameranejší výstup."
+                            "top_p": "Ovláda rozmanitosť výstupu. Nižšie hodnoty znamenajú zameranejší výstup.",
+                            "think": "Povoľte režim myslenia pre modely, ktoré ho podporujú."
                         }
                     },
                     "advanced_section": {
@@ -101,19 +103,21 @@
                         "data": {
                             "default_model": "Predvolený model",
                             "temperature": "Teplota",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "Rozumné úsilie"
                         },
                         "data_description": {
                             "default_model": "Predvolený model, ktorý sa použije, ak nie je špecifikovaný iný.",
                             "temperature": "Ovláda náhodnosť výstupu. Nižšie hodnoty znamenajú deterministickejší výstup.",
-                            "top_p": "Ovláda rozmanitosť výstupu. Nižšie hodnoty znamenajú zameranejší výstup."
+                            "top_p": "Ovláda rozmanitosť výstupu. Nižšie hodnoty znamenajú zameranejší výstup.",
+                            "reasoning_effort": "Riadi úsilie o uvažovanie pre modely, ktoré ho podporujú."
                         }
                     }
                 }
             },
             "azure": {
                 "title": "Konfigurácia Azure",
-                "description": "Zadajte platný Azure API kľúč, základnú URL, deployment a verziu API.\nZákladná URL musí byť vo formáte `https://domain.openai.azure.com/` vrátane lomky na konci.",
+                "description": "Zadajte platný Azure API kľúč, základnú URL, deployment a verziu API.",
                 "sections": {
                     "connection_section": {
                         "name": "Pripojenie",
@@ -161,12 +165,14 @@
                         "data": {
                             "default_model": "Predvolený model",
                             "temperature": "Teplota",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "Myslenie na rozpočet"
                         },
                         "data_description": {
                             "default_model": "Predvolený model, ktorý sa použije, ak nie je špecifikovaný iný.",
                             "temperature": "Ovláda náhodnosť výstupu. Nižšie hodnoty znamenajú deterministickejší výstup.",
-                            "top_p": "Ovláda rozmanitosť výstupu. Nižšie hodnoty znamenajú zameranejší výstup."
+                            "top_p": "Ovláda rozmanitosť výstupu. Nižšie hodnoty znamenajú zameranejší výstup.",
+                            "thinking_budget": "Ovláda rozpočet na myslenie pre modely, ktoré ho podporujú. Vyššie hodnoty umožňujú komplexnejšie uvažovanie, ale môžu zvýšiť čas odozvy a náklady."
                         }
                     }
                 }
@@ -188,12 +194,14 @@
                         "data": {
                             "default_model": "Predvolený model",
                             "temperature": "Teplota",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "Myslenie na rozpočet"
                         },
                         "data_description": {
                             "default_model": "Predvolený model, ktorý sa použije, ak nie je špecifikovaný iný.",
                             "temperature": "Ovláda náhodnosť výstupu. Nižšie hodnoty znamenajú deterministickejší výstup.",
-                            "top_p": "Ovláda rozmanitosť výstupu. Nižšie hodnoty znamenajú zameranejší výstup."
+                            "top_p": "Ovláda rozmanitosť výstupu. Nižšie hodnoty znamenajú zameranejší výstup.",
+                            "thinking_budget": "Ovláda rozpočet na myslenie pre modely, ktoré ho podporujú. Vyššie hodnoty umožňujú komplexnejšie uvažovanie, ale môžu zvýšiť čas odozvy a náklady."
                         }
                     }
                 }
@@ -339,12 +347,14 @@
                         "data": {
                             "default_model": "Predvolený model",
                             "temperature": "Teplota",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "Rozumné úsilie"
                         },
                         "data_description": {
                             "default_model": "Predvolený model, ktorý sa použije, ak nie je špecifikovaný iný.",
                             "temperature": "Ovláda náhodnosť výstupu. Nižšie hodnoty znamenajú deterministickejší výstup.",
-                            "top_p": "Ovláda rozmanitosť výstupu. Nižšie hodnoty znamenajú zameranejší výstup."
+                            "top_p": "Ovláda rozmanitosť výstupu. Nižšie hodnoty znamenajú zameranejší výstup.",
+                            "reasoning_effort": "Riadi úsilie o uvažovanie pre modely, ktoré ho podporujú."
                         }
                     }
                 }
@@ -357,10 +367,12 @@
                         "name": "Všeobecné",
                         "description": "Nastavte preferovaného poskytovateľa, ktorý sa použije, ak vybraný poskytovateľ nie je dostupný.",
                         "data": {
-                            "fallback_provider": "Záložný poskytovateľ"
+                            "fallback_provider": "Záložný poskytovateľ",
+                            "request_timeout": "Časový limit požiadavky (sekundy)"
                         },
                         "data_description": {
-                            "fallback_provider": "LLM Vision zopakuje požiadavku s vybraným poskytovateľom, ak aktuálny zlyhá."
+                            "fallback_provider": "LLM Vision zopakuje požiadavku s vybraným poskytovateľom, ak aktuálny zlyhá.",
+                            "request_timeout": "Maximálny čas čakania na odpoveď od poskytovateľa (sekundy)."
                         }
                     },
                     "prompt_section": {
@@ -379,11 +391,13 @@
                         "name": "Časová os",
                         "description": "Časová os ukladá dnešné udalosti na zobrazenie v LLM Vision karte na vašom paneli.",
                         "data": {
+                            "timeline_language": "Jazyk časovej osi",
                             "retention_time": "Doba uchovania",
                             "timeline_today_summary": "Súhrn časovej osi",
                             "timeline_summary_prompt": "Výzva na súhrn dňa"
                         },
                         "data_description": {
+                            "timeline_language": "Vyberte jazyk používaný pre reťazce a kategórie časovej osi.",
                             "retention_time": "Automaticky vymazať udalosti po (dňoch). Nastavte na 0 pre vypnutie automatického mazania.",
                             "timeline_today_summary": "Povoliť automatické generovanie súhrnu dnešných udalostí.",
                             "timeline_summary_prompt": "Inštrukcia pre model na generovanie súhrnu dnešných udalostí."

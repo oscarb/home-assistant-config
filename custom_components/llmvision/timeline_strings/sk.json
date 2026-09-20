@@ -1,0 +1,79 @@
+{
+    "categories": {
+        "person": {
+            "labels": {
+                "osoba": "person",
+                "jednotlivec": "person",
+                "postava": "person",
+                "ľudia": "person",
+                "dieťa": "person",
+                "žena": "person",
+                "muž": "person",
+                "človek": "person"
+            }
+        },
+        "vehicle": {
+            "labels": {
+                "kuriér": "truck",
+                "poštár": "truck",
+                "bicykel": "bicycle",
+                "motocykel": "motorcycle",
+                "motorka": "motorcycle",
+                "autobus": "bus",
+                "auto": "car",
+                "dodávka": "car",
+                "suv": "car",
+                "vozidlo": "car",
+                "nákladné auto": "truck"
+            }
+        },
+        "animal": {
+            "labels": {
+                "pes": "dog",
+                "mačka": "cat",
+                "vták": "bird",
+                "domáce zviera": "dog",
+                "zviera": "animal",
+                "veverička": "animal",
+                "domáci miláčik": "dog",
+                "divá zver": "animal",
+                "jeleň": "animal",
+                "králik": "animal",
+                "líška": "animal",
+                "kojot": "animal",
+                "mýval": "animal",
+                "skunk": "animal",
+                "vačica": "animal",
+                "ježko": "animal",
+                "medveď": "animal",
+                "los": "animal"
+            }
+        },
+        "delivery": {
+            "labels": {
+                "krabica": "delivery",
+                "balík": "delivery",
+                "zásielka": "delivery"
+            }
+        },
+        "entity": {
+            "labels": {
+                "kamera": "camera",
+                "senzor": "sensor",
+                "svetlo": "light",
+                "kľúč": "key",
+                "zámok": "lock",
+                "alarm": "alarm"
+            }
+        },
+        "nature": {
+            "labels": {
+                "záhrada": "plant",
+                "rastlina": "plant",
+                "kvet": "plant",
+                "strom": "tree"
+            }
+        }
+    },
+    "regex": "`\\b${key}(?:y|i|ovia|ov|e|a|á|é|ia)?\\b`, 'iu'"
+}

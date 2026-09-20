@@ -1,0 +1,75 @@
+{
+    "categories": {
+        "person": {
+            "labels": {
+                "persona": "person",
+                "gente": "person",
+                "bambino": "person",
+                "donna": "person",
+                "uomo": "person",
+                "umano": "person"
+            }
+        },
+        "vehicle": {
+            "labels": {
+                "furgone": "truck",
+                "postino": "truck",
+                "bicicletta": "bicycle",
+                "motocicletta": "motorcycle",
+                "autobus": "bus",
+                "macchina": "car",
+                "fuoristrada": "car",
+                "suv": "car",
+                "veicolo": "car",
+                "camion": "truck"
+            }
+        },
+        "animal": {
+            "labels": {
+                "cane": "dog",
+                "gatto": "cat",
+                "gatti": "cat",
+                "papero": "bird",
+                "scoiattolo": "animal",
+                "animale domestico": "dog",
+                "animale": "animal",
+                "fauna selvatica": "animal",
+                "cervo": "animal",
+                "coniglio": "animal",
+                "volpe": "animal",
+                "coyote": "animal",
+                "procione": "animal",
+                "puzzola": "animal",
+                "opossum": "animal",
+                "riccio": "animal",
+                "orso": "animal",
+                "alce": "animal"
+            }
+        },
+        "delivery": {
+            "labels": {
+                "cassa": "delivery",
+                "pacchetto": "delivery"
+            }
+        },
+        "entity": {
+            "labels": {
+                "telecamera": "camera",
+                "sensore": "sensor",
+                "luce": "light",
+                "chiave": "key",
+                "serratura": "lock",
+                "allarme": "alarm"
+            }
+        },
+        "nature": {
+            "labels": {
+                "giardino": "plant",
+                "pianta": "plant",
+                "fiore": "plant",
+                "albero": "tree"
+            }
+        }
+    },
+    "regex": "`\\b${key}(?:i|e|s)?\\b`, 'iu'"
+}

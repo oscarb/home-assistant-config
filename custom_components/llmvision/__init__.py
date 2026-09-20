@@ -1,16 +1,18 @@
 from datetime import datetime
-import json
-from .calendar import Timeline
+from .timeline import Timeline
 from .providers import Request
 from .memory import Memory
 from .media_handlers import MediaProcessor
-import re
-import os
+import os, re
 from datetime import timedelta
 from homeassistant.util import dt as dt_util
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import SupportsResponse
 from homeassistant.exceptions import ServiceValidationError
+import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.dispatcher import async_dispatcher_send
+from .api import TimelineEventView, TimelineEventsView, TimelineEventCreateView
+
 import logging
 
 # Declare variables
@@ -38,7 +40,7 @@ from .const import (
     CONF_AWS_SECRET_ACCESS_KEY,
     CONF_AWS_REGION_NAME,
     MESSAGE,
-    REMEMBER,
+    STORE_IN_TIMELINE,
     USE_MEMORY,
     MODEL,
     PROVIDER,
@@ -48,8 +50,6 @@ from .const import (
     IMAGE_ENTITY,
     VIDEO_FILE,
     EVENT_ID,
-    FRIGATE_RETRY_ATTEMPTS,
-    FRIGATE_RETRY_SECONDS,
     INTERVAL,
     DURATION,
     MAX_FRAMES,
@@ -70,7 +70,18 @@ from .const import (
     DEFAULT_OPENWEBUI_MODEL,
     CONF_CONTEXT_WINDOW,
     CONF_KEEP_ALIVE,
+    CONF_REQUEST_TIMEOUT,
+    RESPONSE_FORMAT,
+    STRUCTURE,
+    TITLE_FIELD,
+    DESCRIPTION_FIELD,
+    SIGNAL_TIMELINE_UPDATED,
+    CONF_THINKING_BUDGET,
+    CONF_THINK,
+    CONF_REASONING_EFFORT,
 )
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -89,6 +100,7 @@ async def async_setup_entry(hass, entry):
         CONF_DEFAULT_MODEL: entry.data.get(CONF_DEFAULT_MODEL),
         CONF_TEMPERATURE: entry.data.get(CONF_TEMPERATURE),
         CONF_TOP_P: entry.data.get(CONF_TOP_P),
+        CONF_REQUEST_TIMEOUT: entry.data.get(CONF_REQUEST_TIMEOUT),
         # Ollama specific
         CONF_CONTEXT_WINDOW: entry.data.get(CONF_CONTEXT_WINDOW),
         CONF_KEEP_ALIVE: entry.data.get(CONF_KEEP_ALIVE),
@@ -109,6 +121,10 @@ async def async_setup_entry(hass, entry):
         CONF_MEMORY_STRINGS: entry.data.get(CONF_MEMORY_STRINGS),
         CONF_SYSTEM_PROMPT: entry.data.get(CONF_SYSTEM_PROMPT),
         CONF_TITLE_PROMPT: entry.data.get(CONF_TITLE_PROMPT),
+        # Thinking/reasoning parameters
+        CONF_THINKING_BUDGET: entry.data.get(CONF_THINKING_BUDGET),
+        CONF_THINK: entry.data.get(CONF_THINK),
+        CONF_REASONING_EFFORT: entry.data.get(CONF_REASONING_EFFORT),
     }
 
     # Filter out None values
@@ -426,15 +442,120 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry) -> bool:
     return True
 
 
-async def _remember(
+class ServiceCallData:
+    """Store service call data and set default values"""
+
+    def __init__(self, data_call):
+        # This is the config entry id
+        self.provider = str(data_call.data.get(PROVIDER))
+        # If not set, the conf_default_model will be set in providers.py
+        self.model = data_call.data.get(MODEL)
+        self.message = str(data_call.data.get(MESSAGE, "")[0:2000])
+        self.store_in_timeline = data_call.data.get(STORE_IN_TIMELINE, False)
+        self.use_memory = data_call.data.get(USE_MEMORY, False)
+        self.image_paths = (
+            data_call.data.get(IMAGE_FILE, "").split("\n")
+            if data_call.data.get(IMAGE_FILE)
+            else None
+        )
+        self.image_entities = data_call.data.get(IMAGE_ENTITY)
+        self.video_paths = (
+            data_call.data.get(VIDEO_FILE, "").split("\n")
+            if data_call.data.get(VIDEO_FILE)
+            else None
+        )
+        self.event_id = (
+            data_call.data.get(EVENT_ID, "").split("\n")
+            if data_call.data.get(EVENT_ID)
+            else None
+        )
+        self.interval: int = int(data_call.data.get(INTERVAL, 2))
+        self.duration: int = int(data_call.data.get(DURATION, 10))
+        self.max_frames: int = int(data_call.data.get(MAX_FRAMES, 3))
+        self.target_width: int = data_call.data.get(TARGET_WIDTH, 3840)
+        self.temperature: float = float()
+        self.max_tokens: int = int(data_call.data.get(MAXTOKENS, 3000))
+        self.include_filename: bool = data_call.data.get(INCLUDE_FILENAME, False)
+        self.expose_images: bool = data_call.data.get(EXPOSE_IMAGES, False)
+        self.generate_title: bool = data_call.data.get(GENERATE_TITLE, False)
+        self.sensor_entity: str = data_call.data.get(SENSOR_ENTITY, "")
+        self.response_format: str = data_call.data.get(RESPONSE_FORMAT, "text")
+        self.structure: dict | None = data_call.data.get(STRUCTURE, None)
+        self.title_field: str = data_call.data.get(TITLE_FIELD, "")
+        self.description_field: str = data_call.data.get(DESCRIPTION_FIELD, "")
+        self.memory: Memory | None = None
+
+        # ------------ Create Event ------------
+        self.title: str = data_call.data.get("title")
+        self.description: str = data_call.data.get("description")
+        self.start_time: datetime = data_call.data.get("start_time", dt_util.now())
+        self.start_time = self._convert_time_input_to_datetime(self.start_time)
+        self.end_time: datetime = data_call.data.get(
+            "end_time", self.start_time + timedelta(minutes=1)
+        )
+        self.end_time = self._convert_time_input_to_datetime(self.end_time)
+        self.image_path: str = data_call.data.get("image_path", "")
+        self.camera_entity: str = data_call.data.get("camera_entity", "")
+        self.label: str = data_call.data.get("label", "")
+
+        # ------------- Get Events --------------
+        self.start: datetime = data_call.data.get(
+            "start", dt_util.now() - timedelta(days=7)
+        )
+        self.start = self._convert_time_input_to_datetime(self.start)
+        self.end: datetime = data_call.data.get("end", dt_util.now())
+        self.end = self._convert_time_input_to_datetime(self.end)
+        self.cameras: list = data_call.data.get("cameras", "")
+        self.categories: list = data_call.data.get("categories", "")
+        self.labels: list = data_call.data.get("labels", "")
+        self.limit: int = int(data_call.data.get("limit", 100))
+        self.include_no_activity: bool = data_call.data.get("include_no_activity", True)
+
+        # ------------ Added during call ------------
+        # self.base64_images : List[str] = []
+        # self.filenames : List[str] = []
+
+    def _convert_time_input_to_datetime(self, time_input) -> datetime:
+        """Convert time input to datetime object"""
+
+        if isinstance(time_input, datetime):
+            return time_input
+        if isinstance(time_input, (int, float)):
+            # Assume it's a Unix timestamp (seconds since epoch)
+            return datetime.fromtimestamp(time_input)
+        if isinstance(time_input, str):
+            # Try parsing ISO format first
+            try:
+                return datetime.fromisoformat(time_input)
+            except ValueError:
+                pass
+            # Try parsing as timestamp string
+            try:
+                return datetime.fromtimestamp(float(time_input))
+            except Exception:
+                pass
+            raise ValueError(f"Unsupported date string format: {time_input}")
+        raise TypeError(f"Unsupported type for time_input: {type(time_input)}")
+
+    def get(self, key, default=None):
+        return getattr(self, key, default)
+
+    def get_service_call_data(self):
+        return self
+
+    def model_is_glimpse(self) -> bool:
+        """Check if model is Glimpse-v1 like based on model name"""
+        return bool(self.model and "glimpse-v1" in self.model.lower())
+
+
+async def _create_event(
     hass,
-    call: dict,
+    call: ServiceCallData,
     start: datetime,
     response: dict,
     key_frame: str,
-    today_summary: str,
 ) -> None:
-    if call.remember:
+    if call.get("store_in_timeline"):
         # Find timeline config
         config_entry = None
         for entry in hass.config_entries.async_entries(DOMAIN):
@@ -450,33 +571,47 @@ async def _remember(
 
         timeline = Timeline(hass, config_entry)
 
-        if call.image_entities and len(call.image_entities) > 0:
-            camera_name = call.image_entities[0]
-        elif call.video_paths and len(call.video_paths) > 0:
-            camera_name = call.video_paths[0].split("/")[-1].replace(".mp4", "")
+        image_entities = call.get("image_entities") or []
+        video_paths = call.get("video_paths") or []
+        if len(image_entities) > 0:
+            camera_name = image_entities[0]
+        elif len(video_paths) > 0:
+            camera_name = video_paths[0].split("/")[-1].replace(".mp4", "")
         else:
             camera_name = ""
 
-        if "title" in response:
-            title = response.get("title")
-        else:
-            title = "Motion detected"
+        title = response.get("title") or "Motion detected"
+        title = str(title)
 
-        await timeline.remember(
+        description = response.get("response_text", "")
+        structured_response = response.get("structured_response")
+
+        # Handle structured response for description extraction
+        if (
+            call.response_format == "json"
+            and call.description_field
+            and isinstance(structured_response, dict)
+        ):
+            description_field_value = structured_response.get(call.description_field)
+            if description_field_value is not None:
+                description = str(description_field_value)
+
+        await timeline.create_event(
             start=start,
             end=dt_util.now() + timedelta(minutes=1),
-            label=title,
-            summary=response["response_text"],
+            title=title,
+            description=description,
             key_frame=key_frame,
             camera_name=camera_name,
-            today_summary=today_summary,
+            label="",
         )
+        async_dispatcher_send(hass, SIGNAL_TIMELINE_UPDATED)
 
 
 async def _update_sensor(hass, sensor_entity: str, value: str | int, type: str) -> None:
     """Update the value of a sensor entity."""
     # Attempt to parse the response
-    value = value.strip()
+    value = str(value).strip()
     if type == "boolean":
         if value.lower() in ["on", "off"]:
             new_value = value
@@ -530,88 +665,6 @@ async def _update_sensor(hass, sensor_entity: str, value: str | int, type: str) 
         raise
 
 
-class ServiceCallData:
-    """Store service call data and set default values"""
-
-    def __init__(self, data_call):
-        # This is the config entry id
-        self.provider = str(data_call.data.get(PROVIDER))
-        # If not set, the conf_default_model will be set in providers.py
-        self.model = data_call.data.get(MODEL)
-        self.message = str(data_call.data.get(MESSAGE, "")[0:2000])
-        self.remember = data_call.data.get(REMEMBER, False)
-        self.use_memory = data_call.data.get(USE_MEMORY, False)
-        self.image_paths = (
-            data_call.data.get(IMAGE_FILE, "").split("\n")
-            if data_call.data.get(IMAGE_FILE)
-            else None
-        )
-        self.image_entities = data_call.data.get(IMAGE_ENTITY)
-        self.video_paths = (
-            data_call.data.get(VIDEO_FILE, "").split("\n")
-            if data_call.data.get(VIDEO_FILE)
-            else None
-        )
-        self.event_id = (
-            data_call.data.get(EVENT_ID, "").split("\n")
-            if data_call.data.get(EVENT_ID)
-            else None
-        )
-        self.interval = int(data_call.data.get(INTERVAL, 2))
-        self.duration = int(data_call.data.get(DURATION, 10))
-        self.frigate_retry_attempts = int(data_call.data.get(FRIGATE_RETRY_ATTEMPTS, 2))
-        self.frigate_retry_seconds = int(data_call.data.get(FRIGATE_RETRY_SECONDS, 1))
-        self.max_frames = int(data_call.data.get(MAX_FRAMES, 3))
-        self.target_width = data_call.data.get(TARGET_WIDTH, 3840)
-        self.temperature = float()
-        self.max_tokens = int(data_call.data.get(MAXTOKENS, 100))
-        self.include_filename = data_call.data.get(INCLUDE_FILENAME, False)
-        self.expose_images = data_call.data.get(EXPOSE_IMAGES, False)
-        self.generate_title = data_call.data.get(GENERATE_TITLE, False)
-        self.sensor_entity = data_call.data.get(SENSOR_ENTITY, "")
-
-        # ------------ Remember ------------
-        self.title = data_call.data.get("title")
-        self.summary = data_call.data.get("summary")
-        self.image_path = data_call.data.get("image_path", "")
-        self.camera_entity = data_call.data.get("camera_entity", "")
-        self.start_time = data_call.data.get("start_time", dt_util.now())
-        self.start_time = self._convert_time_input_to_datetime(self.start_time)
-        self.end_time = data_call.data.get(
-            "end_time", self.start_time + timedelta(minutes=1)
-        )
-        self.end_time = self._convert_time_input_to_datetime(self.end_time)
-
-        # ------------ Added during call ------------
-        # self.base64_images : List[str] = []
-        # self.filenames : List[str] = []
-
-    def _convert_time_input_to_datetime(self, time_input) -> datetime:
-        """Convert time input to datetime object"""
-
-        if isinstance(time_input, datetime):
-            return time_input
-        if isinstance(time_input, (int, float)):
-            # Assume it's a Unix timestamp (seconds since epoch)
-            return datetime.fromtimestamp(time_input)
-        if isinstance(time_input, str):
-            # Try parsing ISO format first
-            try:
-                return datetime.fromisoformat(time_input)
-            except ValueError:
-                pass
-            # Try parsing as timestamp string
-            try:
-                return datetime.fromtimestamp(float(time_input))
-            except Exception:
-                pass
-            raise ValueError(f"Unsupported date string format: {time_input}")
-        raise TypeError(f"Unsupported type for time_input: {type(time_input)}")
-
-    def get_service_call_data(self):
-        return self
-
-
 def setup(hass, config):
     async def image_analyzer(data_call):
         """Handle the service call to analyze an image with LLM Vision"""
@@ -653,13 +706,12 @@ def setup(hass, config):
             _LOGGER.info(f"Key frame: {processor.key_frame}")
             response["key_frame"] = processor.key_frame
 
-        await _remember(
+        await _create_event(
             hass=hass,
-            call=call,
+            call=call,  # type: ignore
             start=start,
             response=response,
             key_frame=processor.key_frame,
-            today_summary=response.get("today_summary", ""),
         )
         return response
 
@@ -683,8 +735,6 @@ def setup(hass, config):
             target_width=call.target_width,
             include_filename=call.include_filename,
             expose_images=call.expose_images,
-            frigate_retry_attempts=call.frigate_retry_attempts,
-            frigate_retry_seconds=call.frigate_retry_seconds,
         )
         call.memory = Memory(hass)
         await call.memory._update_memory()
@@ -694,13 +744,12 @@ def setup(hass, config):
         if processor.key_frame:
             response["key_frame"] = processor.key_frame
 
-        await _remember(
+        await _create_event(
             hass=hass,
-            call=call,
+            call=call,  # type: ignore
             start=start,
             response=response,
             key_frame=processor.key_frame,
-            today_summary=response.get("today_summary", ""),
         )
         return response
 
@@ -736,13 +785,12 @@ def setup(hass, config):
         if processor.key_frame:
             response["key_frame"] = processor.key_frame
 
-        await _remember(
+        await _create_event(
             hass=hass,
-            call=call,
+            call=call,  # type: ignore
             start=start,
             response=response,
             key_frame=processor.key_frame,
-            today_summary=response.get("today_summary", ""),
         )
         return response
 
@@ -816,13 +864,12 @@ def setup(hass, config):
         if processor.key_frame:
             response["key_frame"] = processor.key_frame
 
-        await _remember(
+        await _create_event(
             hass=hass,
-            call=call,
+            call=call,  # type: ignore
             start=start,
             response=response,
             key_frame=processor.key_frame,
-            today_summary=response.get("today_summary", ""),
         )
 
         _LOGGER.debug(f"Response: {response}")
@@ -830,8 +877,8 @@ def setup(hass, config):
         await _update_sensor(hass, sensor_entity, response["response_text"], type)
         return response
 
-    async def remember(data_call):
-        """Handle the service call to remember an event"""
+    async def create_event(data_call) -> None:
+        """Handle the service call to create an event"""
         start = dt_util.now()
         call = ServiceCallData(data_call).get_service_call_data()
 
@@ -848,16 +895,45 @@ def setup(hass, config):
                 f"Config entry not found. Please create the 'Settings' config entry first."
             )
 
-        timeline = Timeline(hass, config_entry)
+        timeline: Timeline = Timeline(hass, config_entry)
 
-        await timeline.remember(
+        await timeline.create_event(
             start=call.start_time,
             end=call.end_time,
-            label=call.title,
-            summary=call.summary,
+            title=call.title,
+            description=call.description,
             key_frame=call.image_path,
             camera_name=call.camera_entity,
+            label=call.label.lower(),
         )
+        async_dispatcher_send(hass, SIGNAL_TIMELINE_UPDATED)
+
+    async def get_events(data_call) -> dict | None:
+        """Handle the service call to get events"""
+        # Find timeline config
+        config_entry = None
+        for entry in hass.config_entries.async_entries(DOMAIN):
+            # Check if the config entry is empty
+            if entry.data[CONF_PROVIDER] == "Settings":
+                config_entry = entry
+                break
+
+        if config_entry is None:
+            raise ServiceValidationError(
+                f"Config entry not found. Please create the 'Settings' config entry first."
+            )
+
+        timeline: Timeline = Timeline(hass, config_entry)
+        events: list[dict] | None = await timeline.get_events_json(
+            start=data_call.data.get("start"),
+            end=data_call.data.get("end"),
+            cameras=[camera.lower() for camera in data_call.data.get("cameras", [])],
+            categories=[category.lower() for category in data_call.data.get("categories", [])],
+            labels=[label.lower() for label in data_call.data.get("labels", [])],
+            limit=data_call.data.get("limit"),
+            include_no_activity=data_call.data.get("include_no_activity", True),
+        )
+        return {"events": events or []}
 
     # Register actions
     hass.services.register(
@@ -883,8 +959,17 @@ def setup(hass, config):
     )
     hass.services.register(
         DOMAIN,
-        "remember",
-        remember,
+        "create_event",
+        create_event,
     )
+    hass.services.register(
+        DOMAIN,
+        "get_events",
+        get_events,
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.http.register_view(TimelineEventsView)
+    hass.http.register_view(TimelineEventView)
+    hass.http.register_view(TimelineEventCreateView)
 
     return True

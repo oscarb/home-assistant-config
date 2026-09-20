@@ -59,12 +59,14 @@
                         "data": {
                             "default_model": "Domyślny model",
                             "temperature": "Temperatura",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "think": "Myśleć"
                         },
                         "data_description": {
                             "default_model": "Domyślny model do użycia, gdy nie określono innego modelu.",
                             "temperature": "Kontroluje losowość wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej deterministyczne.",
-                            "top_p": "Kontroluje różnorodność wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej skoncentrowane."
+                            "top_p": "Kontroluje różnorodność wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej skoncentrowane.",
+                            "think": "Włącz tryb myślenia dla modeli, które go obsługują."
                         }
                     },
                     "advanced_section": {
@@ -101,19 +103,21 @@
                         "data": {
                             "default_model": "Domyślny model",
                             "temperature": "Temperatura",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "Rozumny wysiłek"
                         },
                         "data_description": {
                             "default_model": "Domyślny model do użycia, gdy nie określono innego modelu.",
                             "temperature": "Kontroluje losowość wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej deterministyczne.",
-                            "top_p": "Kontroluje różnorodność wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej skoncentrowane."
+                            "top_p": "Kontroluje różnorodność wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej skoncentrowane.",
+                            "reasoning_effort": "Kontroluje wysiłek rozumowania w przypadku modeli, które go obsługują."
                         }
                     }
                 }
             },
             "azure": {
                 "title": "Skonfiguruj Azure",
-                "description": "Podaj poprawny klucz API Azure, adres URL, wdrożenie i wersję API.\nAdres URL musi mieć format `https://domain.openai.azure.com/` łącznie z ukośnikiem na końcu.",
+                "description": "Podaj poprawny klucz API Azure, adres URL, wdrożenie i wersję API.",
                 "sections": {
                     "connection_section": {
                         "name": "Połączenie",
@@ -161,12 +165,14 @@
                         "data": {
                             "default_model": "Domyślny model",
                             "temperature": "Temperatura",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "Myślący budżet"
                         },
                         "data_description": {
                             "default_model": "Domyślny model do użycia, gdy nie określono innego modelu.",
                             "temperature": "Kontroluje losowość wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej deterministyczne.",
-                            "top_p": "Kontroluje różnorodność wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej skoncentrowane."
+                            "top_p": "Kontroluje różnorodność wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej skoncentrowane.",
+                            "thinking_budget": "Kontroluje budżet myślenia dla modeli, które go obsługują. Wyższe wartości pozwalają na bardziej złożone rozumowanie, ale mogą wydłużyć czas reakcji i koszt."
                         }
                     }
                 }
@@ -188,12 +194,14 @@
                         "data": {
                             "default_model": "Domyślny model",
                             "temperature": "Temperatura",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "Myślący budżet"
                         },
                         "data_description": {
                             "default_model": "Domyślny model do użycia, gdy nie określono innego modelu.",
                             "temperature": "Kontroluje losowość wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej deterministyczne.",
-                            "top_p": "Kontroluje różnorodność wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej skoncentrowane."
+                            "top_p": "Kontroluje różnorodność wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej skoncentrowane.",
+                            "thinking_budget": "Kontroluje budżet myślenia dla modeli, które go obsługują. Wyższe wartości pozwalają na bardziej złożone rozumowanie, ale mogą wydłużyć czas reakcji i koszt."
                         }
                     }
                 }
@@ -339,12 +347,14 @@
                         "data": {
                             "default_model": "Domyślny model",
                             "temperature": "Temperatura",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "Rozumny wysiłek"
                         },
                         "data_description": {
                             "default_model": "Domyślny model do użycia, gdy nie określono innego modelu.",
                             "temperature": "Kontroluje losowość wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej deterministyczne.",
-                            "top_p": "Kontroluje różnorodność wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej skoncentrowane."
+                            "top_p": "Kontroluje różnorodność wyjścia. Niższe wartości sprawiają, że wyjście jest bardziej skoncentrowane.",
+                            "reasoning_effort": "Kontroluje wysiłek rozumowania w przypadku modeli, które go obsługują."
                         }
                     }
                 }
@@ -357,10 +367,12 @@
                         "name": "Ogólne",
                         "description": "Ustaw preferowanego dostawcę do użycia, gdy wybrany dostawca jest niedostępny.",
                         "data": {
-                            "fallback_provider": "Dostawca zapasowy"
+                            "fallback_provider": "Dostawca zapasowy",
+                            "request_timeout": "Limit czasu żądania (sekundy)"
                         },
                         "data_description": {
-                            "fallback_provider": "LLM Vision spróbuje ponownie wysłać żądanie z wybranym dostawcą, jeśli bieżący dostawca zawiedzie."
+                            "fallback_provider": "LLM Vision spróbuje ponownie wysłać żądanie z wybranym dostawcą, jeśli bieżący dostawca zawiedzie.",
+                            "request_timeout": "Maksymalny czas oczekiwania na odpowiedź od dostawcy (sekundy)."
                         }
                     },
                     "prompt_section": {
@@ -379,11 +391,13 @@
                         "name": "Oś czasu",
                         "description": "Oś czasu przechowuje dzisiejsze wydarzenia do wyświetlenia za pomocą karty LLM Vision na twoim pulpicie.",
                         "data": {
+                            "timeline_language": "Język osi czasu",
                             "retention_time": "Czas przechowywania",
                             "timeline_today_summary": "Podsumowanie osi czasu",
                             "timeline_summary_prompt": "Monit podsumowujący na dzisiejsze wydarzenia"
                         },
                         "data_description": {
+                            "timeline_language": "Wybierz język używany dla łańcuchów i kategorii osi czasu.",
                             "retention_time": "Automatyczne usuwanie wydarzeń po (dniach). Ustaw na 0, aby wyłączyć automatyczne usuwanie.",
                             "timeline_today_summary": "Włącz podsumowanie osi czasu, aby automatycznie wygenerować podsumowanie dzisiejszych wydarzeń.",
                             "timeline_summary_prompt": "Instrukcja podana modelowi w celu wygenerowania podsumowania dzisiejszych wydarzeń."

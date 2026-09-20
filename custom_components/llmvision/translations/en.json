@@ -59,12 +59,14 @@
                         "data": {
                             "default_model": "Default model",
                             "temperature": "Temperature",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "think": "Think"
                         },
                         "data_description": {
                             "default_model": "The default model to use when no other model is specified.",
                             "temperature": "Controls the randomness of the output. Lower values make the output more deterministic.",
-                            "top_p": "Controls the diversity of the output. Lower values make the output more focused."
+                            "top_p": "Controls the diversity of the output. Lower values make the output more focused.",
+                            "think": "Enable thinking mode for models that support it."
                         }
                     },
                     "advanced_section": {
@@ -101,19 +103,21 @@
                         "data": {
                             "default_model": "Default model",
                             "temperature": "Temperature",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "Reasoning effort"
                         },
                         "data_description": {
                             "default_model": "The default model to use when no other model is specified.",
                             "temperature": "Controls the randomness of the output. Lower values make the output more deterministic.",
-                            "top_p": "Controls the diversity of the output. Lower values make the output more focused."
+                            "top_p": "Controls the diversity of the output. Lower values make the output more focused.",
+                            "reasoning_effort": "Controls the reasoning effort for models that support it. None disables thinking."
                         }
                     }
                 }
             },
             "azure": {
                 "title": "Configure Azure",
-                "description": "Provide a valid Azure API key, base URL, deployment and API version.\nThe Base URL must be in the format `https://domain.openai.azure.com/` including the trailing slash.",
+                "description": "Provide a valid Azure API key, base URL, deployment and API version.",
                 "sections": {
                     "connection_section": {
                         "name": "Connection",
@@ -161,12 +165,14 @@
                         "data": {
                             "default_model": "Default model",
                             "temperature": "Temperature",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "Thinking budget"
                         },
                         "data_description": {
                             "default_model": "The default model to use when no other model is specified.",
                             "temperature": "Controls the randomness of the output. Lower values make the output more deterministic.",
-                            "top_p": "Controls the diversity of the output. Lower values make the output more focused."
+                            "top_p": "Controls the diversity of the output. Lower values make the output more focused.",
+                            "thinking_budget": "Controls the thinking budget for models that support it. Higher values allow for more complex reasoning but may increase response time and cost. 0 disables thinking."
                         }
                     }
                 }
@@ -188,12 +194,14 @@
                         "data": {
                             "default_model": "Default model",
                             "temperature": "Temperature",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "thinking_budget": "Thinking budget"
                         },
                         "data_description": {
                             "default_model": "The default model to use when no other model is specified.",
                             "temperature": "Controls the randomness of the output. Lower values make the output more deterministic.",
-                            "top_p": "Controls the diversity of the output. Lower values make the output more focused."
+                            "top_p": "Controls the diversity of the output. Lower values make the output more focused.",
+                            "thinking_budget": "Controls the thinking budget for models that support it. Higher values allow for more complex reasoning but may increase response time and cost."
                         }
                     }
                 }
@@ -339,10 +347,42 @@
                         "data": {
                             "default_model": "Default model",
                             "temperature": "Temperature",
-                            "top_p": "Top P"
+                            "top_p": "Top P",
+                            "reasoning_effort": "Reasoning effort"
                         },
                         "data_description": {
                             "default_model": "The default model to use when no other model is specified.",
+                            "temperature": "Controls the randomness of the output. Lower values make the output more deterministic.",
+                            "top_p": "Controls the diversity of the output. Lower values make the output more focused.",
+                            "reasoning_effort": "Controls the reasoning effort for models that support it."
+                        }
+                    }
+                }
+            },
+            "mistral": {
+                "title": "Configure Mistral",
+                "description": "Vision-capable models (Pixtral) hosted by Mistral AI in the EU.",
+                "sections": {
+                    "connection_section": {
+                        "name": "Connection",
+                        "description": "Mistral authentication",
+                        "data": {
+                            "api_key": "API key"
+                        },
+                        "data_description": {
+                            "api_key": "Your Mistral API key from the Mistral console."
+                        }
+                    },
+                    "model_section": {
+                        "name": "Model",
+                        "description": "Set default model parameters",
+                        "data": {
+                            "default_model": "Default model",
+                            "temperature": "Temperature",
+                            "top_p": "Top P"
+                        },
+                        "data_description": {
+                            "default_model": "Default Mistral model (e.g. pixtral-12b-2409, pixtral-large-latest).",
                             "temperature": "Controls the randomness of the output. Lower values make the output more deterministic.",
                             "top_p": "Controls the diversity of the output. Lower values make the output more focused."
                         }
@@ -357,10 +397,12 @@
                         "name": "General",
                         "description": "Set preferred provider to use when the selected provider is unavailable.",
                         "data": {
-                            "fallback_provider": "Fallback provider"
+                            "fallback_provider": "Fallback provider",
+                            "request_timeout": "Request timeout (seconds)"
                         },
                         "data_description": {
-                            "fallback_provider": "LLM Vision will retry the request with the selected provider if the current provider fails."
+                            "fallback_provider": "LLM Vision will retry the request with the selected provider if the current provider fails.",
+                            "request_timeout": "Total time to wait for a provider response before failing the request."
                         }
                     },
                     "prompt_section": {
@@ -379,11 +421,13 @@
                         "name": "Timeline",
                         "description": "Timeline stores today's events to display using LLM Vision Card on your dashboard.",
                         "data": {
+                            "timeline_language": "Timeline language",
                             "retention_time": "Retention time",
                             "timeline_today_summary": "Timeline Summary",
                             "timeline_summary_prompt": "Today Summary Prompt"
                         },
                         "data_description": {
+                            "timeline_language": "Select the language used to generate icons from events.",
                             "retention_time": "Auto delete events after (days). Set to 0 to disable auto deletion.",
                             "timeline_today_summary": "Enable timeline summary to automatically generate a summary of today's events.",
                             "timeline_summary_prompt": "The instruction given to the model to generate a summary of today's events."
