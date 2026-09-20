@@ -5,6 +5,7 @@
 
 # Ignore folders.
 .storage
+.ssh
 .cloud
 .google.token
 __pycache__

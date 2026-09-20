@@ -81,7 +81,6 @@ recorder:
       - input_text
       - persistent_notification
       - script
-      - sensor
     entities:
       - binary_sensor.updater
     entity_globs:
@@ -105,7 +104,12 @@ recorder:
       - sensor.ip_webcam_motion
       - sensor.oneplus_6t_geocoded_location
       - media_player.tv
-      - device_tracker.oneplus_a6013
+      - device_tracker.pixel_9_pro
+      - device_tracker.pixel_9_pro_local
+      - device_tracker.pixel_watch_4
+      - device_tracker.pixel_watch_4_local
+      - device_tracker.macbook_pro_personal_local
+      - device_tracker.macbook_pro_work_local
       - binary_sensor.macbook_pro 
       - binary_sensor.macbook_pro_at_desk
 
