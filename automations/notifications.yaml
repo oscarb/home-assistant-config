@@ -1,0 +1,22 @@
+- id: '8WwZNK6B'
+  alias: Spotify Like Me - Token expired
+  description: Send notification when Spotify Like Me tokens expire
+  variables:
+    notify_service: "{{ states('input_text.notify_service_mobile_oscar') }}"  
+  triggers:
+    - platform: webhook
+      webhook_id: spotify_like_me
+      allowed_methods:
+        - POST
+      local_only: true
+      # TODO Await/check if home
+  conditions: []
+  actions:
+    - action: "{{ notify_service }}"
+      data:
+        title: "Spotify Like Me"
+        message: "{{ trigger.json.message }}"
+        data:
+          channel: "Spotify Like Me"
+          notification_icon: "mdi:spotify"
+          clickAction: "{{ trigger.json.authorizeUrl | default('app://com.spotify.music', true) }}"
