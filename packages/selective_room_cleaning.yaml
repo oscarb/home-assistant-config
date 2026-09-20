@@ -4,15 +4,15 @@ script:
   start_selective_room_cleaning:
     alias: Start selective room cleaning
     sequence:
-    - action: python_script.vacuum_room
-      entity_id: vacuum.robocop
+    - action: vacuum.clean_area
+      entity_id: vacuum.bobby
       data_template:
-        area: >
+        cleaning_area_id: >
           {{ label_entities('selective_room_cleaning') 
             | select('is_state', 'on') 
-            | map('state_attr', 'friendly_name') 
-            | list 
-            | join(', ')  
+            | map('state_attr', 'friendly_name')
+            | map('area_id') 
+            | list
           }}
 
 
