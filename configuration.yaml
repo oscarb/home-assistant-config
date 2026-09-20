@@ -29,7 +29,7 @@ frontend:
   extra_module_url:
     - /local/plugins/card-mod.js?v=3.1.1
     - /local/community/kiosk-mode/kiosk-mode.js?v6.7.0
-  themes: !include_dir_named themes    
+  themes: !include_dir_named themes
 
 # Handles redirects from the My Home Assistant service.
 my:
@@ -158,6 +158,91 @@ mqtt:
 
 # Template
 template:
+  - trigger:
+      - platform: time_pattern
+        minutes: "/15"
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+    action:
+      - service: calendar.get_events
+        target:
+          entity_id: 
+            - calendar.personal
+            - calendar.kid
+            - calendar.assignment
+        data:
+          duration:
+            hours: 720
+        response_variable: response
+    sensor:
+      - name: Office Dashboard
+        unique_id: office_dashboard
+        icon: mdi:calendar
+        # Accessing the specific calendar key within the response dictionary
+        state: "{{ response['calendar.personal'].events | count }}"
+        attributes:
+          content: > 
+            {% from 'easy_time.jinja' import weekday, month, custom_time %}
+            {% from 'weather_icons.jinja' import meteocons %}
+
+            {% set today = now().strftime('%Y-%m-%d') %}
+            
+            {% set agenda_raw = response.values() 
+              | map(attribute='events') 
+              | sum(start=[]) 
+              | selectattr('start', 'match', today) 
+              | sort(attribute='start') %}
+            
+            {% set upcoming_raw = response.items() 
+              | rejectattr('0', 'eq', 'calendar.assignment') 
+              | map(attribute='1.events') 
+              | sum(start=[]) 
+              | rejectattr('start', 'match', today) 
+              | sort(attribute='start') %}
+
+            {% set ns = namespace(agenda=[], upcoming=[]) %}
+
+            {# 3. Map Agenda: 'time' variable -> 'kicker' key #}
+            {% for event in agenda_raw %}
+              {% set kicker = as_datetime(event.start).strftime('%H:%M') if event.start | length > 10 else none %}
+              {% set ns.agenda = ns.agenda + [{"kicker": kicker, "title": event.summary}] %}
+            {% endfor %}
+
+            {# 4. Map Upcoming: 'time' variable -> 'kicker' key #}
+            {% for event in upcoming_raw %}
+              {# Format: MÅNDAG 14 APRIL #}
+              {% set kicker = (weekday(as_datetime(event.start)) ~ " " ~ as_datetime(event.start).day ~ " " ~ month(as_datetime(event.start))) | upper ~ " • " ~ custom_time(as_datetime(event.start), values="day" ) %}
+              {% set ns.upcoming = ns.upcoming + [{"kicker": kicker, "title": event.summary}] %}
+            {% endfor %}
+
+            {% set calendar = {
+                "kicker": weekday() | upper,
+                "hero": now().day | string, 
+                "title": month() | upper, 
+                "subtitle": "vecka " ~ now().strftime('%V') 
+             } %}
+
+            {% set weather = {
+              "icon": meteocons(states('weather.smhi_home'), style="filled"), 
+              "temperature": state_attr('weather.smhi_home', 'temperature') | round ~ "°"
+             } %}
+
+            {{ {"calendar": calendar, "agenda": ns.agenda, "upcoming": ns.upcoming, "weather": weather} | to_json }}
+
+          day_in_month: "{{ now().day }}"
+          week: "{{ 'vecka ' ~ now().isocalendar().week }}"
+          weekday: >
+            {% from 'easy_time.jinja' import weekday %}
+            {{ weekday() | upper }}
+          heading_today: >
+            {% from 'easy_time.jinja' import month %}
+            {{ ("Idag " ~ now().day ~ " " ~ month()) | upper }}
+          heading_tomorrow: >
+            {% from 'easy_time.jinja' import month %}
+            {{ ("Imorgon " ~ (now() + timedelta(days=1)).day ~ " " ~ month()) | upper }}
+
   - binary_sensor: 
     - name: Bill Device On  
       state: >

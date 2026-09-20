@@ -363,3 +363,18 @@
     - action: homeassistant.turn_off
       target:
         entity_id: group.all_lamps
+
+- id: 'f7K2pL9m'
+  alias: Office duo button clicked
+  triggers:
+    - trigger: event
+      event_type: flic
+      event_data:
+        name: "office_duo"
+  actions:
+    - action: >
+        {% if trigger.event.data.action == 'BIG_BUTTON_PUSH' %}
+          esphome.e_paper_next_page
+        {% elif trigger.event.data.action == 'SMALL_BUTTON_PUSH' %}
+          esphome.e_paper_previous_page
+        {% endif %}
