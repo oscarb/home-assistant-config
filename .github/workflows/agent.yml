@@ -29,6 +29,8 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install aider-chat yamllint
 
+      - run: aider --models gemini/          
+
       - name: Run Aider with Gemini
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -36,8 +38,8 @@ jobs:
           BRANCH_NAME="agent/issue-${{ github.event.issue.number }}"
           git checkout -b "$BRANCH_NAME"
 
-          # Run Aider headlessly. Gemini 2.5 Pro / 1.5 Pro performs the edit.
-          aider --model gemini/gemini-2.5-pro \
+          # Run Aider headlessly.
+          aider --model models/gemini-3.1-pro-preview \
                 --lint-cmd "yamllint -d relaxed automations/" \
                 --auto-lint \
                 --no-auto-commits \
