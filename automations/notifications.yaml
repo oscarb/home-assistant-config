@@ -21,3 +21,28 @@
           notification_icon: "mdi:spotify"
           clickAction: "{{ trigger.json.authorizeUrl | default('app://com.spotify.music', true) }}"
 
+- id: 'pV1aPsKc'
+  alias: Notify when refrigerator door is open
+  description: Send notification when refrigerator door is open for more than 5 minutes
+  variables:
+    notify_service: "{{ states('input_text.notify_service_mobile_oscar') }}"    
+    last_changed: "{{ (states.binary_sensor.kitchen_refrigerator_door.last_changed | as_local).strftime('%H:%M') }}"
+  triggers:
+    - platform: state
+      entity_id: binary_sensor.kitchen_refrigerator_door
+      to: 'on'
+      for:
+        minutes: 5
+  conditions: []
+  actions:
+    - action: google_assistant_sdk.send_text_command
+      data:
+        command: "Sänd ut: Kylskåpsdörren har stått öppen sedan {{ last_changed }}. Glöm inte att stänga dörren."
+        media_player: media_player.kitchen_display
+    - action: "{{ notify_service }}"
+      data:
+        title: "Refrigerator door open"
+        message: "Refrigerator has been open since {{ last_changed }}. Don't forget to close the door."
+        data:
+          channel: "Refrigerator"
+          notification_icon: "mdi:fridge"
