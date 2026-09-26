@@ -1,0 +1,18 @@
+name: Trigger agent work
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  run-agent:
+    if: github.event.label.name == 'agent:gemini'
+    uses: oscarb/workflows/.github/workflows/aider-gemini.yml@main
+    with:
+      issue_title: ${{ github.event.issue.title }}
+      issue_body: ${{ github.event.issue.body }}
+      issue_number: ${{ github.event.issue.number }}
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+

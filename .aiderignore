@@ -1,0 +1,20 @@
+# 1. Critical System & Core Configs (Prevent shell execution & lockout)
+configuration.yaml
+ui-lovelace.yaml
+scenes.yaml
+scripts.yaml
+secrets.yaml
+
+
+# 2. CI/CD Pipeline & GitHub Triggers (Prevent prompt injection from altering workflows)
+.github/
+
+# 3. Third-party Code & Custom Integrations (Save context tokens & prevent AI edits)
+custom_components/
+blueprints/
+www/
+
+# 4. Git Metadata & Exclusions
+.git/
+.gitignore
+.aider*
