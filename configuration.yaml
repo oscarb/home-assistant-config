@@ -104,8 +104,9 @@ recorder:
       - sensor.ip_webcam_motion
       - sensor.oneplus_6t_geocoded_location
       - media_player.tv
-      - device_tracker.pixel_9_pro
-      - device_tracker.pixel_9_pro_local
+      - device_tracker.pixel_9a_router
+      - device_tracker.pixel_9_pro_gps
+      - device_tracker.pixel_9_pro_router
       - device_tracker.pixel_watch_4
       - device_tracker.pixel_watch_4_local
       - device_tracker.macbook_pro_personal_local
