@@ -39,7 +39,7 @@ jobs:
           git checkout -b "$BRANCH_NAME"
 
           # Run Aider headlessly.
-          aider --model models/gemini-3.1-pro-preview \
+          aider --model gemini/gemini-3.8-flash \
                 --lint-cmd "yamllint -d relaxed automations/" \
                 --auto-lint \
                 --no-auto-commits \
@@ -56,11 +56,8 @@ jobs:
 
       - name: Validate Home Assistant Schema
         run: |
-          # Stub empty secrets and dummy configuration for schema check
-          touch secrets.yaml
-          if [ ! -f configuration.yaml ]; then
-            echo "automation: !include automations.yaml" > configuration.yaml
-          fi
+          mv ci/dummy_secrets.yaml secrets.yaml
+          mv ci/dummy_service_account.json google_assistant/service_account.json              
 
           # Run the real Home Assistant core check
           docker run --rm -v "$(pwd):/config" ghcr.io/home-assistant/home-assistant:stable \
