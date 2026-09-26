@@ -15,7 +15,6 @@ script:
             | list
           }}
 
-
 automation:
   - id: 'tiykEfAD'
     alias: Reset selected rooms when docked
