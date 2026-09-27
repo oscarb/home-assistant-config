@@ -43,7 +43,8 @@ jobs:
                 --auto-lint \
                 --message "Update or create files inside the 'automations/' directory according to this prompt: ${{ github.event.issue.title }}. Details: ${{ github.event.issue.body }}" \
                 --yes \
-                automations/ configuration.yaml
+                configuration.yaml automations/*.yaml
+
 
           # Commit changes
           git config user.name "github-actions[bot]"

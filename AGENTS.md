@@ -4,6 +4,11 @@
 - Do not attempt to clone, download, or fabricate third-party Python packages into `custom_components/`.
 - Assume all custom integrations must be installed by the user via HACS or official repos.
 
+## File Organization & Automations
+- **Modular Files**: Do not append unrelated automations to existing files. For each new, distinct feature or automation requested, create a new, descriptively named file inside the `automations/` directory.
+- **Naming Conventions**: Use `snake_case` for filenames.
+- **Root Configuration**: Only touch `configuration.yaml` if an official Core integration, template helper, or root include directive strictly requires it.
+
 ## Dependency Notification Protocol
 If the requested automation or configuration requires a component, integration, or custom card that is NOT part of Home Assistant Core:
 1. Append an exact markdown section at the very end of your final response:
