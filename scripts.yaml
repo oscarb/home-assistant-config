@@ -79,15 +79,49 @@ stop_tv_media:
     data: 
       entity_id: media_player.tv
 
+smooth_turn_off:
+  alias: Smooth turn off
+  description: Smoothly turn off lights and devices with fade out and small delay in between
+  fields:
+    target_entities:
+      description: Entity ID, group ID, or list of entities to turn off
+      example: "group.all_lamps"
+    transition:
+      description: Fade out transition time in seconds for lights
+      example: 3
+      default: 3
+    delay:
+      description: Delay in seconds between turning off each device
+      example: 1
+      default: 1
+  sequence:
+    - repeat:
+        for_each: >
+          {% set raw_targets = target_entities if (target_entities is defined and target_entities) else ['group.all_lamps', 'media_player.tv', 'switch.magic_mirror', 'group.christmas_lights'] %}
+          {% set targets = [raw_targets] if raw_targets is string else raw_targets %}
+          {{ expand(targets) | selectattr('state', 'ne', 'off') | selectattr('state', 'ne', 'unavailable') | map(attribute='entity_id') | list }}
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ repeat.item.startswith('light.') }}"
+                sequence:
+                  - action: light.turn_off
+                    target:
+                      entity_id: "{{ repeat.item }}"
+                    data:
+                      transition: "{{ transition | default(3) | float }}"
+            default:
+              - action: homeassistant.turn_off
+                target:
+                  entity_id: "{{ repeat.item }}"
+          - delay:
+              seconds: "{{ delay | default(1) | float }}"
+
 turn_everything_off:
   alias: Turn everything off
   sequence:
-    action: homeassistant.turn_off
-    entity_id:
-    - group.all_lamps
-    - media_player.tv 
-    - switch.magic_mirror
-    - group.christmas_lights
+    - action: script.smooth_turn_off
 
 good_morning_home:
   alias: Turn lights on in the morning
