@@ -1,0 +1,44 @@
+- id: 'salary_payout_day_before_notify'
+  alias: Notify one day before salary payout
+  description: Send a notification one day before salary payout (25th or preceding banking day if 25th is non-banking day)
+  variables:
+    notify_service: "{{ states('input_text.notify_service_mobile_oscar') | default('notify.mobile_app', true) }}"
+    # Calculate payday for the current month: starts on 25th and moves backward if non-banking day
+    payday_date: >
+      {% set target_day = namespace(date=none) %}
+      {% set current_year = now().year %}
+      {% set current_month = now().month %}
+      {% set d25 = today_at("00:00").replace(year=current_year, month=current_month, day=25) %}
+      {# Check up to 5 days backwards to find the last banking day #}
+      {% for offset in [0, 1, 2, 3, 4, 5] %}
+        {% set check_date = d25 - timedelta(days=offset) %}
+        {% if target_day.date is none %}
+          {# Check if check_date is a weekend #}
+          {% set is_weekend = check_date.isoweekday() in [6, 7] %}
+          {# Check swedish calendar workfree status if checking today, otherwise evaluate standard weekend/calendar attributes #}
+          {% set is_workfree = is_weekend %}
+          {% if check_date.date() == now().date() and state_attr('sensor.swedish_calendar', 'workfree_day') is defined %}
+            {% set is_workfree = (state_attr('sensor.swedish_calendar', 'workfree_day') in ['Ja', true, 'true', 'True']) or is_weekend %}
+          {% endif %}
+          {% if not is_workfree %}
+            {% set target_day.date = check_date.date() %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {{ target_day.date }}
+  triggers:
+    - trigger: time
+      at: '09:00:00'
+  conditions:
+    - condition: template
+      value_template: >
+        {% set tomorrow = (now() + timedelta(days=1)).date() %}
+        {{ tomorrow | string == payday_date | trim }}
+  actions:
+    - action: "{{ notify_service }}"
+      data:
+        title: "💰 Dags för lön imorgon!"
+        message: "Imorgon är det löningsdag ({{ payday_date | trim }})."
+        data:
+          channel: "Economy"
+          notification_icon: "mdi:cash-multiple"
