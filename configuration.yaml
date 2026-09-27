@@ -43,12 +43,6 @@ mobile_app:
 # Enable python scripts
 python_script:
 
-# Uncomment this if you are using SSL/TLS, running in Docker container, etc.
-http:
-  use_x_forwarded_for: true
-  trusted_proxies: 
-    - !secret reverse_proxy_server
-
 # Allows you to issue voice commands from the frontend in enabled browsers
 conversation:
 
