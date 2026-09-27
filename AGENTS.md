@@ -5,7 +5,8 @@
 - Assume all custom integrations must be installed by the user via HACS or official repos.
 
 ## File Organization & Automations
-- **Modular Files**: Do not append unrelated automations to existing files. For each new, distinct feature or automation requested, create a new, descriptively named file inside the `automations/` directory.
+- **Automation ID**: Every automation must include a unique `id` key consisting of a random 8-character alphanumeric string (letters and digits, e.g., `id: "a7k9b2x4"`). Enclose the ID in quotes to ensure YAML parses it as a string.
+- **Modular Files**: Try to keep related automations in the same file, but do not append completely unrelated automations to existing files. For each new, distinct feature or automation requested, where there is no file where it fits, create a new, descriptively named file inside the `automations/` directory.
 - **Naming Conventions**: Use `snake_case` for filenames.
 - **Root Configuration**: Only touch `configuration.yaml` if an official Core integration, template helper, or root include directive strictly requires it.
 

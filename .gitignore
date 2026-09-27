@@ -32,3 +32,4 @@ known_devices.yaml
 service_account.json
 .ha_run.lock
 .HA_RESTORE
+.aider*
