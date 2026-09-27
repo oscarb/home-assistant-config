@@ -1,0 +1,104 @@
+- id: 'salary_payout_notification'
+  alias: Send notification one day before salary payout
+  description: Send notification 1 day before salary payout (25th, or bank day before 25th when 25th is non bank day)
+  variables:
+    notify_service: "{{ states('input_text.notify_service_mobile_oscar') }}"
+  triggers:
+    - trigger: time
+      at: '08:00:00'
+  conditions:
+    - condition: template
+      value_template: >
+        {% set tomorrow = now() + timedelta(days=1) %}
+        {% set y = tomorrow.year %}
+        {% set m = tomorrow.month %}
+        {% set d = tomorrow.day %}
+        {% set w = tomorrow.weekday() %}
+
+        {# Weekend check (5 = Saturday, 6 = Sunday) #}
+        {% set is_weekend = w >= 5 %}
+
+        {# Fixed holidays / non-bank days in Sweden #}
+        {% set is_fixed_holiday = (m == 1 and d in [1, 6]) or
+                                  (m == 5 and d == 1) or
+                                  (m == 6 and d == 6) or
+                                  (m == 12 and d in [24, 25, 26, 31]) %}
+
+        {# Midsummer Eve: Friday between June 19 and June 25 #}
+        {% set is_midsummer_eve = (m == 6 and w == 4 and 19 <= d <= 25) %}
+
+        {# Easter calculation (Anonymous Butcher's algorithm) #}
+        {% set a = y % 19 %}
+        {% set b = y // 100 %}
+        {% set c = y % 100 %}
+        {% set d_e = b // 4 %}
+        {% set e = b % 4 %}
+        {% set f = (b + 8) // 25 %}
+        {% set g = (b - f + 1) // 3 %}
+        {% set h = (19 * a + b - d_e - g + 15) % 30 %}
+        {% set i = c // 4 %}
+        {% set k = c % 4 %}
+        {% set l = (32 + 2 * e + 2 * i - h - k) % 7 %}
+        {% set m_e = (a + 11 * h + 22 * l) // 451 %}
+        {% set easter_month = (h + l - 7 * m_e + 114) // 31 %}
+        {% set easter_day = ((h + l - 7 * m_e + 114) % 31) + 1 %}
+        {% set easter_date = strptime(y ~ '-' ~ '%02d'|format(easter_month) ~ '-' ~ '%02d'|format(easter_day), '%Y-%m-%d') %}
+        {% set good_friday = easter_date - timedelta(days=2) %}
+        {% set easter_monday = easter_date + timedelta(days=1) %}
+        {% set ascension_day = easter_date + timedelta(days=39) %}
+
+        {% set is_easter_holiday = (tomorrow.date() in [good_friday.date(), easter_monday.date(), ascension_day.date()]) %}
+
+        {# Determine if tomorrow is a Swedish bank day #}
+        {% set tomorrow_is_bank_day = not (is_weekend or is_fixed_holiday or is_midsummer_eve or is_easter_holiday) %}
+
+        {# Tomorrow is payout day if tomorrow is a bank day, tomorrow <= 25th, and no bank day exists between tomorrow+1 and 25th #}
+        {% if tomorrow_is_bank_day and d <= 25 %}
+          {% set ns = namespace(has_later_bank_day=false) %}
+          {% for day_offset in range(1, 26 - d) %}
+            {% set check_date = tomorrow + timedelta(days=day_offset) %}
+            {% set cy = check_date.year %}
+            {% set cm = check_date.month %}
+            {% set cd = check_date.day %}
+            {% set cw = check_date.weekday() %}
+
+            {% set c_weekend = cw >= 5 %}
+            {% set c_fixed = (cm == 1 and cd in [1, 6]) or (cm == 5 and cd == 1) or (cm == 6 and cd == 6) or (cm == 12 and cd in [24, 25, 26, 31]) %}
+            {% set c_midsummer = (cm == 6 and cw == 4 and 19 <= cd <= 25) %}
+
+            {% set ca = cy % 19 %}
+            {% set cb = cy // 100 %}
+            {% set cc = cy % 100 %}
+            {% set cd_e = cb // 4 %}
+            {% set ce = cb % 4 %}
+            {% set cf = (cb + 8) // 25 %}
+            {% set cg = (cb - cf + 1) // 3 %}
+            {% set ch = (19 * ca + cb - cd_e - cg + 15) % 30 %}
+            {% set ci = cc // 4 %}
+            {% set ck = cc % 4 %}
+            {% set cl = (32 + 2 * ce + 2 * ci - ch - ck) % 7 %}
+            {% set cm_e = (ca + 11 * ch + 22 * cl) // 451 %}
+            {% set c_easter_month = (ch + cl - 7 * cm_e + 114) // 31 %}
+            {% set c_easter_day = ((ch + cl - 7 * cm_e + 114) % 31) + 1 %}
+            {% set c_easter_date = strptime(cy ~ '-' ~ '%02d'|format(c_easter_month) ~ '-' ~ '%02d'|format(c_easter_day), '%Y-%m-%d') %}
+            {% set c_good_friday = c_easter_date - timedelta(days=2) %}
+            {% set c_easter_monday = c_easter_date + timedelta(days=1) %}
+            {% set c_ascension_day = c_easter_date + timedelta(days=39) %}
+            {% set c_easter_holiday = (check_date.date() in [c_good_friday.date(), c_easter_monday.date(), c_ascension_day.date()]) %}
+
+            {% if not (c_weekend or c_fixed or c_midsummer or c_easter_holiday) %}
+              {% set ns.has_later_bank_day = true %}
+            {% endif %}
+          {% endfor %}
+          {{ not ns.has_later_bank_day }}
+        {% else %}
+          false
+        {% endif %}
+  actions:
+    - action: "{{ notify_service }}"
+      data:
+        title: "Lön imorgon"
+        message: "Imorgon är det dags för löneutbetalning!"
+        data:
+          channel: "Lön"
+          notification_icon: "mdi:cash-multiple"
